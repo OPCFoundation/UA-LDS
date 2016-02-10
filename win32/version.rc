@@ -1,0 +1,72 @@
+// Microsoft Visual C++ generated resource script.
+//
+
+IDI_ICON1   ICON    DISCARDABLE "ualds.ico"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+// include version info defines
+#include "win_version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// German (Germany) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+VS_VERSION_INFO VERSIONINFO
+  FILEVERSION    VER_FILE_VERSION
+  PRODUCTVERSION VER_PRODUCTVERSION
+  FILEFLAGSMASK  0x3fL
+#ifdef _DEBUG
+  FILEFLAGS      0x1L
+#else
+  FILEFLAGS      0x0L
+#endif
+  FILEOS         0x40004L
+  FILETYPE       0x2L
+  FILESUBTYPE    0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "Comments",         "UA Local Discovery Server\0"
+            VALUE "CompanyName",      "OPC Foundation"
+            VALUE "FileDescription",  "UA Local Discovery Server Windows Service\0"
+#ifdef _DEBUG
+            VALUE "FileVersion",      VER_FILE_VERSION_STR "(Debug Build)\0"
+#else
+            VALUE "FileVersion",      VER_FILE_VERSION_STR "(Release Build)\0"
+#endif
+            VALUE "InternalName",     "UALDS\0"
+            VALUE "LegalCopyright",   "Copyright (C) 2013, OPC Foundation"
+            VALUE "LegalTrademarks",  ""
+            VALUE "OriginalFilename", "ualds.exe\0"
+            VALUE "PrivateBuild",     "\0"
+            VALUE "ProductName",      "UA Local Discovery Server"
+            VALUE "ProductVersion",   VER_PRODUCTVERSION_STR "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0000, 1200
+    END
+END
+
+
+#endif    // German (Germany) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
