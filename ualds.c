@@ -35,6 +35,7 @@
 /* local includes */
 #include "config.h"
 #include "ualds.h"
+#include "service.h"
 #include "settings.h"
 /* local platform includes */
 #include <platform.h>
@@ -983,22 +984,18 @@ static OpcUa_StatusCode ualds_delete_endpoints()
         OpcUa_Endpoint_Delete(&g_pEndpoints[i].hEndpoint);
     }
 
-    return ret;
+    return ret; 
 }
 
 static void ualds_initialize_proxystubconfig(OpcUa_ProxyStubConfiguration *pConfig)
 {
-    if (g_StackTraceLevel == OPCUA_TRACE_OUTPUT_LEVEL_NONE) {
-        pConfig->bProxyStub_Trace_Enabled          = OpcUa_False;
-    } else {
-        pConfig->bProxyStub_Trace_Enabled          = OpcUa_True;
-    }
     pConfig->uProxyStub_Trace_Level                = g_StackTraceLevel;
     pConfig->iSerializer_MaxAlloc                  = -1;
     pConfig->iSerializer_MaxStringLength           = -1;
     pConfig->iSerializer_MaxByteStringLength       = -1;
     pConfig->iSerializer_MaxArrayLength            = -1;
     pConfig->iSerializer_MaxMessageSize            = -1;
+    pConfig->iSerializer_MaxRecursionDepth         = -1;
     pConfig->bSecureListener_ThreadPool_Enabled    = OpcUa_False;
     pConfig->iSecureListener_ThreadPool_MinThreads = -1;
     pConfig->iSecureListener_ThreadPool_MaxThreads = -1;
@@ -1026,6 +1023,14 @@ static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(const OpcUa_CharA* szMess
 int ualds_serve()
 {
     int ret = EXIT_SUCCESS;
+
+    /*Precondition: Bonjour Service running.*/
+    BOOL successBonjourServiceStart = StartBonjourService();
+    if (successBonjourServiceStart == FALSE)
+    {
+        ualds_log(UALDS_LOG_ERR, "Could not start Bonjour Service");
+    }
+
     OpcUa_ProxyStubConfiguration stackconfig;
     OpcUa_StatusCode status;
     OpcUa_UInt32 LoopTimeout = 1000;

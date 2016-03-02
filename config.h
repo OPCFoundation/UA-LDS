@@ -29,9 +29,9 @@
 
 /* define version information */
 #define UALDS_CONF_VERSION_MAJOR 1
-#define UALDS_CONF_VERSION_MINOR 02
-#define UALDS_CONF_VERSION_PATCH 335
-#define UALDS_CONF_VERSION_BUILD 1
+#define UALDS_CONF_VERSION_MINOR 03
+#define UALDS_CONF_VERSION_PATCH 340
+#define UALDS_CONF_VERSION_BUILD 0
 #define UALDS_VERSION_SUFFIX " Release"
 #define UALDS_CONF_VERSION_STRING xstr(UALDS_CONF_VERSION_MAJOR) "." \
     xstr(UALDS_CONF_VERSION_MINOR) "." xstr(UALDS_CONF_VERSION_PATCH) "." \
@@ -62,5 +62,9 @@
 #define UALDS_CONF_LOG_LEVEL         UALDS_LOG_DEBUG
 #define UALDS_CONF_SYSLOG_IDENT      "ualds"
 #define UALDS_CONF_SYSLOG_FACILITY   LOG_LOCAL0
+
+// Bonjour Service Names
+# define APPLE_BONJOUR_SERVICE_NAME       TEXT("Bonjour Service")
+# define OPCF_BONJOUR_SERVICE_NAME        TEXT("OPCF Bonjour Service")
 
 #endif /* __CONFIG_H__ */

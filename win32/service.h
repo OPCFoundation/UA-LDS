@@ -18,6 +18,7 @@
 #include <windows.h>
 
 void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv);
+BOOL StartBonjourService();
 int ServiceRegister();
 int ServiceUnregister();
 int ServiceStart();
