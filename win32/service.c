@@ -100,24 +100,27 @@ BOOL StartBonjourService()
     DWORD dwBytesNeeded;
     TCHAR szMessage[256];
 
-    // verify if Apple-Bounjour is regitered
-    SC_HANDLE serviceDbHandle = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    SC_HANDLE serviceDbHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
     if (serviceDbHandle == NULL)
     {
         lastErrorCode = GetLastError();
+        ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
         _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"), UALDS_CONF_SERVICE_NAME);
-        ualds_log(UALDS_LOG_ERR, "Error: Could not open Service Control Manager. (Missing Admin privileges");
+        ualds_log(UALDS_LOG_ERR, "Error: Could not open Service Control Manager. (Missing Admin privileges). ErrorCode: %s", szMessage);
         return FALSE;
     }
 
-    SC_HANDLE appleBonjourServiceHandle = OpenService(serviceDbHandle, APPLE_BONJOUR_SERVICE_NAME, SERVICE_ALL_ACCESS);
+    // verify if Apple-Bounjour is registered
+    SC_HANDLE appleBonjourServiceHandle = OpenService(serviceDbHandle, APPLE_BONJOUR_SERVICE_NAME, SERVICE_QUERY_STATUS | 
+                                            SERVICE_CHANGE_CONFIG | SERVICE_START | SERVICE_STOP | SERVICE_ENUMERATE_DEPENDENTS);
 
     if (appleBonjourServiceHandle == NULL)
     {
         // Apple-Bounjour is not regitered
 
         // verify if OPCF-Bonjour is registered
-        SC_HANDLE opcfBonjourServiceHandle = OpenService(serviceDbHandle, OPCF_BONJOUR_SERVICE_NAME, SERVICE_ALL_ACCESS);
+        SC_HANDLE opcfBonjourServiceHandle = OpenService(serviceDbHandle, OPCF_BONJOUR_SERVICE_NAME, SERVICE_QUERY_STATUS |
+                                                SERVICE_CHANGE_CONFIG | SERVICE_START | SERVICE_STOP | SERVICE_ENUMERATE_DEPENDENTS);
 
         if (opcfBonjourServiceHandle == NULL)
         {
@@ -234,7 +237,8 @@ BOOL StartBonjourService()
         // try to stop opcf-bonfour, if it is running.
 
         // verify if OPCF-Bonjour is registered
-        SC_HANDLE opcfBonjourServiceHandle = OpenService(serviceDbHandle, OPCF_BONJOUR_SERVICE_NAME, SERVICE_ALL_ACCESS);
+        SC_HANDLE opcfBonjourServiceHandle = OpenService(serviceDbHandle, OPCF_BONJOUR_SERVICE_NAME, SERVICE_QUERY_STATUS |
+                                                SERVICE_CHANGE_CONFIG | SERVICE_START | SERVICE_STOP | SERVICE_ENUMERATE_DEPENDENTS);
 
         if (opcfBonjourServiceHandle != NULL)
         {
@@ -570,6 +574,11 @@ int ServiceRegister(const char *szUser, const char *szPass)
 
         GetModuleFileName(NULL, szApplicationFilePath, MAX_PATH);
 
+        TCHAR szApplicationFilePathWithQuotes[MAX_PATH + 10] = TEXT("\"");
+
+        _tcscat(szApplicationFilePathWithQuotes, szApplicationFilePath);
+        _tcscat(szApplicationFilePathWithQuotes, TEXT("\""));
+
         if (szUser == 0 || strcmp(szUser, "SYSTEM") == 0)
         {
             hService = CreateService(
@@ -580,7 +589,7 @@ int ServiceRegister(const char *szUser, const char *szPass)
                 SERVICE_WIN32_OWN_PROCESS,
                 SERVICE_AUTO_START,
                 SERVICE_ERROR_NORMAL,
-                szApplicationFilePath,
+                szApplicationFilePathWithQuotes,
                 NULL,
                 NULL,
                 NULL,
@@ -604,7 +613,7 @@ int ServiceRegister(const char *szUser, const char *szPass)
                 SERVICE_WIN32_OWN_PROCESS,
                 SERVICE_AUTO_START,
                 SERVICE_ERROR_NORMAL,
-                szApplicationFilePath,
+                szApplicationFilePathWithQuotes,
                 NULL,
                 NULL,
                 NULL,
@@ -619,7 +628,7 @@ int ServiceRegister(const char *szUser, const char *szPass)
                 SERVICE_WIN32_OWN_PROCESS,
                 SERVICE_AUTO_START,
                 SERVICE_ERROR_NORMAL,
-                szApplicationFilePath,
+                szApplicationFilePathWithQuotes,
                 NULL,
                 NULL,
                 NULL,
