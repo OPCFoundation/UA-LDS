@@ -235,8 +235,20 @@ static OpcUa_StatusCode ualds_create_security_policies()
     OpcUa_StatusCode ret = OpcUa_Good;
     int tmpInt;
 
-    ualds_settings_begingroup("General");
-    ualds_settings_beginreadarray("Endpoints", &tmpInt);
+    int retCode = ualds_settings_begingroup("General");
+    if (retCode > 0)
+    {
+        ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read General settings from config file.");
+        return OpcUa_BadConfigurationError;
+    }
+
+    retCode = ualds_settings_beginreadarray("Endpoints", &tmpInt);
+    if (retCode > 0)
+    {
+        ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read number of endpoints from config file.");
+        return OpcUa_BadConfigurationError;
+    }
+
     g_numEndpoints = tmpInt;
     /* create endpoint configurastion array */
     g_pEndpoints = OpcUa_Alloc(sizeof(ualds_endpoint) * g_numEndpoints);
@@ -251,10 +263,31 @@ static OpcUa_StatusCode ualds_create_security_policies()
     /* read in all endpoints configuration */
     for (n=0; n<g_numEndpoints; n++)
     {
-        ualds_settings_setarrayindex(n);
-        ualds_settings_readstring("Url", g_pEndpoints[n].szUrl, UALDS_CONF_MAX_URI_LENGTH);
+        retCode = ualds_settings_setarrayindex(n);
+        if (retCode > 0)
+        {
+            ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read endpoint index from config file.");
+            ualds_delete_security_policies();
+            return OpcUa_BadConfigurationError;
+        }
+
+        retCode = ualds_settings_readstring("Url", g_pEndpoints[n].szUrl, UALDS_CONF_MAX_URI_LENGTH);
+        if (retCode > 0)
+        {
+            ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read endpoint url from config file.");
+            ret =  OpcUa_BadConfigurationError;
+            break;
+        }
+
         replace_string(g_pEndpoints[n].szUrl, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", g_szHostname);
-        ualds_settings_readstring("SecurityPolicies", szSecurityPolicies, sizeof(szSecurityPolicies));
+        retCode = ualds_settings_readstring("SecurityPolicies", szSecurityPolicies, sizeof(szSecurityPolicies));
+        if (retCode > 0)
+        {
+            ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read security policies for endpoint from config file.");
+            ret = OpcUa_BadConfigurationError;
+            break;
+        }
+
         g_pEndpoints[n].nNoOfSecurityPolicies = split_string(szSecurityPolicies, ',', &szPolicyArray);
         if (g_pEndpoints[n].nNoOfSecurityPolicies < 1)
         {
@@ -298,9 +331,30 @@ static OpcUa_StatusCode ualds_create_security_policies()
         {
             for (i=0; i<g_pEndpoints[n].nNoOfSecurityPolicies; i++)
             {
-                ualds_settings_begingroup(OpcUa_String_GetRawString(&g_pEndpoints[n].pSecurityPolicies[i].sSecurityPolicy));
-                ualds_settings_readstring("Url", szUrl, sizeof(szUrl));
-                ualds_settings_readstring("MessageSecurity", szMessageSecurity, sizeof(szMessageSecurity));
+                retCode = ualds_settings_begingroup(OpcUa_String_GetRawString(&g_pEndpoints[n].pSecurityPolicies[i].sSecurityPolicy));
+                if (retCode > 0)
+                {
+                    ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read security policies group from config file.");
+                    ret = OpcUa_BadConfigurationError;
+                    break;
+                }
+
+                retCode = ualds_settings_readstring("Url", szUrl, sizeof(szUrl));
+                if (retCode > 0)
+                {
+                    ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read Url from security policies group from config file.");
+                    ret = OpcUa_BadConfigurationError;
+                    break;
+                }
+
+                retCode = ualds_settings_readstring("MessageSecurity", szMessageSecurity, sizeof(szMessageSecurity));
+                if (retCode > 0)
+                {
+                    ualds_log(UALDS_LOG_ERR, "Configuration error: Could not read MessageSecurity from security policies group from config file.");
+                    ret = OpcUa_BadConfigurationError;
+                    break;
+                }
+
                 ualds_settings_endgroup();
 
                 OpcUa_String_Clear(&g_pEndpoints[n].pSecurityPolicies[i].sSecurityPolicy);
@@ -352,6 +406,7 @@ static OpcUa_StatusCode ualds_delete_security_policies()
         }
         OpcUa_Free(g_pEndpoints);
         g_pEndpoints = 0;
+        g_numEndpoints = 0;
     }
 
     return OpcUa_Good;
@@ -931,6 +986,12 @@ static OpcUa_StatusCode ualds_create_endpoints()
     OpcUa_StatusCode ret = OpcUa_Good;
     ualds_endpoint *pEP = g_pEndpoints;
     OpcUa_UInt32 i;
+
+    if (pEP == NULL)
+    {
+        ualds_log(UALDS_LOG_NOTICE, "No endpoints to open!");
+        return OpcUa_Bad;
+    }
 
     for (i=0; i<g_numEndpoints; i++, pEP++)
     {
