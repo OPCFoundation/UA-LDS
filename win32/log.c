@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <process.h>
+#include <tchar.h>
 #ifdef HAVE_OPCUA_STACK
 /* uastack includes */
 #include <opcua_platformdefs.h>
@@ -29,21 +30,23 @@
 #include "log.h"
 
 /** internal logger state */
+static int       g_max_size = 100*1024*1024; // 100 MB default value, equivalent in bytes
 static int       g_logger_state = 0; /* 0=closed, 1=open */
 static LogTarget g_target = UALDS_LOG_STDERR;
-static LogLevel  g_level  = UALDS_LOG_EMERG;
+static LogLevel  g_level = UALDS_LOG_EMERG;
 static FILE     *g_f = 0;
 
 int ualds_openlog(LogTarget target, LogLevel level)
 {
     int ret = 0;
     char szLogfile[PATH_MAX];
+    char szLogfileSize[10];
 
     if (g_logger_state != 0) return 1;
 
     /* store configuration */
     g_target = target;
-    g_level  = level;
+    g_level = level;
 
     switch (target)
     {
@@ -56,7 +59,31 @@ int ualds_openlog(LogTarget target, LogLevel level)
     case UALDS_LOG_FILE:
         ualds_settings_begingroup("Log");
         ualds_settings_readstring("LogFile", szLogfile, sizeof(szLogfile));
+        int success = ualds_settings_readstring("LogFileSize", szLogfileSize, sizeof(szLogfileSize));
+        if (success == 0)
+        {
+           // convert string to int
+            int tmpLogSize = atoi(szLogfileSize);
+            if (tmpLogSize > 0)
+            {
+                g_max_size = tmpLogSize *1024 *1024;
+            }
+        }
+        else
+        {
+            // convert int ot string
+            _itoa(g_max_size / 1024 / 1024, szLogfileSize, 10);
+
+            // add it to global settings, so that it can be flushed to file, at a later point.
+            char comment[100] = "#Maximum logfile size in MB. This is only required for LogSystem=file.";
+            ualds_settings_addcomment(comment);
+            ualds_settings_addemptyline();
+            ualds_settings_writestring("LogFileSize", szLogfileSize);
+            ualds_settings_addemptyline();
+        }
+        
         ualds_settings_endgroup();
+
         g_f = fopen(szLogfile, "a");
         if (g_f == 0) ret = -1;
         break;
@@ -104,6 +131,49 @@ void ualds_log(LogLevel level, const char *format, ...)
         vfprintf(g_f, format, ap);
         fprintf(g_f, "\n");
         fflush(g_f);
+
+        long currentPos = ftell(g_f);
+        if (currentPos != -1)
+        {
+            // Log file size is limited
+            if (currentPos >= g_max_size)
+            {
+                // backup File parameters
+                LogTarget tmp_target = g_target;
+                LogLevel tmp_level = g_level;
+
+                // close log file
+                ualds_closelog();
+
+                // get name/path of log file
+                char szLogfile[PATH_MAX];
+                ualds_settings_begingroup("Log");
+                ualds_settings_readstring("LogFile", szLogfile, sizeof(szLogfile));
+                ualds_settings_endgroup();
+
+                char szLogfile_backup[PATH_MAX];
+                strcpy(szLogfile_backup, szLogfile);
+
+                // get current time in string format
+                time_t rawtime;
+                struct tm * timeinfo;
+                char time_str[80];
+                time(&rawtime);
+                timeinfo = localtime(&rawtime);
+                strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+
+                strcat(szLogfile_backup, "_");
+                strcat(szLogfile_backup, time_str);
+                strcat(szLogfile_backup, ".log");
+
+                // rename file
+                MoveFileA(szLogfile, szLogfile_backup);
+
+                // open log file
+                ualds_openlog(tmp_target, tmp_level);
+            }
+        }
+
 #ifdef _DEBUG
         OutputDebugStringVarArgs(format, ap);
 #endif

@@ -912,7 +912,12 @@ int ualds_settings_addcomment(const char* szComment)
 {
     FileSettings *pFS = &g_settings;
     Entry *pEntry = UaServer_FSBE_AddComment(pFS, szComment);
-    if (pEntry) return 0;
+    if (pEntry)
+    {
+        pEntry->parent = pFS->CurrentGroup;
+        return 0;
+    }
+
     return -1;
 }
 
@@ -920,7 +925,12 @@ int ualds_settings_addemptyline()
 {
     FileSettings *pFS = &g_settings;
     Entry *pEntry = UaServer_FSBE_AddEmptyLine(pFS);
-    if (pEntry) return 0;
+    if (pEntry)
+    {
+        pEntry->parent = pFS->CurrentGroup;
+        return 0;
+    }
+
     return -1;
 }
 
