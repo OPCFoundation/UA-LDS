@@ -28,6 +28,7 @@
 #include <platform.h>
 #include <daemon.h>
 #include <log.h>
+#include <crtdbg.h>
 
 void version()
 {
@@ -72,6 +73,7 @@ int main(int argc, char* argv[])
     char szPass[50];
     LogTarget logtarget = UALDS_CONF_LOG_TARGET;
     LogLevel loglevel = UALDS_CONF_LOG_LEVEL;
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
     /* parse commandline arguments */
     while ((opt = getopt(argc, argv, "dDvhc:i:p:u")) != -1) {

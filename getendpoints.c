@@ -23,6 +23,7 @@
 #include <opcua_serverstub.h>
 #include <opcua_memory.h>
 #include <opcua_string.h>
+#include <opcua_core.h>
 #include <opcua_datetime.h>
 /* local includes */
 #include "config.h"
@@ -166,7 +167,12 @@ OpcUa_StatusCode ualds_getendpoints(
                         /* tranport profile uri */
                         OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].TransportProfileUri, "http://opcfoundation.org/UA-Profile/Transport/uatcp-uasc-uabinary");
                         /* fill server certificate */
-                        OpcUa_ByteString_CopyTo(&g_server_certificate, &pResponse->Endpoints[index].ServerCertificate);
+                        pResponse->Endpoints[index].ServerCertificate.Length = g_server_certificate.Length;
+                        if (g_server_certificate.Length >= 0)
+                        {
+                            pResponse->Endpoints[index].ServerCertificate.Data = OpcUa_Memory_Alloc(g_server_certificate.Length);
+                            memcpy(pResponse->Endpoints[index].ServerCertificate.Data, g_server_certificate.Data, g_server_certificate.Length);
+                        }
                         /* set security level */
                         if (strcmp(OpcUa_String_GetRawString(&pEP[i].pSecurityPolicies[j].sSecurityPolicy), OpcUa_SecurityPolicy_Basic256) == 0)
                         {

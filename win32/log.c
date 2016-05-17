@@ -41,6 +41,7 @@ int ualds_openlog(LogTarget target, LogLevel level)
     int ret = 0;
     char szLogfile[PATH_MAX];
     char szLogfileSize[10];
+    int success;
 
     if (g_logger_state != 0) return 1;
 
@@ -59,7 +60,7 @@ int ualds_openlog(LogTarget target, LogLevel level)
     case UALDS_LOG_FILE:
         ualds_settings_begingroup("Log");
         ualds_settings_readstring("LogFile", szLogfile, sizeof(szLogfile));
-        int success = ualds_settings_readstring("LogFileSize", szLogfileSize, sizeof(szLogfileSize));
+        success = ualds_settings_readstring("LogFileSize", szLogfileSize, sizeof(szLogfileSize));
         if (success == 0)
         {
            // convert string to int
@@ -75,8 +76,7 @@ int ualds_openlog(LogTarget target, LogLevel level)
             _itoa(g_max_size / 1024 / 1024, szLogfileSize, 10);
 
             // add it to global settings, so that it can be flushed to file, at a later point.
-            char comment[100] = "#Maximum logfile size in MB. This is only required for LogSystem=file.";
-            ualds_settings_addcomment(comment);
+            ualds_settings_addcomment("#Maximum logfile size in MB. This is only required for LogSystem=file.");
             ualds_settings_addemptyline();
             ualds_settings_writestring("LogFileSize", szLogfileSize);
             ualds_settings_addemptyline();
@@ -112,6 +112,12 @@ void ualds_log(LogLevel level, const char *format, ...)
     char *szTimeStamp;
     time_t now;
     va_list ap;
+    long currentPos;
+    char szLogfile[PATH_MAX];
+    char szLogfile_backup[PATH_MAX];
+    time_t rawtime;
+    struct tm * timeinfo;
+    char time_str[80];
 
     if (g_logger_state == 0 || level > g_level) return;
 
@@ -132,7 +138,7 @@ void ualds_log(LogLevel level, const char *format, ...)
         fprintf(g_f, "\n");
         fflush(g_f);
 
-        long currentPos = ftell(g_f);
+        currentPos = ftell(g_f);
         if (currentPos != -1)
         {
             // Log file size is limited
@@ -146,18 +152,13 @@ void ualds_log(LogLevel level, const char *format, ...)
                 ualds_closelog();
 
                 // get name/path of log file
-                char szLogfile[PATH_MAX];
                 ualds_settings_begingroup("Log");
                 ualds_settings_readstring("LogFile", szLogfile, sizeof(szLogfile));
                 ualds_settings_endgroup();
 
-                char szLogfile_backup[PATH_MAX];
                 strcpy(szLogfile_backup, szLogfile);
 
                 // get current time in string format
-                time_t rawtime;
-                struct tm * timeinfo;
-                char time_str[80];
                 time(&rawtime);
                 timeinfo = localtime(&rawtime);
                 strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);

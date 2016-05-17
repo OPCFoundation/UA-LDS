@@ -22,6 +22,7 @@
 /* uastack includes */
 #include <opcua_serverstub.h>
 #include <opcua_string.h>
+#include <opcua_core.h>
 #include <opcua_datetime.h>
 #include <opcua_memory.h>
 /* local includes */

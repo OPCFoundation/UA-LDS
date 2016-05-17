@@ -40,17 +40,15 @@
 /* local platform includes */
 #include <platform.h>
 #include <log.h>
-#if (defined _WIN32) && OPCUA_SUPPORT_PKI_WIN32
+#if OPCUA_SUPPORT_PKI_WIN32
 # include <certstore.h>
-#endif /* (defined _WIN32) && OPCUA_SUPPORT_PKI_WIN32 */
+#endif /* OPCUA_SUPPORT_PKI_WIN32 */
 
 static volatile int g_shutdown = 0;
-#ifdef OPCUA_PKI_TYPE_NONE
-static OpcUa_CertificateStoreConfiguration     g_PKIConfig;
-#else
 static OpcUa_P_OpenSSL_CertificateStore_Config g_PKIConfig;
-#endif
 static OpcUa_PKIProvider                       g_PkiProvider;
+static OpcUa_P_OpenSSL_CertificateStore_Config g_Win32Config;
+static OpcUa_PKIProvider                       g_Win32Override;
 static char g_szCertificateFile[PATH_MAX];
 static char g_szCertificateKeyFile[PATH_MAX];
 static char g_szCertificateChainFile[PATH_MAX];
@@ -152,6 +150,7 @@ OpcUa_StatusCode ualds_registerserver(
     OpcUa_Handle          hContext,
     OpcUa_Void          **ppRequest,
     OpcUa_EncodeableType *pRequestType);
+static OpcUa_StatusCode ualds_delete_security_policies();
 
 /* OPC UA STACK Service Type configurations */
 static OpcUa_ServiceType FindServersService =
@@ -424,22 +423,14 @@ static void ualds_datetime_from_time_t(time_t t, OpcUa_DateTime *pDate)
 }
 
 #if HAVE_OPENSSL
-OpcUa_StatusCode OpcUa_P_OpenSSL_X509_SaveToFile(
-    OpcUa_CryptoProvider*       pProvider,
-    OpcUa_StringA               fileName,
-    OpcUa_Certificate           certificate);
-
 static OpcUa_StatusCode ualds_create_selfsigned_certificates(OpcUa_Handle hCertificateStore)
 {
     OpcUa_StatusCode ret = OpcUa_Good;
     OpcUa_CryptoProvider crypto;
     OpcUa_Int32 serial = (OpcUa_Int32)time(0);
-    time_t tFrom, tTo;
-    OpcUa_DateTime validFrom;
-    OpcUa_DateTime validTo;
     OpcUa_Crypto_NameEntry NameEntries[7];
     OpcUa_UInt numNameEntries = 7;
-    OpcUa_Certificate pCert = 0;
+    OpcUa_Certificate pCert = OPCUA_BYTESTRING_STATICINITIALIZER;
     OpcUa_Key pubKey, prvKey;
     char szSubjectAltName[256] = {0};
     char szCommonName[50] = {0};
@@ -449,6 +440,7 @@ static OpcUa_StatusCode ualds_create_selfsigned_certificates(OpcUa_Handle hCerti
     char szState[50] = {0};
     char szCountry[5] = {0};
     int i = 0;
+    FILE* f;
 
     UALDS_UNUSED(hCertificateStore);
 
@@ -461,19 +453,7 @@ static OpcUa_StatusCode ualds_create_selfsigned_certificates(OpcUa_Handle hCerti
     ret = OpcUa_Crypto_GenerateAsymmetricKeypair(
         &crypto,
         OpcUa_Crypto_Rsa_Id,
-        1024,
-        &pubKey,
-        &prvKey
-    );
-    OpcUa_GotoErrorIfBad(ret);
-    pubKey.Key.Data = OpcUa_Alloc(pubKey.Key.Length);
-    OpcUa_GotoErrorIfBad(ret);
-    prvKey.Key.Data = OpcUa_Alloc(prvKey.Key.Length);
-    OpcUa_GotoErrorIfBad(ret);
-    ret = OpcUa_Crypto_GenerateAsymmetricKeypair(
-        &crypto,
-        OpcUa_Crypto_Rsa_Id,
-        1024,
+        2048,
         &pubKey,
         &prvKey
     );
@@ -523,39 +503,71 @@ static OpcUa_StatusCode ualds_create_selfsigned_certificates(OpcUa_Handle hCerti
     replace_string(szSubjectAltName, sizeof(szSubjectAltName), "[gethostname]", g_szHostname);
     ext_ent[0].value = szSubjectAltName;
 
-    tFrom = time(0)+10;
-    tTo = tFrom + 3 * SECONDS_PER_YEAR;
-    ualds_datetime_from_time_t(tFrom, &validFrom);
-    ualds_datetime_from_time_t(tTo, &validTo);
-
     ret = OpcUa_Crypto_CreateCertificate(
         &crypto,
         serial,
-        validFrom,
-        validTo,
+        3 * SECONDS_PER_YEAR,
         NameEntries,
         numNameEntries,
         pubKey,
         ext_ent,
         EXT_COUNT,
-        OPCUA_P_SHA_160,
-        OpcUa_Null,
+        OPCUA_P_SHA_256,
         prvKey,
         &pCert);
     OpcUa_GotoErrorIfBad(ret);
 
-    ret = OpcUa_P_OpenSSL_X509_SaveToFile(&crypto, g_szCertificateFile, pCert);
-    OpcUa_GotoErrorIfBad(ret);
+    f = fopen(g_szCertificateFile, "wb");
+    if (f != NULL)
+    {
+        fwrite(pCert.Data, 1, pCert.Length, f);
+        fclose(f);
+    }
 
-    ret = OpcUa_PKIProvider_SavePrivateKeyToFile(&g_PkiProvider, g_szCertificateKeyFile, OpcUa_Crypto_Encoding_PEM, "", &prvKey.Key);
-    OpcUa_GotoErrorIfBad(ret);
+    f = fopen(g_szCertificateKeyFile, "wb");
+    if (f != NULL)
+    {
+        fwrite(prvKey.Key.Data, 1, prvKey.Key.Length, f);
+        fclose(f);
+    }
 
 Error:
     OpcUa_CryptoProvider_Delete(&crypto);
+    OpcUa_ByteString_Clear(&pCert);
+    OpcUa_Key_Clear(&prvKey);
+    OpcUa_Key_Clear(&pubKey);
 
     return ret;
 }
 #endif /* HAVE_OPENSSL */
+
+#if OPCUA_SUPPORT_PKI_WIN32
+static OpcUa_StatusCode ualds_override_validate_certificate(
+    struct _OpcUa_PKIProvider*  pPKI,
+    OpcUa_ByteString*           pCertificate,
+    OpcUa_Void*                 pCertificateStore,
+    OpcUa_Int*                  pValidationCode)
+{
+  OpcUa_StatusCode ret = g_PkiProvider.ValidateCertificate(pPKI, pCertificate, pCertificateStore, pValidationCode);
+
+  if (ret == OpcUa_BadCertificateUntrusted && g_bAllowLocalRegistration)
+  {
+    ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Ignoring BadCertificateUntrusted error, because AllowLocalRegistration is set to yes.");
+    ret = OpcUa_Good;
+  }
+
+  if (ret == OpcUa_BadCertificateUntrusted && g_bWin32StoreCheck)
+  {
+    ret = ualds_verify_cert_win32(pCertificate);
+    if (OpcUa_IsGood(ret))
+    {
+      ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Verifying certificate in windows store succeeded.");
+    }
+  }
+
+  return ret;
+}
+#endif /* OPCUA_SUPPORT_PKI_WIN32 */
 
 static OpcUa_StatusCode ualds_security_initialize()
 {
@@ -591,23 +603,11 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     ualds_settings_endgroup();
 
 #if HAVE_OPENSSL
-#ifdef OPCUA_PKI_TYPE_NONE
-    /* new stack PKI interface */
-    g_PKIConfig.strPkiType = OPCUA_P_PKI_TYPE_OPENSSL;
-    g_PKIConfig.strTrustedCertificateListLocation = g_szTrustListPath;
-    g_PKIConfig.strRevokedCertificateListLocation = g_szCRLPath;
-    g_PKIConfig.strIssuerCertificateStoreLocation = g_szIssuerPath;
-    g_PKIConfig.strRevokedIssuerCertificateListLocation = g_szCRLPath;
-    g_PKIConfig.uFlags = 0;
-    g_PKIConfig.pvOverride = OpcUa_Null;
-#else /* OPCUA_PKI_TYPE_NONE */
-    /* old stack PKI interface */
     g_PKIConfig.PkiType = OpcUa_OpenSSL_PKI;
     g_PKIConfig.CertificateTrustListLocation = g_szTrustListPath;
     g_PKIConfig.CertificateRevocationListLocation = g_szCRLPath;
     g_PKIConfig.Flags = 0;
     g_PKIConfig.Override = OpcUa_Null;
-#endif /* OPCUA_PKI_TYPE_NONE */
 
     uStatus = OpcUa_PKIProvider_Create(&g_PKIConfig, &g_PkiProvider);
     OpcUa_GotoErrorIfBad(uStatus);
@@ -642,7 +642,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     /* load PEM encoded server certificate private key */
     uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
         g_szCertificateKeyFile,
-        OpcUa_Crypto_Encoding_PEM,
+        OpcUa_Crypto_Encoding_DER,
         OpcUa_Null,
         &g_server_key.Key);
 
@@ -654,24 +654,20 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
 
     g_PkiProvider.CloseCertificateStore(&g_PkiProvider, &hCertificateStore);
 #else /* HAVE_OPENSSL */
-# ifdef OPCUA_PKI_TYPE_NONE
-    /* new stack PKI interface */
-    g_PKIConfig.strPkiType = OPCUA_PKI_TYPE_NONE;
-    g_PKIConfig.strTrustedCertificateListLocation = 0;
-    g_PKIConfig.strRevokedCertificateListLocation = 0;
-    g_PKIConfig.strIssuerCertificateStoreLocation = 0;
-    g_PKIConfig.strRevokedIssuerCertificateListLocation = 0;
-    g_PKIConfig.uFlags = 0;
-    g_PKIConfig.pvOverride = OpcUa_Null;
-# else /* OPCUA_PKI_TYPE_NONE */
-    /* old stack PKI interface */
     g_PKIConfig.PkiType = OpcUa_NO_PKI;
     g_PKIConfig.CertificateTrustListLocation = 0;
     g_PKIConfig.CertificateRevocationListLocation = 0;
     g_PKIConfig.Flags = 0;
     g_PKIConfig.Override = OpcUa_Null;
-# endif /* OPCUA_PKI_TYPE_NONE */
 #endif /* HAVE_OPENSSL */
+
+#if OPCUA_SUPPORT_PKI_WIN32
+    memset(&g_Win32Override, 0, sizeof(g_Win32Override));
+    g_Win32Override.ValidateCertificate = ualds_override_validate_certificate;
+    g_Win32Config = g_PKIConfig;
+    g_Win32Config.PkiType = OpcUa_Override;
+    g_Win32Config.Override = &g_Win32Override;
+#endif /* OPCUA_SUPPORT_PKI_WIN32 */
 
     ualds_create_security_policies();
 
@@ -848,16 +844,12 @@ static OpcUa_StatusCode ualds_endpoint_callback(
     OpcUa_Endpoint_Event    eEvent,
     OpcUa_StatusCode        uStatus,
     OpcUa_UInt32            uSecureChannelId,
-    OpcUa_Handle*           phRawRequestContext,
     OpcUa_ByteString*       pbsClientCertificate,
     OpcUa_String*           pSecurityPolicy,
-    OpcUa_UInt16            uSecurityMode,
-    OpcUa_UInt32            uRequestedLifetime)
+    OpcUa_UInt16            uSecurityMode)
 {
     int index = eEvent;
     UALDS_UNUSED(pvCallbackData);
-    UALDS_UNUSED(phRawRequestContext);
-    UALDS_UNUSED(uRequestedLifetime);
 
     if (index < 0 || index > 8) index = 0;
     ualds_log(UALDS_LOG_INFO, "ualds_endpoint_callback called: Event=%s, SecureChanneldId=0x%08X, uStatus=0x%08X",
@@ -866,31 +858,12 @@ static OpcUa_StatusCode ualds_endpoint_callback(
     {
     case eOpcUa_Endpoint_Event_SecureChannelOpened:
         {
-            OpcUa_String sPeerInfo = OPCUA_STRING_STATICINITIALIZER;
-
-            if (OpcUa_IsGood(OpcUa_Endpoint_GetPeerInfoBySecureChannelId( hEndpoint, uSecureChannelId, &sPeerInfo)))
-            {
-                ualds_log(UALDS_LOG_DEBUG,
-                                "ualds_endpoint_callback: SecureChanneld 0x%08X opened with %s in mode %u status 0x%08X from %*.*s!",
-                                uSecureChannelId,
-                                (pSecurityPolicy)?OpcUa_String_GetRawString(pSecurityPolicy):"(not provided)",
-                                uSecurityMode,
-                                uStatus,
-                                OpcUa_String_StrLen(&sPeerInfo),
-                                OpcUa_String_StrLen(&sPeerInfo),
-                                OpcUa_String_GetRawString(&sPeerInfo));
-            }
-            else
-            {
-                ualds_log(UALDS_LOG_DEBUG,
+            ualds_log(UALDS_LOG_DEBUG,
                                 "ualds_endpoint_callback: SecureChannel 0x%08X opened with %s in mode %u status 0x%08X!",
                                 uSecureChannelId,
                                 (pSecurityPolicy)?OpcUa_String_GetRawString(pSecurityPolicy):"(not provided)",
                                 uSecurityMode,
                                 uStatus);
-            }
-
-            OpcUa_String_Clear(&sPeerInfo);
             break;
         }
     case eOpcUa_Endpoint_Event_SecureChannelClosed:
@@ -911,63 +884,6 @@ static OpcUa_StatusCode ualds_endpoint_callback(
     case eOpcUa_Endpoint_Event_DecoderError:
         {
             ualds_log(UALDS_LOG_DEBUG, "ualds_endpoint_callback: SecureChannel 0x%08X received a request that could not be decoded! (0x%08X)", uSecureChannelId, uStatus);
-            break;
-        }
-    case eOpcUa_Endpoint_Event_SecureChannelOpenVerifyCertificate:
-        {
-            ualds_log(UALDS_LOG_DEBUG, "ualds_endpoint_callback: Verification of certificate validation requested! (open, 0x%08X)", uStatus);
-            if (uStatus == OpcUa_BadCertificateUntrusted)
-            {
-                /* optionally ignore untrusted certificates from localhost */
-                if (g_bAllowLocalRegistration)
-                {
-                    OpcUa_String sPeerInfo = OPCUA_STRING_STATICINITIALIZER;
-                    char *szPeerInfo = 0;
-
-                    /* get peer info from uastack */
-                    if (OpcUa_IsGood(OpcUa_Endpoint_GetPeerInfoBySecureChannelId( hEndpoint, uSecureChannelId, &sPeerInfo)))
-                    {
-                        /* convert to C string */
-                        szPeerInfo = strdup(OpcUa_String_GetRawString(&sPeerInfo));
-                    }
-                    /* compare address */
-                    if (szPeerInfo)
-                    {
-                        if (strncmp(szPeerInfo, "127.0.0.1:", 10) == 0 ||
-                            strncmp(szPeerInfo, "[::1]:", 6) == 0 ||
-                            strncmp(szPeerInfo, "[::ffff:127.0.0.1]", 6) == 0)
-                        {
-                            ualds_log(UALDS_LOG_DEBUG, "ualds_endpoint_callback: Ignoring BadCertificateUntrusted error from %s, because AllowLocalRegistration is set to yes.", szPeerInfo);
-                            uStatus = OpcUa_BadContinue;
-                        }
-                        free(szPeerInfo);
-                    }
-                }
-            }
-#if (defined _WIN32) && OPCUA_SUPPORT_PKI_WIN32
-            if (uStatus == OpcUa_BadCertificateUntrusted && g_bWin32StoreCheck)
-            {
-                OpcUa_StatusCode uStatusVerify = OpcUa_BadCertificateUntrusted;
-
-                /* check windows certificate store */
-                uStatusVerify = ualds_verify_cert_win32(pbsClientCertificate);
-                if (OpcUa_IsGood(uStatusVerify))
-                {
-                    ualds_log(UALDS_LOG_DEBUG, "ualds_endpoint_callback: Verifying certificate in windows store succeeded.");
-                    uStatus = OpcUa_BadContinue;
-                }
-            }
-#endif /* (defined _WIN32) && OPCUA_SUPPORT_PKI_WIN32 */
-            if (uStatus == OpcUa_BadCertificateUntrusted)
-            {
-                /* save untrusted certificate in rejected folder */
-                ualds_save_clientcertificate(pbsClientCertificate);
-            }
-            break;
-        }
-    case eOpcUa_Endpoint_Event_SecureChannelRenewVerifyCertificate:
-        {
-            ualds_log(UALDS_LOG_DEBUG, "ualds_endpoint_callback: Verification of certificate validation requested! (renew, 0x%08X)", uStatus);
             break;
         }
     case eOpcUa_Endpoint_Event_Invalid:
@@ -993,6 +909,9 @@ static OpcUa_StatusCode ualds_create_endpoints()
         return OpcUa_Bad;
     }
 
+    ret = OpcUa_SocketManager_Create(OpcUa_Null, 0, 0);
+    OpcUa_ReturnErrorIfBad(ret);
+
     for (i=0; i<g_numEndpoints; i++, pEP++)
     {
         /* only opc.tcp endpoints allow RegisterServer */
@@ -1012,12 +931,16 @@ static OpcUa_StatusCode ualds_create_endpoints()
         ret = OpcUa_Endpoint_Open(
             pEP->hEndpoint,
             pEP->szUrl,
-            OpcUa_TransportProfile_UaTcp,
+            OpcUa_True,
             ualds_endpoint_callback,
             OpcUa_Null,
             &g_server_certificate,
             &g_server_key,
+#if OPCUA_SUPPORT_PKI_WIN32
+            &g_Win32Config,
+#else
             &g_PKIConfig,
+#endif /* OPCUA_SUPPORT_PKI_WIN32 */
             pEP->nNoOfSecurityPolicies,
             pEP->pSecurityPolicies);
 
@@ -1042,14 +965,21 @@ static OpcUa_StatusCode ualds_delete_endpoints()
     for (i=0; i<g_numEndpoints; i++)
     {
         ret = OpcUa_Endpoint_Close(g_pEndpoints[i].hEndpoint);
+    }
+
+    OpcUa_SocketManager_Delete(OpcUa_Null);
+
+    for (i=0; i<g_numEndpoints; i++)
+    {
         OpcUa_Endpoint_Delete(&g_pEndpoints[i].hEndpoint);
     }
 
-    return ret; 
+    return ret;
 }
 
 static void ualds_initialize_proxystubconfig(OpcUa_ProxyStubConfiguration *pConfig)
 {
+    pConfig->bProxyStub_Trace_Enabled              = OpcUa_True;
     pConfig->uProxyStub_Trace_Level                = g_StackTraceLevel;
     pConfig->iSerializer_MaxAlloc                  = -1;
     pConfig->iSerializer_MaxStringLength           = -1;
@@ -1084,6 +1014,13 @@ static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(const OpcUa_CharA* szMess
 int ualds_serve()
 {
     int ret = EXIT_SUCCESS;
+    OpcUa_ProxyStubConfiguration stackconfig;
+    OpcUa_StatusCode status;
+    OpcUa_UInt32 LoopTimeout = 1000;
+    int numServerNames = 0;
+    char szExeFileName[PATH_MAX];
+    char szValue[10];
+    OpcUa_Handle pcalltab = OpcUa_Null;
 
     /*Precondition: Bonjour Service running.*/
     BOOL successBonjourServiceStart = StartBonjourService();
@@ -1091,13 +1028,6 @@ int ualds_serve()
     {
         ualds_log(UALDS_LOG_ERR, "Could not start Bonjour Service");
     }
-
-    OpcUa_ProxyStubConfiguration stackconfig;
-    OpcUa_StatusCode status;
-    OpcUa_UInt32 LoopTimeout = 1000;
-    int numServerNames = 0;
-    char szExeFileName[PATH_MAX];
-    char szValue[10];
 
     /* Get fully qualified domain name */
     ualds_platform_getfqhostname(g_szHostname, sizeof(g_szHostname));
@@ -1127,14 +1057,18 @@ int ualds_serve()
     g_OpcUa_P_TraceHook = ualds_stack_trace_hook;
 
     /* Initialize stack platform layer */
-    status = OpcUa_P_Initialize();
+    status = OpcUa_P_Initialize(&pcalltab);
     if (OpcUa_IsBad(status)) return EXIT_FAILURE;
 
     /* Initialize OPC UA Stack */
     memset(&stackconfig, 0, sizeof(stackconfig));
     ualds_initialize_proxystubconfig(&stackconfig);
-    status = OpcUa_ProxyStub_Initialize(&stackconfig);
-    if (OpcUa_IsBad(status)) return EXIT_FAILURE;
+    status = OpcUa_ProxyStub_Initialize(pcalltab, &stackconfig);
+    if (OpcUa_IsBad(status))
+    {
+        OpcUa_P_Clean(&pcalltab);
+        return EXIT_FAILURE;
+    }
 
     /* read settings */
     ualds_settings_begingroup("General");
@@ -1168,6 +1102,7 @@ int ualds_serve()
     if (OpcUa_IsBad(status))
     {
         OpcUa_ProxyStub_Clear();
+        OpcUa_P_Clean(&pcalltab);
         return EXIT_FAILURE;
     }
 
@@ -1177,6 +1112,7 @@ int ualds_serve()
     {
         ualds_security_uninitialize();
         OpcUa_ProxyStub_Clear();
+        OpcUa_P_Clean(&pcalltab);
         return EXIT_FAILURE;
     }
 
@@ -1198,7 +1134,7 @@ int ualds_serve()
     ualds_delete_endpoints();
     ualds_security_uninitialize();
     OpcUa_ProxyStub_Clear();
-    OpcUa_P_Clean();
+    OpcUa_P_Clean(&pcalltab);
 
     return ret;
 }

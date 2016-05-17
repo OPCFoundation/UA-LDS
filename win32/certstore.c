@@ -15,6 +15,7 @@
 
 /* uastack includes */
 #include <opcua_pkifactory.h>
+#include <opcua_core.h>
 /* local platform includes */
 #include <../config.h>
 #include <log.h>
@@ -24,7 +25,7 @@
 */
 OpcUa_StatusCode ualds_verify_cert_win32(OpcUa_ByteString* pbsClientCertificate)
 {
-    OpcUa_CertificateStoreConfiguration win32PkiConfig;
+    OpcUa_P_OpenSSL_CertificateStore_Config win32PkiConfig;
     OpcUa_PKIProvider                   win32PkiProvider;
     OpcUa_Handle                        hCertificateStore = OpcUa_Null;
 
@@ -34,12 +35,12 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_win32");
 
     uStatus = OpcUa_BadCertificateUntrusted;
 
-    OpcUa_CertificateStoreConfiguration_Initialize(&win32PkiConfig);
+    memset(&win32PkiConfig, 0, sizeof(win32PkiConfig));
 
     /* store configuration, only strPkiType, uFlags and strTrustedCertificateListLocation need to be set */
-    win32PkiConfig.strPkiType                           = OPCUA_P_PKI_TYPE_WIN32;
-    win32PkiConfig.uFlags                               = UALDS_CONF_WIN32_STORE_LOCATION;
-    win32PkiConfig.strTrustedCertificateListLocation    = UALDS_CONF_WIN32_STORE_NAME;
+    win32PkiConfig.PkiType                         = OpcUa_Win32_PKI;
+    win32PkiConfig.Flags                           = UALDS_CONF_WIN32_STORE_LOCATION;
+    win32PkiConfig.CertificateTrustListLocation    = UALDS_CONF_WIN32_STORE_NAME;
 
     uStatus = OpcUa_PKIProvider_Create(&win32PkiConfig, &win32PkiProvider);
     OpcUa_GotoErrorIfBad(uStatus);

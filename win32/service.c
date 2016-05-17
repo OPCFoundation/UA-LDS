@@ -99,6 +99,17 @@ BOOL StartBonjourService()
     DWORD lastErrorCode = 0;
     DWORD dwBytesNeeded;
     TCHAR szMessage[256];
+    SC_HANDLE appleBonjourServiceHandle;
+    SERVICE_STATUS_PROCESS _status;
+    LPSERVICE_STATUS_PROCESS status = &_status;
+    DWORD bytesNeeded;
+    BOOL queryOpcfBonjourServiceRetCode;
+    BOOL queryApplefBonjourServiceRetCode;
+    BOOL opcfBonjourStartServiceRetCode;
+    BOOL controlServiceRetCode;
+    BOOL waitSuccess;
+    BOOL waitSuccess1;
+    BOOL waitSuccess2;
 
     SC_HANDLE serviceDbHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
     if (serviceDbHandle == NULL)
@@ -106,12 +117,12 @@ BOOL StartBonjourService()
         lastErrorCode = GetLastError();
         ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
         _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"), UALDS_CONF_SERVICE_NAME);
-        ualds_log(UALDS_LOG_ERR, "Error: Could not open Service Control Manager. (Missing Admin privileges). ErrorCode: %s", szMessage);
+        ualds_log(UALDS_LOG_ERR, "Error: Could not open Service Control Manager. (Missing Admin privileges). ErrorCode: %S", szMessage);
         return FALSE;
     }
 
     // verify if Apple-Bounjour is registered
-    SC_HANDLE appleBonjourServiceHandle = OpenService(serviceDbHandle, APPLE_BONJOUR_SERVICE_NAME, SERVICE_QUERY_STATUS | 
+    appleBonjourServiceHandle = OpenService(serviceDbHandle, APPLE_BONJOUR_SERVICE_NAME, SERVICE_QUERY_STATUS | 
                                             SERVICE_CHANGE_CONFIG | SERVICE_START | SERVICE_STOP | SERVICE_ENUMERATE_DEPENDENTS);
 
     if (appleBonjourServiceHandle == NULL)
@@ -127,31 +138,28 @@ BOOL StartBonjourService()
             lastErrorCode = GetLastError();
             ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
             _ftprintf(stderr, _T("Error: OpenService '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-            ualds_log(UALDS_LOG_ERR, "Error: OpenService '%s' failed with error(%i): %s", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+            ualds_log(UALDS_LOG_ERR, "Error: OpenService '%S' failed with error(%i): %S", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
             CloseServiceHandle(serviceDbHandle);
             return FALSE;
         }
 
         // verify if OPCF-Bonjour is running
-        SERVICE_STATUS_PROCESS _status;
-        LPSERVICE_STATUS_PROCESS status = &_status;
-        DWORD bytesNeeded;
-        BOOL queryOpcfBonjourServiceRetCode = QueryServiceStatusEx(opcfBonjourServiceHandle, SC_STATUS_PROCESS_INFO,
+        queryOpcfBonjourServiceRetCode = QueryServiceStatusEx(opcfBonjourServiceHandle, SC_STATUS_PROCESS_INFO,
             (LPBYTE)status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
         if (queryOpcfBonjourServiceRetCode == FALSE)
         {
             lastErrorCode = GetLastError();
             ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
             _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-            ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%s' failed with error(%i): %s.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+            ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
             CloseServiceHandle(opcfBonjourServiceHandle);
             CloseServiceHandle(serviceDbHandle);
             return FALSE;
         }
 
         // wait util the PENDING state has finished
-        BOOL waitSuccess1 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_START_PENDING, status);
-        BOOL waitSuccess2 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_STOP_PENDING, status);
+        waitSuccess1 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_START_PENDING, status);
+        waitSuccess2 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_STOP_PENDING, status);
 
         if (waitSuccess1 == FALSE || waitSuccess2 == FALSE)
         {
@@ -182,7 +190,7 @@ BOOL StartBonjourService()
                     lastErrorCode = GetLastError();
                     ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
                     _ftprintf(stderr, _T("Error: ChangeServiceConfig '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-                    ualds_log(UALDS_LOG_ERR, "Error: ChangeServiceConfig '%s' failed with error(%i): %s.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+                    ualds_log(UALDS_LOG_ERR, "Error: ChangeServiceConfig '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
                     CloseServiceHandle(opcfBonjourServiceHandle);
                     CloseServiceHandle(serviceDbHandle);
                     return FALSE;
@@ -191,13 +199,13 @@ BOOL StartBonjourService()
             }
 
             // start service.
-            BOOL opcfBonjourStartServiceRetCode = StartService(opcfBonjourServiceHandle, 0, NULL);
+            opcfBonjourStartServiceRetCode = StartService(opcfBonjourServiceHandle, 0, NULL);
             if (opcfBonjourStartServiceRetCode == FALSE)
             {
                 lastErrorCode = GetLastError();
                 ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
                 _ftprintf(stderr, _T("Error: StartService '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-                ualds_log(UALDS_LOG_ERR, "Error: StartService '%s' failed with error(%i): %s.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+                ualds_log(UALDS_LOG_ERR, "Error: StartService '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
                 CloseServiceHandle(opcfBonjourServiceHandle);
                 CloseServiceHandle(serviceDbHandle);
                 return FALSE;
@@ -214,14 +222,14 @@ BOOL StartBonjourService()
                 lastErrorCode = GetLastError();
                 ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
                 _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-                ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%s' failed with error(%i): %s.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+                ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
                 CloseServiceHandle(opcfBonjourServiceHandle);
                 CloseServiceHandle(serviceDbHandle);
                 return FALSE;
             }
 
             // Wait until the service is no longer start pending. 
-            BOOL waitSuccess = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_START_PENDING, status);
+            waitSuccess = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_START_PENDING, status);
             if (waitSuccess == FALSE)
             {
                 CloseServiceHandle(opcfBonjourServiceHandle);
@@ -243,25 +251,22 @@ BOOL StartBonjourService()
         if (opcfBonjourServiceHandle != NULL)
         {
             // verify if OPCF-Bonjour is running
-            SERVICE_STATUS_PROCESS _status;
-            LPSERVICE_STATUS_PROCESS status = &_status;
-            DWORD bytesNeeded;
-            BOOL queryOpcfBonjourServiceRetCode = QueryServiceStatusEx(opcfBonjourServiceHandle, SC_STATUS_PROCESS_INFO,
+            queryOpcfBonjourServiceRetCode = QueryServiceStatusEx(opcfBonjourServiceHandle, SC_STATUS_PROCESS_INFO,
                 (LPBYTE)status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
             if (queryOpcfBonjourServiceRetCode == FALSE)
             {
                 lastErrorCode = GetLastError();
                 ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
                 _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-                ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%s' failed with error(%i): %s.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+                ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
                 CloseServiceHandle(opcfBonjourServiceHandle);
                 CloseServiceHandle(serviceDbHandle);
                 return FALSE;
             }
 
             // wait util the PENDING state has finished
-            BOOL waitSuccess1 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_START_PENDING, status);
-            BOOL waitSuccess2 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_STOP_PENDING, status);
+            waitSuccess1 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_START_PENDING, status);
+            waitSuccess2 = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_STOP_PENDING, status);
 
             if (waitSuccess1 == FALSE || waitSuccess2 == FALSE)
             {
@@ -278,13 +283,13 @@ BOOL StartBonjourService()
                 StopDependentServices(opcfBonjourServiceHandle, serviceDbHandle);
 
                 // stop the opcf-bonjour
-                BOOL controlServiceRetCode = ControlService(opcfBonjourServiceHandle, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS)status);
+                controlServiceRetCode = ControlService(opcfBonjourServiceHandle, SERVICE_CONTROL_STOP, (LPSERVICE_STATUS)status);
                 if (controlServiceRetCode == 0)
                 {
                     lastErrorCode = GetLastError();
                     ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
                     _ftprintf(stderr, _T("Error: SERVICE_CONTROL_STOP '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-                    ualds_log(UALDS_LOG_ERR, "Error: SERVICE_CONTROL_STOP '%s' failed with error(%i): %s.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+                    ualds_log(UALDS_LOG_ERR, "Error: SERVICE_CONTROL_STOP '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
                     CloseServiceHandle(opcfBonjourServiceHandle);
                     CloseServiceHandle(appleBonjourServiceHandle);
                     CloseServiceHandle(serviceDbHandle);
@@ -292,7 +297,7 @@ BOOL StartBonjourService()
                 }
 
                 // wait for the service to stop.
-                BOOL waitSuccess = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_STOP_PENDING, status);
+                waitSuccess = WaitForPendingStateToFinish(opcfBonjourServiceHandle, SERVICE_STOP_PENDING, status);
                 if (waitSuccess == FALSE)
                 {
                     CloseServiceHandle(opcfBonjourServiceHandle);
@@ -320,7 +325,7 @@ BOOL StartBonjourService()
                         lastErrorCode = GetLastError();
                         ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
                         _ftprintf(stderr, _T("Error: ChangeServiceConfig '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-                        ualds_log(UALDS_LOG_ERR, "Error: ChangeServiceConfig '%s' failed with error(%i): %s.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+                        ualds_log(UALDS_LOG_ERR, "Error: ChangeServiceConfig '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
                         CloseServiceHandle(opcfBonjourServiceHandle);
                         CloseServiceHandle(appleBonjourServiceHandle);
                         CloseServiceHandle(serviceDbHandle);
@@ -333,17 +338,14 @@ BOOL StartBonjourService()
         }
 
         // verify if Apple-Bonjour is running
-        SERVICE_STATUS_PROCESS _status;
-        LPSERVICE_STATUS_PROCESS status = &_status;
-        DWORD bytesNeeded;
-        BOOL queryApplefBonjourServiceRetCode = QueryServiceStatusEx(appleBonjourServiceHandle, SC_STATUS_PROCESS_INFO,
+        queryApplefBonjourServiceRetCode = QueryServiceStatusEx(appleBonjourServiceHandle, SC_STATUS_PROCESS_INFO,
             (LPBYTE)status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
         if (queryApplefBonjourServiceRetCode == FALSE)
         {
             lastErrorCode = GetLastError();
             ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
             _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), APPLE_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-            ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%s' failed with error(%i): %s.", APPLE_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+            ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", APPLE_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
             CloseServiceHandle(opcfBonjourServiceHandle);
             CloseServiceHandle(appleBonjourServiceHandle);
             CloseServiceHandle(serviceDbHandle);
@@ -351,8 +353,8 @@ BOOL StartBonjourService()
         }
 
         // wait util the PENDING state has finished
-        BOOL waitSuccess1 = WaitForPendingStateToFinish(appleBonjourServiceHandle, SERVICE_START_PENDING, status);
-        BOOL waitSuccess2 = WaitForPendingStateToFinish(appleBonjourServiceHandle, SERVICE_STOP_PENDING, status);
+        waitSuccess1 = WaitForPendingStateToFinish(appleBonjourServiceHandle, SERVICE_START_PENDING, status);
+        waitSuccess2 = WaitForPendingStateToFinish(appleBonjourServiceHandle, SERVICE_STOP_PENDING, status);
         if (waitSuccess1 == FALSE || waitSuccess2 == FALSE)
         {
             CloseServiceHandle(opcfBonjourServiceHandle);
@@ -369,7 +371,7 @@ BOOL StartBonjourService()
                 lastErrorCode = GetLastError();
                 ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
                 _ftprintf(stderr, _T("Error: StartService '%s' failed with error(%i): %s.\n"), APPLE_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
-                ualds_log(UALDS_LOG_ERR, "Error: StartService '%s' failed with error(%i): %s.", APPLE_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
+                ualds_log(UALDS_LOG_ERR, "Error: StartService '%S' failed with error(%i): %S.", APPLE_BONJOUR_SERVICE_NAME, lastErrorCode, szMessage);
                 CloseServiceHandle(opcfBonjourServiceHandle);
                 CloseServiceHandle(appleBonjourServiceHandle);
                 CloseServiceHandle(serviceDbHandle);
@@ -377,7 +379,7 @@ BOOL StartBonjourService()
             }
 
             // wait for the service to start.
-            BOOL waitSuccess = WaitForPendingStateToFinish(appleBonjourServiceHandle, SERVICE_START_PENDING, status);
+            waitSuccess = WaitForPendingStateToFinish(appleBonjourServiceHandle, SERVICE_START_PENDING, status);
             if (waitSuccess == FALSE)
             {
                 // nothing to do.
@@ -397,10 +399,11 @@ BOOL WaitForPendingStateToFinish(SC_HANDLE schService, int pending_state, LPSERV
     DWORD dwStartTime = GetTickCount();
     DWORD dwBytesNeeded;
     BOOL success = TRUE;
+    DWORD dwOldCheckPoint;
 
     // Save the tick count and initial checkpoint.
     dwStartTime = GetTickCount();
-    DWORD dwOldCheckPoint = status->dwCheckPoint;
+    dwOldCheckPoint = status->dwCheckPoint;
 
     while (status->dwCurrentState == pending_state)
     {
@@ -571,10 +574,9 @@ int ServiceRegister(const char *szUser, const char *szPass)
     if (hService == NULL)
     {
         TCHAR szApplicationFilePath[MAX_PATH] = TEXT("");
+        TCHAR szApplicationFilePathWithQuotes[MAX_PATH + 10] = TEXT("\"");
 
         GetModuleFileName(NULL, szApplicationFilePath, MAX_PATH);
-
-        TCHAR szApplicationFilePathWithQuotes[MAX_PATH + 10] = TEXT("\"");
 
         _tcscat(szApplicationFilePathWithQuotes, szApplicationFilePath);
         _tcscat(szApplicationFilePathWithQuotes, TEXT("\""));
