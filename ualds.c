@@ -94,10 +94,7 @@ static const char *g_szEndpointEventNames[] = {
     "SecureChannelOpened",
     "SecureChannelClosed",
     "SecureChannelRenewed",
-    "SecureChannelOpenVerifyCertificate",
-    "SecureChannelRenewVerifyCertificate",
     "UnsupportedServiceRequested",
-    "RawRequest",
     "DecoderError"
 };
 
@@ -541,33 +538,36 @@ Error:
 }
 #endif /* HAVE_OPENSSL */
 
-#if OPCUA_SUPPORT_PKI_WIN32
+#ifdef _WIN32
 static OpcUa_StatusCode ualds_override_validate_certificate(
     struct _OpcUa_PKIProvider*  pPKI,
     OpcUa_ByteString*           pCertificate,
     OpcUa_Void*                 pCertificateStore,
     OpcUa_Int*                  pValidationCode)
 {
-  OpcUa_StatusCode ret = g_PkiProvider.ValidateCertificate(pPKI, pCertificate, pCertificateStore, pValidationCode);
+  OpcUa_StatusCode uStatus = g_PkiProvider.ValidateCertificate(pPKI, pCertificate, pCertificateStore, pValidationCode);
 
-  if (ret == OpcUa_BadCertificateUntrusted && g_bAllowLocalRegistration)
+  if (uStatus == OpcUa_BadCertificateUntrusted && g_bAllowLocalRegistration)
   {
     ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Ignoring BadCertificateUntrusted error, because AllowLocalRegistration is set to yes.");
-    ret = OpcUa_Good;
+    uStatus = OpcUa_Good;
   }
 
-  if (ret == OpcUa_BadCertificateUntrusted && g_bWin32StoreCheck)
+#if OPCUA_SUPPORT_PKI_WIN32
+  if (uStatus == OpcUa_BadCertificateUntrusted && g_bWin32StoreCheck)
   {
-    ret = ualds_verify_cert_win32(pCertificate);
-    if (OpcUa_IsGood(ret))
+    OpcUa_StatusCode uStatusVerify = ualds_verify_cert_win32(pCertificate);
+    if (OpcUa_IsGood(uStatusVerify))
     {
       ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Verifying certificate in windows store succeeded.");
+      uStatus = OpcUa_Good;
     }
   }
-
-  return ret;
-}
 #endif /* OPCUA_SUPPORT_PKI_WIN32 */
+
+  return uStatus;
+}
+#endif /* _WIN32 */
 
 static OpcUa_StatusCode ualds_security_initialize()
 {
@@ -661,13 +661,13 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     g_PKIConfig.Override = OpcUa_Null;
 #endif /* HAVE_OPENSSL */
 
-#if OPCUA_SUPPORT_PKI_WIN32
+#ifdef _WIN32
     memset(&g_Win32Override, 0, sizeof(g_Win32Override));
     g_Win32Override.ValidateCertificate = ualds_override_validate_certificate;
     g_Win32Config = g_PKIConfig;
     g_Win32Config.PkiType = OpcUa_Override;
     g_Win32Config.Override = &g_Win32Override;
-#endif /* OPCUA_SUPPORT_PKI_WIN32 */
+#endif /* _WIN32 */
 
     ualds_create_security_policies();
 
@@ -851,7 +851,7 @@ static OpcUa_StatusCode ualds_endpoint_callback(
     int index = eEvent;
     UALDS_UNUSED(pvCallbackData);
 
-    if (index < 0 || index > 8) index = 0;
+    if (index < 0 || index > 5) index = 0;
     ualds_log(UALDS_LOG_INFO, "ualds_endpoint_callback called: Event=%s, SecureChanneldId=0x%08X, uStatus=0x%08X",
               g_szEndpointEventNames[index], uSecureChannelId, uStatus);
     switch (eEvent)
@@ -864,6 +864,11 @@ static OpcUa_StatusCode ualds_endpoint_callback(
                                 (pSecurityPolicy)?OpcUa_String_GetRawString(pSecurityPolicy):"(not provided)",
                                 uSecurityMode,
                                 uStatus);
+            if (uStatus == OpcUa_BadCertificateUntrusted)
+            {
+                /* save untrusted certificate in rejected folder */
+                ualds_save_clientcertificate(pbsClientCertificate);
+            }
             break;
         }
     case eOpcUa_Endpoint_Event_SecureChannelClosed:
@@ -915,7 +920,7 @@ static OpcUa_StatusCode ualds_create_endpoints()
     for (i=0; i<g_numEndpoints; i++, pEP++)
     {
         /* only opc.tcp endpoints allow RegisterServer */
-        if (pEP->szUrl[0] != 'o')
+        if (tolower(pEP->szUrl[0]) != 'o')
         {
             ret = OpcUa_Endpoint_Create(&pEP->hEndpoint, OpcUa_Endpoint_SerializerType_Binary, g_ServiceTableHttps);
             OpcUa_ReturnErrorIfBad(ret);
@@ -936,11 +941,11 @@ static OpcUa_StatusCode ualds_create_endpoints()
             OpcUa_Null,
             &g_server_certificate,
             &g_server_key,
-#if OPCUA_SUPPORT_PKI_WIN32
+#ifdef _WIN32
             &g_Win32Config,
 #else
             &g_PKIConfig,
-#endif /* OPCUA_SUPPORT_PKI_WIN32 */
+#endif /* _WIN32 */
             pEP->nNoOfSecurityPolicies,
             pEP->pSecurityPolicies);
 
