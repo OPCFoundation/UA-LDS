@@ -1,6 +1,5 @@
 The AnsiC stack needs special configuration for the LDS project.
 in opcua_config.h, the following defines need these values:
 
-	OPCUA_USE_STATIC_PLATFORM_INTERFACE        OPCUA_CONFIG_YES
 	OPCUA_MULTITHREADED                        OPCUA_CONFIG_NO
 	OPCUA_USE_SYNCHRONISATION                  OPCUA_CONFIG_NO
