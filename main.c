@@ -1,16 +1,18 @@
-/******************************************************************************
-**
-** Copyright (C) 2005-2013 Unified Automation GmbH. All Rights Reserved.
-** Web: http://www.unifiedautomation.com
-**
-** Project: OPC UA Local Discovery Server
-**
-** Author: Gerhard Gappmeier <gerhard.gappmeier@ascolab.com>
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-******************************************************************************/
+/* Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
+
+The source code in this file is covered under a dual-license scenario:
+- RCL: for OPC Foundation members in good-standing
+- GPL V2: everybody else
+
+RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
+
+GNU General Public License as published by the Free Software Foundation;
+version 2 of the License are accompanied with this source code. See http://opcfoundation.org/License/GPLv2
+
+This source code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
 
 /* system includes */
 #include <stdio.h>
@@ -33,7 +35,7 @@
 void version()
 {
     fprintf(stdout, "OPC UA Local Discovery Server %s\n", UALDS_CONF_VERSION_STRING);
-    fprintf(stdout, "Copyright (C) 2005-2013 Unified Automation GmbH\n");
+    fprintf(stdout, "Copyright (c) 1996-2016, OPC Foundation. All rights reserved.n");
     fprintf(stdout, "Build date: %s\n", __DATE__);
 }
 

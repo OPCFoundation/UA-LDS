@@ -8,7 +8,7 @@ IDI_ICON1   ICON    DISCARDABLE "ualds.ico"
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "windows.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -51,7 +51,7 @@ BEGIN
             VALUE "FileVersion",      VER_FILE_VERSION_STR "(Release Build)\0"
 #endif
             VALUE "InternalName",     "UALDS\0"
-            VALUE "LegalCopyright",   "Copyright (C) 2013, OPC Foundation"
+            VALUE "LegalCopyright",   "Copyright (C) 2016, OPC Foundation"
             VALUE "LegalTrademarks",  ""
             VALUE "OriginalFilename", "ualds.exe\0"
             VALUE "PrivateBuild",     "\0"

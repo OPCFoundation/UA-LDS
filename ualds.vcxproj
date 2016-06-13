@@ -163,6 +163,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
+    <ClInclude Include="settings.h" />
     <ClInclude Include="ualds.h" />
     <ClInclude Include="win32\certstore.h" />
     <ClInclude Include="win32\daemon.h" />
@@ -170,9 +171,13 @@
     <ClInclude Include="win32\log.h" />
     <ClInclude Include="win32\platform.h" />
     <ClInclude Include="win32\service.h" />
+    <ClInclude Include="win32\win_version.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="win32\version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="win32\ualds.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
