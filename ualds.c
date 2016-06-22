@@ -636,12 +636,22 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
         OpcUa_GotoError;
     }
 
-    /* load PEM encoded server certificate private key */
+    /* load DER encoded server certificate private key */
     uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
         g_szCertificateKeyFile,
         OpcUa_Crypto_Encoding_DER,
         OpcUa_Null,
         &g_server_key.Key);
+
+    if (OpcUa_IsBad(uStatus))
+    {
+        /* load PEM encoded server certificate private key */
+        uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
+            g_szCertificateKeyFile,
+            OpcUa_Crypto_Encoding_PEM,
+            OpcUa_Null,
+            &g_server_key.Key);
+    }
 
     if (OpcUa_IsBad(uStatus))
     {
