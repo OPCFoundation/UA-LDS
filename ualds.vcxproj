@@ -42,14 +42,16 @@
     <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\bin\debug\</OutDir>
-    <IntDir>.\bin\debug\intermediate\</IntDir>
+    <OutDir>.\bin\$(Configuration)\</OutDir>
+    <IntDir>.\bin\$(Configuration)\intermediate\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>opcualds</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\bin\release\</OutDir>
-    <IntDir>.\bin\release\intermediate\</IntDir>
+    <OutDir>.\bin\$(Configuration)\</OutDir>
+    <IntDir>.\bin\$(Configuration)\intermediate\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>opcualds</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -69,13 +71,13 @@
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>.\win32;.\stack\Stack\core;.\stack\Stack\stackcore;.\stack\Stack\proxystub\serverstub;.\stack\Stack\platforms\win32;.\stack\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;UNICODE;_UNICODE;HAVE_OPCUA_STACK;HAVE_SERVICE_REGISTER;HAVE_SERVICE_UNREGISTER;HAVE_SERVICE_START;HAVE_SERVICE_STOP;HAVE_SERVICE_STATUS;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;HAVE_OPCUA_STACK;HAVE_SERVICE_REGISTER;HAVE_SERVICE_UNREGISTER;HAVE_SERVICE_START;HAVE_SERVICE_STOP;HAVE_SERVICE_STATUS;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AssemblerListingLocation>Debug</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <ProgramDataBaseFileName>.\bin\debug\ualdsd.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
@@ -89,14 +91,16 @@
     </ProjectReference>
     <Link>
       <AdditionalOptions> /STACK:10000000 /machine:X86 /debug %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;uastack.lib;libeay32.lib;ssleay32.lib;ws2_32.lib;rpcrt4.lib;crypt32.lib</AdditionalDependencies>
-      <OutputFile>.\bin\debug\ualdsd.exe</OutputFile>
-      <Version>0.0</Version>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;uastack.lib;crypt32.lib;rpcrt4.lib;ws2_32.lib;ssleay32.lib;libeay32.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <Version>
+      </Version>
       <AdditionalLibraryDirectories>.\stack\lib\win32;.\stack\openssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\bin\debug\ualdsd.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
-      <ImportLibrary>.\Debug\ualdsd.lib</ImportLibrary>
+      <ImportLibrary>
+      </ImportLibrary>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -115,16 +119,19 @@
     <ClCompile>
       <AdditionalOptions> /Zm1000 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>.\win32;.\stack\Stack\core;.\stack\Stack\stackcore;.\stack\Stack\proxystub\serverstub;.\stack\Stack\platforms\win32;.\stack\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HAVE_OPCUA_STACK;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;UNICODE;_UNICODE;HAVE_SERVICE_REGISTER;HAVE_SERVICE_UNREGISTER;HAVE_SERVICE_START;HAVE_SERVICE_STOP;HAVE_SERVICE_STATUS;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HAVE_OPCUA_STACK;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;HAVE_SERVICE_REGISTER;HAVE_SERVICE_UNREGISTER;HAVE_SERVICE_START;HAVE_SERVICE_STOP;HAVE_SERVICE_STATUS;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AssemblerListingLocation>Release</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <ProgramDataBaseFileName>.\bin\release\ualds.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
-      <CompileAs>CompileAsC</CompileAs>
+      <CompileAs>Default</CompileAs>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <UseFullPaths>true</UseFullPaths>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;UNICODE;_UNICODE;HAVE_SERVICE_REGISTER;HAVE_SERVICE_UNREGISTER;HAVE_SERVICE_START;HAVE_SERVICE_STOP;HAVE_SERVICE_STATUS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -135,13 +142,16 @@
     </ProjectReference>
     <Link>
       <AdditionalOptions> /STACK:10000000 /machine:X86 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;uastack.lib;libeay32.lib;ssleay32.lib;ws2_32.lib;rpcrt4.lib;crypt32.lib</AdditionalDependencies>
-      <OutputFile>.\bin\release\ualds.exe</OutputFile>
-      <Version>0.0</Version>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;uastack.lib;crypt32.lib;rpcrt4.lib;ws2_32.lib;ssleay32.lib;libeay32.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <Version>
+      </Version>
       <AdditionalLibraryDirectories>.\stack\lib\win32;.\stack\openssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ProgramDatabaseFile>.\bin\release\ualds.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
-      <ImportLibrary>.\Release\ualds.lib</ImportLibrary>
+      <ImportLibrary>
+      </ImportLibrary>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

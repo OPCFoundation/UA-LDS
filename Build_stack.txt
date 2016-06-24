@@ -3,3 +3,6 @@ in opcua_config.h, the following defines need these values:
 
 	OPCUA_MULTITHREADED                        OPCUA_CONFIG_NO
 	OPCUA_USE_SYNCHRONISATION                  OPCUA_CONFIG_NO
+
+Before building the LDS the stack respective open ssl need to be already compuled for the desred target.
+For details on how to build the stack please reffer to the ANSI C Stack readmme file.

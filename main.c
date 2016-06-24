@@ -211,6 +211,9 @@ int main(int argc, char* argv[])
 
     if (install == 1) {
 #ifdef HAVE_SERVICE_REGISTER
+		/* force an unregister first	*/
+		ret = ServiceUnregister();
+		/* no matter if the server was unregistered, go ahead and attempt a forced register */
         ret = ServiceRegister(szUser, szPass);
 #else
         fprintf(stderr, "Service install option is not supported on this platform.\n");
