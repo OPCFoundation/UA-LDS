@@ -147,12 +147,17 @@
             be find a list of available UA Servers that can be connected to. The
             complete process is described in <a target="_blank" href="https://opcfoundation.org/developer-tools/specifications-unified-architecture/part-12-discovery/">UA
               Part 12 - Discovery</a>.</p>
+          <p>mDNS enables Local Discovery Servers to share their list of Servers
+            with other LDS-ME servers on the network. Clients can request a list
+            of all Servers on the network with a single optimized call thereby
+            eliminating the need to individually query each endpoint on the
+            network:</p>
+          <div style="text-align: center;"><img style="width: 480px; height: 361px;"
+              alt="mDNS network architecture diagram" src="../UA-AnsiC/images/mDNS-network-diagram.png"></div>
           <p>This repository consists of:</p>
           <ul>
             <li><strong>UA LDS-ME</strong>: actual implementation of the
               discovery server with multicast extensions.</li>
-            <li><strong>Apple Bonjour</strong>: open-source version of
-              source-code</li>
             <li><strong>Documentation</strong>:
               <ul>
                 <li>Instructions on building and using the stack</li>
@@ -173,9 +178,20 @@
         <div class="col-md-6">
           <h4><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
             Getting Started</h4>
+          <p>Please use the <a target="_blank" title="Official LDS Installation"
+              href="https://opcfoundation.org/developer-tools/developer-kits-unified-architecture/local-discovery-server-lds/">official
+              LDS-ME distribution</a> from the OPC Foundation for production
+            environments.</p>
+          <p>This source code repository is intended for diagnostics purposes
+            only. Please do not build and deploy your own version of LDS-ME
+            except for troubleshooting purposes only.</p>
           <p>Follow these steps to build the LDS-ME:</p>
           <ul>
+          </ul>
+          <ol>
             <li>TODO</li>
+          </ol>
+          <ul>
           </ul>
         </div>
       </div>
