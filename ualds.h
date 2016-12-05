@@ -35,6 +35,8 @@ struct _ualds_endpoint
 };
 typedef struct _ualds_endpoint ualds_endpoint;
 
+extern OpcUa_Mutex g_mutex;
+
 void ualds_endpoint_initialize(ualds_endpoint *pEndpoint);
 void ualds_endpoint_clear(ualds_endpoint *pEndpoint);
 

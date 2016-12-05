@@ -4,6 +4,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ualds", "ualds.vcxproj", "{BC202C9F-F78D-4688-957A-58B337316D1D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6568CB26-97E7-43D1-A434-B68F6C9ADAC6} = {6568CB26-97E7-43D1-A434-B68F6C9ADAC6}
+		{2BFC69D2-0912-4C08-9B6C-2AF422FA823B} = {2BFC69D2-0912-4C08-9B6C-2AF422FA823B}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AnsiCStack", "stack\Stack\AnsiCStack_VS2013.vcxproj", "{6568CB26-97E7-43D1-A434-B68F6C9ADAC6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mdns", "mdns\mdns.vcxproj", "{2BFC69D2-0912-4C08-9B6C-2AF422FA823B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +23,14 @@ Global
 		{BC202C9F-F78D-4688-957A-58B337316D1D}.Debug|Win32.Build.0 = Debug|Win32
 		{BC202C9F-F78D-4688-957A-58B337316D1D}.Release|Win32.ActiveCfg = Release|Win32
 		{BC202C9F-F78D-4688-957A-58B337316D1D}.Release|Win32.Build.0 = Release|Win32
+		{6568CB26-97E7-43D1-A434-B68F6C9ADAC6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6568CB26-97E7-43D1-A434-B68F6C9ADAC6}.Debug|Win32.Build.0 = Debug|Win32
+		{6568CB26-97E7-43D1-A434-B68F6C9ADAC6}.Release|Win32.ActiveCfg = Release|Win32
+		{6568CB26-97E7-43D1-A434-B68F6C9ADAC6}.Release|Win32.Build.0 = Release|Win32
+		{2BFC69D2-0912-4C08-9B6C-2AF422FA823B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2BFC69D2-0912-4C08-9B6C-2AF422FA823B}.Debug|Win32.Build.0 = Debug|Win32
+		{2BFC69D2-0912-4C08-9B6C-2AF422FA823B}.Release|Win32.ActiveCfg = Release|Win32
+		{2BFC69D2-0912-4C08-9B6C-2AF422FA823B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

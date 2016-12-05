@@ -1,39 +1,40 @@
-/* Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
+/******************************************************************************
+**
+** Copyright (C) 2005-2013 Unified Automation GmbH. All Rights Reserved.
+** Web: http://www.unifiedautomation.com
+**
+** Project: OPC UA Local Discovery Server
+**
+** Author: Gerhard Gappmeier <gerhard.gappmeier@ascolab.com>
+**
+** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+**
+******************************************************************************/
 
-The source code in this file is covered under a dual - license scenario :
--RCL : for OPC Foundation members in good - standing
-- GPL V2 : everybody else
-
-RCL license terms accompanied with this source code.See http ://opcfoundation.org/License/RCL/1.00/
-
-GNU General Public License as published by the Free Software Foundation;
-version 2 of the License are accompanied with this source code.See http ://opcfoundation.org/License/GPLv2
-
-This source code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*/
+/**
+ * \addtogroup ualds OPC UA LDS Module
+ * @{
+ */
 
 /* system includes */
 #include <time.h>
 /* uastack includes */
 #include <opcua_serverstub.h>
 #include <opcua_string.h>
-#include <opcua_core.h>
 #include <opcua_datetime.h>
 #include <opcua_memory.h>
+#include <opcua_core.h>
 /* local includes */
 #include "config.h"
 #include "settings.h"
 #include "ualds.h"
-#ifdef HAVE_HDS
-# include "zeroconf.h"
-#endif
+#include "zeroconf.h"
 /* local platform includes */
 #include <platform.h>
 #include <log.h>
 
-/** RegisterServer Service implementation.
+/** RegisterServer2 Service implementation.
 * @param hEndpoint OPC UA Endpoint handle.
 * @param hContext  Service context.
 * @param ppRequest Pointer to decoded service request structure.
@@ -41,16 +42,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 *
 * @return OpcUa_StatusCode
 */
-OpcUa_StatusCode ualds_registerserver(
-    OpcUa_Endpoint        hEndpoint,
-    OpcUa_Handle          hContext,
-    OpcUa_Void          **ppRequest,
-    OpcUa_EncodeableType *pRequestType)
+OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
+                                       OpcUa_Handle          hContext,
+                                       OpcUa_Void          **ppRequest,
+                                       OpcUa_EncodeableType *pRequestType)
 {
-    OpcUa_RegisterServerRequest  *pRequest;
-    OpcUa_RegisterServerResponse *pResponse;
-    OpcUa_EncodeableType         *pResponseType = 0;
-    OpcUa_StatusCode              uStatus = OpcUa_Good;
+    OpcUa_RegisterServer2Request  *pRequest;
+    OpcUa_RegisterServer2Response *pResponse;
+    OpcUa_EncodeableType          *pResponseType = 0;
+    OpcUa_StatusCode               uStatus = OpcUa_Good;
     int i;
     int numServers = 0;
     int bExists = 0;
@@ -188,13 +188,22 @@ OpcUa_StatusCode ualds_registerserver(
                 ualds_settings_endarray();
                 ualds_settings_writestring("SemaphoreFilePath", OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath));
                 ualds_settings_writetime_t("UpdateTime", time(0));
+/*
+				ualds_settings_writestring("MdnsServerName", OpcUa_String_GetRawString(&pRequest->Server.MdnsServerName));
+
+                ualds_settings_beginwritearray("ServerCapabilities", pRequest->Server.NoOfServerCapabilities);
+                for (i=0; i<pRequest->Server.NoOfServerCapabilities; i++)
+                {
+                    ualds_settings_setarrayindex(i);
+                    ualds_settings_writestring("Capability", OpcUa_String_GetRawString(&pRequest->Server.ServerCapabilities[i]));
+                }
+                ualds_settings_endarray();
+*/
                 ualds_settings_endgroup();
-#ifdef HAVE_HDS
                 if (bExists == 0)
                 {
                     ualds_zeroconf_addRegistration(pszServerUri);
                 }
-#endif
                 ualds_settings_flush();
             }
             else
@@ -202,9 +211,7 @@ OpcUa_StatusCode ualds_registerserver(
                 /* unregister */
                 ualds_log(UALDS_LOG_INFO, "Unregistering server %s.", pszServerUri);
                 ualds_settings_removegroup(pszServerUri);
-#ifdef HAVE_HDS
                 ualds_zeroconf_removeRegistration(pszServerUri);
-#endif
                 ualds_settings_flush();
                 ualds_expirationcheck();
             }
@@ -223,7 +230,7 @@ OpcUa_StatusCode ualds_registerserver(
             pResponseType);
 
         /* free response */
-        OpcUa_RegisterServerResponse_Clear(pResponse);
+        OpcUa_RegisterServer2Response_Clear(pResponse);
         OpcUa_Free(pResponse);
 
         /* we have send a response, either with good or bad status, this does not matter.

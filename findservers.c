@@ -74,6 +74,8 @@ OpcUa_StatusCode ualds_findservers(
 
     if ( pResponse )
     {
+		OpcUa_Mutex_Lock(g_mutex);
+
         ualds_settings_begingroup("RegisteredServers");
         ualds_settings_beginreadarray("Servers", &numServers);
         if (numServers > 0)
@@ -133,6 +135,9 @@ OpcUa_StatusCode ualds_findservers(
 
                 ualds_settings_endarray();
                 ualds_settings_endgroup();
+
+				OpcUa_Mutex_Unlock(g_mutex);
+
                 return OpcUa_Good;
             }
         }
@@ -189,6 +194,9 @@ OpcUa_StatusCode ualds_findservers(
         {
             uStatus = OpcUa_BadOutOfMemory;
         }
+
+
+		OpcUa_Mutex_Unlock(g_mutex);
 
         UALDS_BUILDRESPONSEHEADER;
 

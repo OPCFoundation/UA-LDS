@@ -138,6 +138,8 @@ OpcUa_StatusCode ualds_getendpoints(
                         OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].Server.ProductUri, ualds_producturi());
                         pResponse->Endpoints[index].Server.ApplicationType = OpcUa_ApplicationType_DiscoveryServer;
 
+						OpcUa_Mutex_Lock(g_mutex);
+
                         ualds_settings_begingroup(ualds_serveruri());
                         ualds_settings_beginreadarray("DiscoveryUrls", &numDiscoveryUrls);
                         if (numDiscoveryUrls > 0)
@@ -158,6 +160,8 @@ OpcUa_StatusCode ualds_getendpoints(
                         }
                         ualds_settings_endarray();
                         ualds_settings_endgroup();
+
+						OpcUa_Mutex_Unlock(g_mutex);
 
                         /* set security policy */
                         OpcUa_String_StrnCpy(&pResponse->Endpoints[index].SecurityPolicyUri, &pEP[i].pSecurityPolicies[j].sSecurityPolicy, OPCUA_STRING_LENDONTCARE);

@@ -34,6 +34,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "ualds.h"
 #include "service.h"
 #include "settings.h"
+#ifdef HAVE_HDS
+# include "zeroconf.h"
+# include "findserversonnetwork.h"
+#endif
 /* local platform includes */
 #include <platform.h>
 #include <log.h>
@@ -71,6 +75,10 @@ static int              g_MaxAgeRejectedCertificates = 1; /* days */
 static int              g_bWin32StoreCheck = 0;
 #endif /* _WIN32 */
 
+static OpcUa_SocketManager g_SocketManager = OpcUa_Null;
+
+OpcUa_Mutex g_mutex = OpcUa_Null;
+
 #if HAVE_OPENSSL
 /* basic extensions */
 #define EXT_COUNT 6
@@ -91,7 +99,10 @@ static const char *g_szEndpointEventNames[] = {
     "SecureChannelOpened",
     "SecureChannelClosed",
     "SecureChannelRenewed",
+    "SecureChannelOpenVerifyCertificate",
+    "SecureChannelRenewVerifyCertificate",
     "UnsupportedServiceRequested",
+    "RawRequest",
     "DecoderError"
 };
 
@@ -145,6 +156,16 @@ OpcUa_StatusCode ualds_registerserver(
     OpcUa_Void          **ppRequest,
     OpcUa_EncodeableType *pRequestType);
 static OpcUa_StatusCode ualds_delete_security_policies();
+#ifdef HAVE_HDS
+OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
+                                       OpcUa_Handle          hContext,
+                                       OpcUa_Void          **ppRequest,
+                                       OpcUa_EncodeableType *pRequestType);
+OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint        hEndpoint,
+                                            OpcUa_Handle          hContext,
+                                            OpcUa_Void          **ppRequest,
+                                            OpcUa_EncodeableType *pRequestType);
+#endif /* HAVE_HDS */
 
 /* OPC UA STACK Service Type configurations */
 static OpcUa_ServiceType FindServersService =
@@ -171,12 +192,34 @@ static OpcUa_ServiceType RegisterServerService =
     0
 };
 
+#ifdef HAVE_HDS
+static OpcUa_ServiceType RegisterServer2Service =
+{
+    OpcUaId_RegisterServer2Request,
+    &OpcUa_RegisterServer2Response_EncodeableType,
+    ualds_registerserver2,
+    0
+};
+
+static OpcUa_ServiceType FindServersOnNetworkService =
+{
+    OpcUaId_FindServersOnNetworkRequest,
+    &OpcUa_FindServersOnNetworkResponse_EncodeableType,
+    ualds_findserversonnetwork,
+    0
+};
+#endif /* HAVE_HDS */
+
 /** Service table for EndPointOpen */
 static OpcUa_ServiceType *g_ServiceTable[] =
 {
     &FindServersService,
     &GetEndPointsService,
     &RegisterServerService,
+#ifdef HAVE_HDS
+    &RegisterServer2Service,
+    &FindServersOnNetworkService,
+#endif /* HAVE_HDS */
     0
 };
 
@@ -184,6 +227,9 @@ static OpcUa_ServiceType *g_ServiceTableHttps[] =
 {
     &FindServersService,
     &GetEndPointsService,
+#ifdef HAVE_HDS
+    &FindServersOnNetworkService,
+#endif /* HAVE_HDS */
     0
 };
 
@@ -921,7 +967,8 @@ static OpcUa_StatusCode ualds_create_endpoints()
         return OpcUa_Bad;
     }
 
-    ret = OpcUa_SocketManager_Create(OpcUa_Null, 0, 0);
+    //ret = OpcUa_SocketManager_Create(OpcUa_Null, 0, 0);
+	ret = OpcUa_SocketManager_Create(&g_SocketManager, 0, 0);
     OpcUa_ReturnErrorIfBad(ret);
 
     for (i=0; i<g_numEndpoints; i++, pEP++)
@@ -1034,6 +1081,10 @@ int ualds_serve()
     char szValue[10];
     OpcUa_Handle pcalltab = OpcUa_Null;
 
+#ifdef HAVE_HDS
+    int bEnableZeroconf = 1;
+#endif
+
     /*Precondition: Bonjour Service running.*/
     BOOL successBonjourServiceStart = StartBonjourService();
     if (successBonjourServiceStart == FALSE)
@@ -1118,24 +1169,74 @@ int ualds_serve()
         return EXIT_FAILURE;
     }
 
+	/* create mutex before opening any endpoint */
+	status = OpcUa_Mutex_Create(&g_mutex);
+	if (OpcUa_IsBad(status))
+	{
+		ualds_security_uninitialize();
+		OpcUa_ProxyStub_Clear();
+		OpcUa_P_Clean(&pcalltab);
+		return EXIT_FAILURE;
+	}
+
     /* Open Endpoints */
     status = ualds_create_endpoints();
     if (OpcUa_IsBad(status))
     {
         ualds_security_uninitialize();
-        OpcUa_ProxyStub_Clear();
+		OpcUa_Mutex_Delete(&g_mutex);
+		OpcUa_ProxyStub_Clear();
         OpcUa_P_Clean(&pcalltab);
         return EXIT_FAILURE;
     }
 
 #if OPCUA_MULTITHREADED
-# error "LDS requires single thread configuration! Set OPCUA_MULTITHREADED and OPCUA_USE_SYNCHRONISATION to OPCUA_CONFIG_NO and recompile all components."
+//# error "LDS requires single thread configuration! Set OPCUA_MULTITHREADED and OPCUA_USE_SYNCHRONISATION to OPCUA_CONFIG_NO and recompile all components."
+#endif
+#ifdef HAVE_HDS
+    ualds_settings_begingroup("Zeroconf");
+    if (ualds_settings_readstring("EnableZeroconf", szValue, sizeof(szValue)) == 0)
+    {
+        if (strcmp(szValue, "yes") != 0)
+        {
+            bEnableZeroconf = 0;
+        }
+    }
+    ualds_settings_endgroup();
+
+    ualds_log(UALDS_LOG_INFO, "Zeroconf is %s.", bEnableZeroconf == 0 ? "disabled" : "enabled");
+    if (bEnableZeroconf)
+    {
+        status = ualds_zeroconf_start_registration();
+        if (OpcUa_IsBad(status))
+        {
+            ualds_delete_endpoints();
+            ualds_security_uninitialize();
+			OpcUa_Mutex_Delete(&g_mutex);
+			OpcUa_ProxyStub_Clear();
+			OpcUa_P_Clean(&pcalltab);
+            return EXIT_FAILURE;
+        }
+
+        /* start browsing for DNSServices in the background */
+        status = ualds_findserversonnetwork_start_listening();
+        if (OpcUa_IsBad(status))
+        {
+            ualds_zeroconf_stop_registration();
+            ualds_delete_endpoints();
+            ualds_security_uninitialize();
+			OpcUa_Mutex_Delete(&g_mutex);
+			OpcUa_ProxyStub_Clear();
+			OpcUa_P_Clean(&pcalltab);
+            return EXIT_FAILURE;
+        }
+    }
 #endif
 
-    while (!g_shutdown)
+	while (!g_shutdown)
     {
-        status = OpcUa_SocketManager_Loop(OpcUa_Null, LoopTimeout, OpcUa_True);
-
+        //status = OpcUa_SocketManager_Loop(OpcUa_Null, LoopTimeout, OpcUa_True);
+		status = OpcUa_SocketManager_Loop(g_SocketManager, LoopTimeout, OpcUa_True);
         if (OpcUa_IsBad(status))
         {
             ret = EXIT_FAILURE;
@@ -1143,9 +1244,20 @@ int ualds_serve()
         }
     }
 
+  #ifdef HAVE_HDS
+    if (bEnableZeroconf)
+    {
+        ualds_zeroconf_stop_registration();
+
+        /* stop browsing for DNSServices in the background */
+        ualds_findserversonnetwork_stop_listening();
+    }
+#endif
+
     ualds_delete_endpoints();
     ualds_security_uninitialize();
-    OpcUa_ProxyStub_Clear();
+	OpcUa_Mutex_Delete(&g_mutex);
+	OpcUa_ProxyStub_Clear();
     OpcUa_P_Clean(&pcalltab);
 
     return ret;
@@ -1228,6 +1340,9 @@ void ualds_expirationcheck()
             {
                 ualds_settings_endgroup();
                 ualds_settings_removegroup(szServerUriArray[i]);
+#ifdef HAVE_HDS
+                ualds_zeroconf_removeRegistration(szServerUriArray[i]);
+#endif
                 RemovedServers[i] = 1;
                 numRemoved++;
                 continue;
@@ -1249,6 +1364,9 @@ void ualds_expirationcheck()
                     {
                         /* file does not exist, remove entry */
                         ualds_settings_removegroup(szServerUriArray[i]);
+#ifdef HAVE_HDS
+                        ualds_zeroconf_removeRegistration(szServerUriArray[i]);
+#endif
                         RemovedServers[i] = 1;
                         numRemoved++;
                     }
@@ -1265,6 +1383,9 @@ void ualds_expirationcheck()
                 {
                     /* entry is expired, remove it */
                     ualds_settings_removegroup(szServerUriArray[i]);
+#ifdef HAVE_HDS
+                    ualds_zeroconf_removeRegistration(szServerUriArray[i]);
+#endif
                     RemovedServers[i] = 1;
                     numRemoved++;
                 }
