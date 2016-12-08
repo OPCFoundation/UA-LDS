@@ -1,31 +1,18 @@
-/******************************************************************************
-**
-** Copyright (C) 2005-2013 Unified Automation GmbH. All Rights Reserved.
-** Web: http://www.unifiedautomation.com
-**
-** Project: OPC UA Local Discovery Server
-**
-** Author: Hannes Mezger <hannes.mezger@ascolab.com>
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-** This file is based on uaserver_settings_filebackend.c from the
-** ANSI C based OPC UA Server SDK / Toolkit from Unified Automation GmbH.
-**
-******************************************************************************/
+/* Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
 
-/**
- * \addtogroup zeroconf Zeroconf Module
- * @{
- *
- */
+The source code in this file is covered under a dual - license scenario :
+- RCL: for OPC Foundation members in good - standing
+- GPL V2: everybody else
 
-/**
- * \file
- * Zeroconf implementation file.
- * \author Hannes Mezger <hannes.mezger@ascolab.com>
- */
+RCL license terms accompanied with this source code.See http ://opcfoundation.org/License/RCL/1.00/
+
+GNU General Public License as published by the Free Software Foundation;
+version 2 of the License are accompanied with this source code.See http ://opcfoundation.org/License/GPLv2
+
+This source code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
 
 #include "zeroconf.h"
 
@@ -50,6 +37,8 @@
 
 /* Globals for zeroconf registration */
 
+static OpcUa_List g_registerServersSocketList;
+OpcUa_Mutex g_registerServersSocketListMutex = OpcUa_Null;
 
 typedef enum _ualds_RegistrationStatus
 {
@@ -105,49 +94,59 @@ void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
     }
 }
 
-/* callback function for socket events coming out of the uastack */
-OpcUa_StatusCode ualds_zeroconf_socketEventCallback(OpcUa_Socket   hSocket,
-                                                    OpcUa_UInt32   uintSocketEvent,
-                                                    OpcUa_Void*    pUserData,
-                                                    OpcUa_UInt16   usPortNumber,
-                                                    OpcUa_Boolean  bIsSSL)
+void ualds_zeroconf_socketEventCallback(int* shutdown)
 {
-    DNSServiceErrorType     retDnssd;
-    ualds_registerContext  *pRegisterContext = (ualds_registerContext*)pUserData;
+	OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
 
-    UALDS_UNUSED(hSocket);
-    UALDS_UNUSED(usPortNumber);
-    UALDS_UNUSED(bIsSSL);
+	OpcUa_List_ResetCurrent(&g_registerServersSocketList);
 
-    /* we only need to handle READ events */
-    switch (uintSocketEvent)
-    {
-    case OPCUA_SOCKET_READ_EVENT:
-        {
-            retDnssd = DNSServiceProcessResult(pRegisterContext->sdRef);
-            if (retDnssd != kDNSServiceErr_NoError)
-            {
-                ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_socketEventCallback: DNSServiceProcessResult returned error %i", retDnssd);
-                pRegisterContext->registrationStatus = RegistrationStatus_Unregistered;
-                OpcUa_Socket_Close(pRegisterContext->uaSocket);
-                DNSServiceRefDeallocate(pRegisterContext->sdRef);
-                pRegisterContext->uaSocket = OpcUa_Null;
-                pRegisterContext->sdRef = OpcUa_Null;
-            }
-            break;
-        }
-    case OPCUA_SOCKET_EXCEPT_EVENT:
-        ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_socketEventCallback: received OPCUA_SOCKET_EXCEPT_EVENT");
-        break;
-    case OPCUA_SOCKET_TIMEOUT_EVENT:
-        ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_socketEventCallback: received OPCUA_SOCKET_TIMEOUT_EVENT");
-        break;
-    default:
-        ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_socketEventCallback: received event %u", uintSocketEvent);
-        break;
-    }
+	MulticastSocketCallbackStruct* socketCallbackStruct2 = OpcUa_Null;
 
-    return OpcUa_Good;
+	socketCallbackStruct2 = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
+	while (socketCallbackStruct2)
+	{
+		if (*shutdown)
+		{
+			// exit ASAP
+			return;
+		}
+
+		fd_set         readFDs;
+		struct timeval tv;
+
+		FD_ZERO(&readFDs);
+		FD_SET(socketCallbackStruct2->fd, &readFDs);
+
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+
+		int status = select(socketCallbackStruct2->fd + 1, &readFDs, NULL, NULL, &tv);
+
+		if (status == -1)
+		{
+			//fprintf(stderr, "status == -1\n");
+			//break;
+		}
+		else
+		if (status == 0)
+		{
+			//fprintf(stderr, "status == 0\n");
+		}
+		else
+		if (FD_ISSET(socketCallbackStruct2->fd, &readFDs))
+		{
+			int error = DNSServiceProcessResult(socketCallbackStruct2->sdRef);
+
+			if (error != kDNSServiceErr_NoError)
+			{
+				fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
+				//break;
+			}
+		}
+		socketCallbackStruct2 = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
+	}
+
+	OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
 }
 
 OpcUa_StatusCode ualds_parse_url(char *szUrl, char **szScheme, char **szHostname, uint16_t *port, char **szPath)
@@ -399,66 +398,50 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         {
             int fd = DNSServiceRefSockFD(pRegisterContext->sdRef);
 
-            /*uStatus = OpcUa_SocketManager_AddSocket(OpcUa_Null,
-                                                    (OpcUa_RawSocket)fd,
-                                                    OpcUa_True,
-                                                    OpcUa_Null,
-                                                    OpcUa_Null,
-                                                    OpcUa_Null,
-                                                    ualds_zeroconf_socketEventCallback,
-                                                    pRegisterContext,
-                                                    &pRegisterContext->uaSocket);
-													
-			
-            if (OpcUa_IsNotGood(uStatus))
-            {
-                ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_registerInternal: OpcUa_SocketManager_AddSocket returned error %08x", uStatus);
-                DNSServiceRefDeallocate(pRegisterContext->sdRef);
-                pRegisterContext->sdRef = 0;
-            }
-            else*/
+			pRegisterContext->registrationStatus = RegistrationStatus_Registering;
 
 			fd_set         readFDs;
 			struct timeval tv;
+			FD_ZERO(&readFDs);
+			FD_SET(fd, &readFDs);
 
-			int tmp_flag = 1;
-			//while (tmp_flag)
+			tv.tv_sec = 1;
+			tv.tv_usec = 0;
+
+			int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
+
+			if (status == -1)
 			{
-				FD_ZERO(&readFDs);
-				FD_SET(fd, &readFDs);
+				//fprintf(stderr, "status == -1\n");
+				//break;
+			}
+			else
+			if (status == 0)
+			{
+				//fprintf(stderr, "status == 0\n");
+			}
+			else
+			if (FD_ISSET(fd, &readFDs))
+			{
+				int error = DNSServiceProcessResult(pRegisterContext->sdRef);
 
-				//tv.tv_sec = 1000000;
-				tv.tv_sec = 1;
-				tv.tv_usec = 0;
-
-				int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
-
-				if (status == -1)
+				if (error != kDNSServiceErr_NoError)
 				{
-					fprintf(stderr, "status == -1\n");
+					fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
 					break;
-				}
-				else
-				if (status == 0)
-				{
-					fprintf(stderr, "status == 0\n");
-				}
-				else
-				if (FD_ISSET(fd, &readFDs))
-				{
-					int error = DNSServiceProcessResult(pRegisterContext->sdRef);
-
-					if (error != kDNSServiceErr_NoError)
-					{
-						fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
-						break;
-					}
 				}
 			}
 
-            {
-                pRegisterContext->registrationStatus = RegistrationStatus_Registering;
-            }
+			if (pRegisterContext->sdRef)
+			{
+				MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
+				socketCallbackStruct->fd = fd;
+				socketCallbackStruct->sdRef = pRegisterContext->sdRef;
+
+				OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+				uStatus = OpcUa_List_AddElementToEnd(&g_registerServersSocketList, socketCallbackStruct);
+				OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+			}
         }
 
         pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
@@ -488,6 +471,27 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
     {
         if (pRegisterContext->registrationStatus == RegistrationStatus_Registered)
         {
+			{
+				// remove element from g_registerServersSocketList
+				OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+				OpcUa_List_ResetCurrent(&g_registerServersSocketList);
+				MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
+				while (socketCallbackStruct)
+				{
+					DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
+					if ((serviceRef == pRegisterContext->sdRef) || (serviceRef == OpcUa_Null))
+					{
+						OpcUa_Free(socketCallbackStruct);
+						OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
+						break;
+					}
+
+					socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
+				}
+
+				OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+			}
+
             /* release ref for unregistering */
             ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_unregisterInternal: Call DNSServiceRefDeallocate to unregister server");
             OpcUa_Socket_Close(pRegisterContext->uaSocket);
@@ -502,6 +506,9 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
     }
 
     OpcUa_List_Clear(&g_lstServers);
+
+	OpcUa_List_Clear(&g_registerServersSocketList);
+	OpcUa_Mutex_Delete(&g_registerServersSocketListMutex);
 
 	OpcUa_Mutex_Unlock(g_mutex);
 
@@ -528,6 +535,9 @@ void ualds_zeroconf_init_servers()
     }
     ualds_settings_endarray();
     ualds_settings_endgroup();
+
+	OpcUa_StatusCode status = OpcUa_Mutex_Create(&g_registerServersSocketListMutex);
+	OpcUa_List_Initialize(&g_registerServersSocketList);
 }
 
 OpcUa_StatusCode ualds_zeroconf_start_registration()
@@ -608,6 +618,27 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
     {
         if (strcmp(pRegisterContext->szServerUri, szServerUri) == 0)
         {
+			{
+				// remove element from g_registerServersSocketList
+				OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+				OpcUa_List_ResetCurrent(&g_registerServersSocketList);
+				MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
+				while (socketCallbackStruct)
+				{
+					DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
+					if ((serviceRef == pRegisterContext->sdRef) || (serviceRef == OpcUa_Null))
+					{
+						OpcUa_Free(socketCallbackStruct);
+						OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
+						break;
+					}
+
+					socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
+				}
+
+				OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+			}
+
             if (pRegisterContext->registrationStatus != RegistrationStatus_Unregistered)
             {
                 /* release ref for unregistering */
@@ -625,8 +656,4 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
         pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
     }
 }
-
-/**
- * @}
- */
 

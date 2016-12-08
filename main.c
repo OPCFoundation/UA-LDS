@@ -75,8 +75,13 @@ int main(int argc, char* argv[])
     char szPass[50];
     LogTarget logtarget = UALDS_CONF_LOG_TARGET;
     LogLevel loglevel = UALDS_CONF_LOG_LEVEL;
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
+#if _DEBUG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	//_CrtSetBreakAlloc(11656); // Comment or un-comment on need basis
+	/*Sleep(10000);*/ /* give some time for attaching with debugger */
+#endif
+    
     /* parse commandline arguments */
     while ((opt = getopt(argc, argv, "dDvhc:i:p:u")) != -1) {
         switch (opt) {

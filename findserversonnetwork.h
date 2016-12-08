@@ -1,8 +1,8 @@
 /* Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
 
 The source code in this file is covered under a dual - license scenario :
--RCL : for OPC Foundation members in good - standing
-- GPL V2 : everybody else
+- RCL: for OPC Foundation members in good - standing
+- GPL V2: everybody else
 
 RCL license terms accompanied with this source code.See http ://opcfoundation.org/License/RCL/1.00/
 
@@ -21,5 +21,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 OpcUa_StatusCode ualds_findserversonnetwork_start_listening();
 void ualds_findserversonnetwork_stop_listening();
+
+void ualds_findserversonnetwork_socketEventCallback(int *shutdown);
 
 #endif /* __FINDSERVERSONNETWORK_H__ */

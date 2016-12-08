@@ -1,19 +1,19 @@
-/******************************************************************************
-**
-** Copyright (C) 2005-2013 Unified Automation GmbH. All Rights Reserved.
-** Web: http://www.unifiedautomation.com
-**
-** Project: OPC UA Local Discovery Server
-**
-** Author: Hannes Mezger <hannes.mezger@ascolab.com>
-**
-** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-**
-** This file is based on uaserver_settings_filebackend.c from the
-** ANSI C based OPC UA Server SDK / Toolkit from Unified Automation GmbH.
-**
-******************************************************************************/
+/* Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
+
+The source code in this file is covered under a dual - license scenario :
+- RCL: for OPC Foundation members in good - standing
+- GPL V2: everybody else
+
+RCL license terms accompanied with this source code.See http ://opcfoundation.org/License/RCL/1.00/
+
+GNU General Public License as published by the Free Software Foundation;
+version 2 of the License are accompanied with this source code.See http ://opcfoundation.org/License/GPLv2
+
+This source code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
+
 #ifndef __ZEROCONF_H__
 #define __ZEROCONF_H__
 
@@ -24,5 +24,7 @@ void ualds_zeroconf_stop_registration();
 
 void ualds_zeroconf_addRegistration(const char *szServerUri);
 void ualds_zeroconf_removeRegistration(const char *szServerUri);
+
+void ualds_zeroconf_socketEventCallback(int* shutdown);
 
 #endif /* __ZEROCONF_H__ */

@@ -742,6 +742,8 @@ static OpcUa_StatusCode ualds_security_uninitialize()
     OpcUa_ByteString_Clear(&g_server_certificate);
     OpcUa_Key_Clear(&g_server_key);
 
+	OpcUa_PKIProvider_Delete(&g_PkiProvider);
+
     return ualds_delete_security_policies();
 }
 
@@ -1235,13 +1237,15 @@ int ualds_serve()
 
 	while (!g_shutdown)
     {
-        //status = OpcUa_SocketManager_Loop(OpcUa_Null, LoopTimeout, OpcUa_True);
 		status = OpcUa_SocketManager_Loop(g_SocketManager, LoopTimeout, OpcUa_True);
         if (OpcUa_IsBad(status))
         {
             ret = EXIT_FAILURE;
             g_shutdown = 1;
         }
+
+		ualds_zeroconf_socketEventCallback(&g_shutdown);
+		ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
     }
 
   #ifdef HAVE_HDS
@@ -1429,8 +1433,3 @@ void ualds_expirationcheck()
         RemovedServers = 0;
     }
 }
-
-/** @} */
-
-/* vim: tw=120:ts=4:sw=4:expandtab
- */
