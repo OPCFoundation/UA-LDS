@@ -108,6 +108,7 @@ void ualds_zeroconf_socketEventCallback(int* shutdown)
 		if (*shutdown)
 		{
 			// exit ASAP
+			OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
 			return;
 		}
 

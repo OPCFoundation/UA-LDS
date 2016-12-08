@@ -171,6 +171,7 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
 		if (*shutdown)
 		{
 			// exit ASAP
+			OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
 			return;
 		}
 
