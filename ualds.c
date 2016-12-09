@@ -969,7 +969,6 @@ static OpcUa_StatusCode ualds_create_endpoints()
         return OpcUa_Bad;
     }
 
-    //ret = OpcUa_SocketManager_Create(OpcUa_Null, 0, 0);
 	ret = OpcUa_SocketManager_Create(&g_SocketManager, 0, 0);
     OpcUa_ReturnErrorIfBad(ret);
 
@@ -1034,6 +1033,8 @@ static OpcUa_StatusCode ualds_delete_endpoints()
     {
         OpcUa_Endpoint_Delete(&g_pEndpoints[i].hEndpoint);
     }
+
+	OpcUa_SocketManager_Delete(&g_SocketManager);
 
     return ret;
 }

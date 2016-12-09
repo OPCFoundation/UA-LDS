@@ -835,6 +835,18 @@ void ualds_findserversonnetwork_stop_listening()
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
         }
         OpcUa_List_Clear(&g_lstServers);
+
+		// remove element from g_findServersSocketList
+		OpcUa_Mutex_Lock(g_findServersSocketListMutex);
+		OpcUa_List_ResetCurrent(&g_findServersSocketList);
+		MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
+		while (socketCallbackStruct)
+		{
+			OpcUa_Free(socketCallbackStruct);
+			socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
+		}
+		OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+
 		OpcUa_List_Clear(&g_findServersSocketList);
 		OpcUa_Mutex_Delete(&g_findServersSocketListMutex);
 		OpcUa_Mutex_Unlock(g_mutex);
