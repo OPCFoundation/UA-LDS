@@ -37,18 +37,18 @@ Copy (or move) the content of the  UaStack project folder (from the previous ste
 The following tree shows the directory layout as required by the included project:
 
 - /-- ualds
-- |  |- AnsiCStack                   OPC UA Ansi C Stack
-- |     |- core                      Configuration and utilities
-- |     |- platforms
-- |        |- linux                  Platform adaption to OpenSSL and linux API
-- |        |- win32                  Platform adaption to OpenSSL and Win32 API
-- |     |- proxystub
-- |        |- clientproxy            Client side top level API (optional)
-- |        |- serverstub             Server side top level API (optional)
-- |     |- securechannel             OPC UA secure conversation
-- |     |- stackcore                 Base types and interfaces
-- |     |- transport
-- |        |- https                  HTTPS transport (optional)
-- |        |- tcp                    OPC TCP Binary transport
-- |  |- mdns                         Multicast Domain Name System
-- |  |- ualds                        Local Discovery Server
+- |  |- AnsiCStack               OPC UA Ansi C Stack
+- |    ||- core                   Configuration and utilities
+- |    ||- platforms
+- |      |||- linux                Platform adaption to OpenSSL and linux API
+- |      |||- win32                Platform adaption to OpenSSL and Win32 API
+- |    ||- proxystub
+- |    ||- clientproxy            Client side top level API (optional)
+- |    ||- serverstub             Server side top level API (optional)
+- |    ||- securechannel          OPC UA secure conversation
+- |    ||- stackcore              Base types and interfaces
+- |    ||- transport
+- |      |||- https                HTTPS transport (optional)
+- |      |||- tcp                  OPC TCP Binary transport
+- |  |- mdns                     Multicast Domain Name System
+- |  |- ualds                    Local Discovery Server
