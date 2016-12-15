@@ -3,7 +3,7 @@ OPC Foundation OPC UA Local Discovery Server
 
 Version 1.03.341
         Highlights:
-                - Added Multicast Extension	feature
+                - Added Multicast Extension feature.
 		
         Mantis issues, resolved:	
                 -		

@@ -5,6 +5,8 @@ The OPC Foundation has formally released the OPC Unified Architecture Local Disc
 Please review official site page (https://OPCFoundation.github.io/UA-LDS/) for:
  * Overview
  * Licensing
+
+Official installations for Windows are built by the OPC Foundation and provided at the OPC Foundation website (https://opcfoundation.org/).
  
 ## Contributing
 
@@ -16,7 +18,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
 ## Build Dependencies
 
- * OPC UA Ansi C Stack (1.03)
+ * OPC UA Ansi C Stack (1.03.340)
        It can be downloaded from https://github.com/OPCFoundation/UA-AnsiC
 	   Please review official site page http://opcfoundation.github.io/UA-AnsiC
  * OpenSSL (1.0.1t)
