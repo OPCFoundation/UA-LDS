@@ -185,17 +185,36 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 ualds_settings_endarray();
                 ualds_settings_writestring("SemaphoreFilePath", OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath));
                 ualds_settings_writetime_t("UpdateTime", time(0));
-/*
-				ualds_settings_writestring("MdnsServerName", OpcUa_String_GetRawString(&pRequest->Server.MdnsServerName));
 
-                ualds_settings_beginwritearray("ServerCapabilities", pRequest->Server.NoOfServerCapabilities);
-                for (i=0; i<pRequest->Server.NoOfServerCapabilities; i++)
-                {
-                    ualds_settings_setarrayindex(i);
-                    ualds_settings_writestring("Capability", OpcUa_String_GetRawString(&pRequest->Server.ServerCapabilities[i]));
-                }
-                ualds_settings_endarray();
-*/
+				for (int k = 0; k < pRequest->NoOfDiscoveryConfiguration; ++k)
+				{
+					OpcUa_ExtensionObject* discoveryConfiguration = &pRequest->DiscoveryConfiguration[k];
+					if (discoveryConfiguration && discoveryConfiguration->Encoding == OpcUa_ExtensionObjectEncoding_EncodeableObject)
+					{
+						if (discoveryConfiguration->Body.EncodeableObject.Type->TypeId == OpcUaId_MdnsDiscoveryConfiguration)
+						{
+							OpcUa_MdnsDiscoveryConfiguration* mdnsCfg = (OpcUa_MdnsDiscoveryConfiguration*)discoveryConfiguration->Body.EncodeableObject.Object;
+
+							if (mdnsCfg)
+							{
+								ualds_settings_writestring("MdnsServerName", OpcUa_String_GetRawString(&mdnsCfg->MdnsServerName));
+
+								if (mdnsCfg->NoOfServerCapabilities > 0)
+								{
+									ualds_settings_beginwritearray("ServerCapabilities", mdnsCfg->NoOfServerCapabilities);
+									for (i = 0; i< mdnsCfg->NoOfServerCapabilities; i++)
+									{
+										ualds_settings_setarrayindex(i);
+										ualds_settings_writestring("Capability", OpcUa_String_GetRawString(&mdnsCfg->ServerCapabilities[i]));
+									}
+									ualds_settings_endarray();
+								}
+								break;
+							}
+						}
+					}
+				}
+
                 ualds_settings_endgroup();
                 if (bExists == 0)
                 {
