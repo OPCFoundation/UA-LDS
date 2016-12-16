@@ -298,7 +298,14 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
         }
         else
         {
-            TXTRecordSetValue(txtRecord, "caps", 2, "NO");
+			if (port != OpcUa_Null && *port == 4840)
+			{
+				TXTRecordSetValue(txtRecord, "caps", 3, "LDS");
+			}
+			else
+			{
+				TXTRecordSetValue(txtRecord, "caps", 2, "NA");
+			}
         }
         ualds_settings_endarray();
     }

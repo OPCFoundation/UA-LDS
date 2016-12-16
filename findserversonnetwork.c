@@ -262,14 +262,12 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
     OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
                          OpcUa_String_FromCString(hosttarget),
                          OPCUA_STRING_LENDONTCARE);
-    if (hostOrderPort != 4840)
-    {
+  
         char szPort[40] = {0};
         OpcUa_SnPrintfA(szPort, 40, 40, ":%hu", hostOrderPort);
         OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
                              OpcUa_String_FromCString(szPort),
                              OPCUA_STRING_LENDONTCARE);
-    }
 
     if (TXTRecordContainsKey(txtLen, txtRecord, "path"))
     {
