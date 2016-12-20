@@ -95,6 +95,18 @@ static OpcUa_DateTime           g_lastCounterResetTime = {0, 0};
 static OpcUa_UInt32             g_currentRecordId = 0;
 
 
+int string_ends_with(const char * str, const char * suffix)
+{
+	int str_len = strlen(str);
+	int suffix_len = strlen(suffix);
+
+	int ret = strcmp(str + (str_len - suffix_len), suffix);
+
+	return
+		(str_len >= suffix_len) &&
+		(ret);
+}
+
 /* if pBrowseContext is one of the global browse contexts, the according browse call has been canceled.
    in this case, all according entries in g_lstServers have to be removed. */
 void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrowseContext)
@@ -258,16 +270,35 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
     ualds_log(UALDS_LOG_DEBUG, "                              hosttarget     %s", hosttarget);
     ualds_log(UALDS_LOG_DEBUG, "                              port           %hu", hostOrderPort);
 
-    /* fill results */
-    OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                         OpcUa_String_FromCString(hosttarget),
-                         OPCUA_STRING_LENDONTCARE);
-  
-        char szPort[40] = {0};
-        OpcUa_SnPrintfA(szPort, 40, 40, ":%hu", hostOrderPort);
-        OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                             OpcUa_String_FromCString(szPort),
-                             OPCUA_STRING_LENDONTCARE);
+	int _containsLocalDomain = string_ends_with(hosttarget, ".local.");
+	int _endsWithDot = string_ends_with(hosttarget, ".");
+
+	/* fill results */
+	if (_containsLocalDomain == 0)
+	{
+		OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+			OpcUa_String_FromCString(hosttarget),
+			strlen(hosttarget) - strlen(".local."));
+	}
+	else if (_endsWithDot == 0)
+	{
+		OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+			OpcUa_String_FromCString(hosttarget),
+			strlen(hosttarget) - strlen("."));
+	}
+	else
+	{
+		OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+			OpcUa_String_FromCString(hosttarget),
+			OPCUA_STRING_LENDONTCARE);
+	}
+
+
+	char szPort[40] = { 0 };
+	OpcUa_SnPrintfA(szPort, 40, 40, ":%hu", hostOrderPort);
+	OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+		OpcUa_String_FromCString(szPort),
+		OPCUA_STRING_LENDONTCARE);
 
     if (TXTRecordContainsKey(txtLen, txtRecord, "path"))
     {
