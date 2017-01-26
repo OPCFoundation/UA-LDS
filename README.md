@@ -21,8 +21,8 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
  * OPC UA Ansi C Stack (1.03.340)
        It can be downloaded from https://github.com/OPCFoundation/UA-AnsiC
 	   Please review official site page http://opcfoundation.github.io/UA-AnsiC
- * OpenSSL (1.0.1t)
-       It can be downloaded from https://www.openssl.org/source/old/1.0.1/
+ * OpenSSL (1.0.2j)
+       It can be downloaded from https://www.openssl.org/source/
  * Mdns (Multicast Domain Name System) library
  
 ## Runtime Dependencies
@@ -38,19 +38,21 @@ Copy (or move) the content of the  UaStack project folder (from the previous ste
 
 The following tree shows the directory layout as required by the included project:
 
+```
 - /-- ualds
 - |  |- AnsiCStack               OPC UA Ansi C Stack
-- |    ||- core                   Configuration and utilities
+- |    ||- core                  Configuration and utilities
 - |    ||- platforms
-- |      |||- linux                Platform adaption to OpenSSL and linux API
-- |      |||- win32                Platform adaption to OpenSSL and Win32 API
+- |      |||- linux              Platform adaption to OpenSSL and linux API
+- |      |||- win32              Platform adaption to OpenSSL and Win32 API
 - |    ||- proxystub
-- |    ||- clientproxy            Client side top level API (optional)
-- |    ||- serverstub             Server side top level API (optional)
-- |    ||- securechannel          OPC UA secure conversation
-- |    ||- stackcore              Base types and interfaces
+- |    ||- clientproxy           Client side top level API (optional)
+- |    ||- serverstub            Server side top level API (optional)
+- |    ||- securechannel         OPC UA secure conversation
+- |    ||- stackcore             Base types and interfaces
 - |    ||- transport
-- |      |||- https                HTTPS transport (optional)
-- |      |||- tcp                  OPC TCP Binary transport
+- |      |||- https              HTTPS transport (optional)
+- |      |||- tcp                OPC TCP Binary transport
 - |  |- mdns                     Multicast Domain Name System
 - |  |- ualds                    Local Discovery Server
+```

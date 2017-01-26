@@ -22,6 +22,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <opcua_datetime.h>
 #include <opcua_memory.h>
 #include <opcua_core.h>
+#include <opcua_securechannel_types.h>
 /* local includes */
 #include "config.h"
 #include "settings.h"
@@ -44,6 +45,13 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                                        OpcUa_Void          **ppRequest,
                                        OpcUa_EncodeableType *pRequestType)
 {
+    OpcUa_Endpoint_SecurityPolicyConfiguration policy;
+    if (OpcUa_IsGood(OpcUa_Endpoint_GetMessageSecureChannelSecurityPolicy(hEndpoint, hContext, &policy)) &&
+        policy.uMessageSecurityModes == OPCUA_SECURECHANNEL_MESSAGESECURITYMODE_NONE)
+    {
+        return OpcUa_BadServiceUnsupported;
+    }
+
     OpcUa_RegisterServer2Request  *pRequest;
     OpcUa_RegisterServer2Response *pResponse;
     OpcUa_EncodeableType          *pResponseType = 0;
@@ -68,7 +76,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
 
     if (pResponse)
     {
-		OpcUa_Mutex_Lock(g_mutex);
+        OpcUa_Mutex_Lock(g_mutex);
 
         OpcUa_Boolean bIsOnline = OpcUa_False;
 
@@ -177,6 +185,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 ualds_settings_writeint("ServerType", pRequest->Server.ServerType);
                 ualds_settings_writestring("GatewayServerUri", OpcUa_String_GetRawString(&pRequest->Server.GatewayServerUri));
                 ualds_settings_beginwritearray("DiscoveryUrls", pRequest->Server.NoOfDiscoveryUrls);
+
                 for (i=0; i<pRequest->Server.NoOfDiscoveryUrls; i++)
                 {
                     ualds_settings_setarrayindex(i);
@@ -186,40 +195,41 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 ualds_settings_writestring("SemaphoreFilePath", OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath));
                 ualds_settings_writetime_t("UpdateTime", time(0));
 
-				for (int k = 0; k < pRequest->NoOfDiscoveryConfiguration; ++k)
-				{
-					OpcUa_ExtensionObject* discoveryConfiguration = &pRequest->DiscoveryConfiguration[k];
-					if (discoveryConfiguration && discoveryConfiguration->Encoding == OpcUa_ExtensionObjectEncoding_EncodeableObject)
-					{
-						if (discoveryConfiguration->Body.EncodeableObject.Type->TypeId == OpcUaId_MdnsDiscoveryConfiguration)
-						{
-							OpcUa_MdnsDiscoveryConfiguration* mdnsCfg = (OpcUa_MdnsDiscoveryConfiguration*)discoveryConfiguration->Body.EncodeableObject.Object;
+                for (int k = 0; k < pRequest->NoOfDiscoveryConfiguration; ++k)
+                {
+                    OpcUa_ExtensionObject* discoveryConfiguration = &pRequest->DiscoveryConfiguration[k];
+                    if (discoveryConfiguration && discoveryConfiguration->Encoding == OpcUa_ExtensionObjectEncoding_EncodeableObject)
+                    {
+                        if (discoveryConfiguration->Body.EncodeableObject.Type->TypeId == OpcUaId_MdnsDiscoveryConfiguration)
+                        {
+                            OpcUa_MdnsDiscoveryConfiguration* mdnsCfg = (OpcUa_MdnsDiscoveryConfiguration*)discoveryConfiguration->Body.EncodeableObject.Object;
 
-							if (mdnsCfg)
-							{
-								ualds_settings_writestring("MdnsServerName", OpcUa_String_GetRawString(&mdnsCfg->MdnsServerName));
+                            if (mdnsCfg)
+                            {
+                                ualds_settings_writestring("MdnsServerName", OpcUa_String_GetRawString(&mdnsCfg->MdnsServerName));
 
-								if (mdnsCfg->NoOfServerCapabilities > 0)
-								{
-									ualds_settings_beginwritearray("ServerCapabilities", mdnsCfg->NoOfServerCapabilities);
-									for (i = 0; i< mdnsCfg->NoOfServerCapabilities; i++)
-									{
-										ualds_settings_setarrayindex(i);
-										ualds_settings_writestring("Capability", OpcUa_String_GetRawString(&mdnsCfg->ServerCapabilities[i]));
-									}
-									ualds_settings_endarray();
-								}
-								break;
-							}
-						}
-					}
-				}
+                                if (mdnsCfg->NoOfServerCapabilities > 0)
+                                {
+                                    ualds_settings_beginwritearray("ServerCapabilities", mdnsCfg->NoOfServerCapabilities);
+                                    for (i = 0; i< mdnsCfg->NoOfServerCapabilities; i++)
+                                    {
+                                        ualds_settings_setarrayindex(i);
+                                        ualds_settings_writestring("Capability", OpcUa_String_GetRawString(&mdnsCfg->ServerCapabilities[i]));
+                                    }
+                                    ualds_settings_endarray();
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
 
                 ualds_settings_endgroup();
                 if (bExists == 0)
                 {
                     ualds_zeroconf_addRegistration(pszServerUri);
                 }
+
                 ualds_settings_flush();
             }
             else
@@ -233,7 +243,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
             }
         }
 
-		OpcUa_Mutex_Unlock(g_mutex);
+        OpcUa_Mutex_Unlock(g_mutex);
 
         UALDS_BUILDRESPONSEHEADER;
 

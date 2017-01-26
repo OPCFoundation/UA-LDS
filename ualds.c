@@ -45,7 +45,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 # include <certstore.h>
 #endif /* OPCUA_SUPPORT_PKI_WIN32 */
 
-static volatile int g_shutdown = 0;
+static int g_shutdown = 0;
 static OpcUa_P_OpenSSL_CertificateStore_Config g_PKIConfig;
 static OpcUa_PKIProvider                       g_PkiProvider;
 static OpcUa_P_OpenSSL_CertificateStore_Config g_Win32Config;
@@ -354,7 +354,7 @@ static OpcUa_StatusCode ualds_create_security_policies()
         {
             /* temporary store the security policy configuration name */
             OpcUa_String_Initialize(&g_pEndpoints[n].pSecurityPolicies[i].sSecurityPolicy);
-            OpcUa_String_AttachCopy(&g_pEndpoints[n].pSecurityPolicies[i].sSecurityPolicy, szPolicyArray[i]);
+            OpcUa_String_AttachCopy(&g_pEndpoints[n].pSecurityPolicies[i].sSecurityPolicy, (OpcUa_StringA)szPolicyArray[i]);
         }
 
         free((void*)szPolicyArray);
@@ -742,7 +742,7 @@ static OpcUa_StatusCode ualds_security_uninitialize()
     OpcUa_ByteString_Clear(&g_server_certificate);
     OpcUa_Key_Clear(&g_server_key);
 
-	OpcUa_PKIProvider_Delete(&g_PkiProvider);
+    OpcUa_PKIProvider_Delete(&g_PkiProvider);
 
     return ualds_delete_security_policies();
 }
@@ -969,7 +969,7 @@ static OpcUa_StatusCode ualds_create_endpoints()
         return OpcUa_Bad;
     }
 
-	ret = OpcUa_SocketManager_Create(&g_SocketManager, 0, 0);
+    ret = OpcUa_SocketManager_Create(&g_SocketManager, 0, 0);
     OpcUa_ReturnErrorIfBad(ret);
 
     for (i=0; i<g_numEndpoints; i++, pEP++)
@@ -1034,7 +1034,7 @@ static OpcUa_StatusCode ualds_delete_endpoints()
         OpcUa_Endpoint_Delete(&g_pEndpoints[i].hEndpoint);
     }
 
-	OpcUa_SocketManager_Delete(&g_SocketManager);
+    OpcUa_SocketManager_Delete(&g_SocketManager);
 
     return ret;
 }
@@ -1172,23 +1172,23 @@ int ualds_serve()
         return EXIT_FAILURE;
     }
 
-	/* create mutex before opening any endpoint */
-	status = OpcUa_Mutex_Create(&g_mutex);
-	if (OpcUa_IsBad(status))
-	{
-		ualds_security_uninitialize();
-		OpcUa_ProxyStub_Clear();
-		OpcUa_P_Clean(&pcalltab);
-		return EXIT_FAILURE;
-	}
+    /* create mutex before opening any endpoint */
+    status = OpcUa_Mutex_Create(&g_mutex);
+    if (OpcUa_IsBad(status))
+    {
+        ualds_security_uninitialize();
+        OpcUa_ProxyStub_Clear();
+        OpcUa_P_Clean(&pcalltab);
+        return EXIT_FAILURE;
+    }
 
     /* Open Endpoints */
     status = ualds_create_endpoints();
     if (OpcUa_IsBad(status))
     {
         ualds_security_uninitialize();
-		OpcUa_Mutex_Delete(&g_mutex);
-		OpcUa_ProxyStub_Clear();
+        OpcUa_Mutex_Delete(&g_mutex);
+        OpcUa_ProxyStub_Clear();
         OpcUa_P_Clean(&pcalltab);
         return EXIT_FAILURE;
     }
@@ -1215,9 +1215,9 @@ int ualds_serve()
         {
             ualds_delete_endpoints();
             ualds_security_uninitialize();
-			OpcUa_Mutex_Delete(&g_mutex);
-			OpcUa_ProxyStub_Clear();
-			OpcUa_P_Clean(&pcalltab);
+            OpcUa_Mutex_Delete(&g_mutex);
+            OpcUa_ProxyStub_Clear();
+            OpcUa_P_Clean(&pcalltab);
             return EXIT_FAILURE;
         }
 
@@ -1228,25 +1228,25 @@ int ualds_serve()
             ualds_zeroconf_stop_registration();
             ualds_delete_endpoints();
             ualds_security_uninitialize();
-			OpcUa_Mutex_Delete(&g_mutex);
-			OpcUa_ProxyStub_Clear();
-			OpcUa_P_Clean(&pcalltab);
+            OpcUa_Mutex_Delete(&g_mutex);
+            OpcUa_ProxyStub_Clear();
+            OpcUa_P_Clean(&pcalltab);
             return EXIT_FAILURE;
         }
     }
 #endif
 
-	while (!g_shutdown)
+    while (!g_shutdown)
     {
-		status = OpcUa_SocketManager_Loop(g_SocketManager, LoopTimeout, OpcUa_True);
+        status = OpcUa_SocketManager_Loop(g_SocketManager, LoopTimeout, OpcUa_True);
         if (OpcUa_IsBad(status))
         {
             ret = EXIT_FAILURE;
             g_shutdown = 1;
         }
 
-		ualds_zeroconf_socketEventCallback(&g_shutdown);
-		ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
+        ualds_zeroconf_socketEventCallback(&g_shutdown);
+        ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
     }
 
   #ifdef HAVE_HDS
@@ -1261,8 +1261,8 @@ int ualds_serve()
 
     ualds_delete_endpoints();
     ualds_security_uninitialize();
-	OpcUa_Mutex_Delete(&g_mutex);
-	OpcUa_ProxyStub_Clear();
+    OpcUa_Mutex_Delete(&g_mutex);
+    OpcUa_ProxyStub_Clear();
     OpcUa_P_Clean(&pcalltab);
 
     return ret;

@@ -70,7 +70,7 @@
       <AdditionalOptions> /Zm1000 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>.\win32;.\stack\Stack\core;.\stack\Stack\stackcore;.\stack\Stack\proxystub\serverstub;.\stack\Stack\platforms\win32;.\stack\openssl\include;.\mdns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\win32;.\stack\Stack\core;.\stack\Stack\stackcore;.\stack\Stack\proxystub\serverstub;.\stack\Stack\platforms\win32;.\stack\openssl\include;.\mdns;.\stack\Stack\securechannel;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;HAVE_OPCUA_STACK;HAVE_SERVICE_REGISTER;HAVE_SERVICE_UNREGISTER;HAVE_SERVICE_START;HAVE_SERVICE_STOP;HAVE_SERVICE_STATUS;HAVE_OPENSSL;HAVE_HDS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -122,7 +122,7 @@
       <AdditionalOptions> /Zm1000 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>.\win32;.\stack\Stack\core;.\stack\Stack\stackcore;.\stack\Stack\proxystub\serverstub;.\stack\Stack\platforms\win32;.\stack\openssl\include;.\mdns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\win32;.\stack\Stack\core;.\stack\Stack\stackcore;.\stack\Stack\proxystub\serverstub;.\stack\Stack\platforms\win32;.\stack\openssl\include;.\mdns;.\stack\Stack\securechannel;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HAVE_OPCUA_STACK;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;HAVE_SERVICE_REGISTER;HAVE_SERVICE_UNREGISTER;HAVE_SERVICE_START;HAVE_SERVICE_STOP;HAVE_SERVICE_STATUS;HAVE_OPENSSL;HAVE_HDS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>

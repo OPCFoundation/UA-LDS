@@ -37,8 +37,9 @@ typedef struct _ualds_endpoint ualds_endpoint;
 
 typedef struct _multicastSocketCallbackStruct
 {
-	int		     fd;
-	OpcUa_Void*	 sdRef;
+    int		     fd;
+    OpcUa_Void*	 sdRef;
+    OpcUa_Void*  context;
 } MulticastSocketCallbackStruct;
 
 extern OpcUa_Mutex g_mutex;

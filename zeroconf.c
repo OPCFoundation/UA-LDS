@@ -53,6 +53,7 @@ typedef struct _ualds_registerContext
     OpcUa_Socket                uaSocket;
     ualds_RegistrationStatus    registrationStatus;
     char                        szServerUri[UALDS_CONF_MAX_URI_LENGTH];
+    int                         discoveryUrlIndex;
 } ualds_registerContext;
 
 static OpcUa_Timer          g_hRegistrationTimer = OpcUa_Null;
@@ -82,7 +83,7 @@ void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
     {
         ualds_log(UALDS_LOG_ERR, "ualds_DNSServiceRegisterReply returned error %i, retrying registration", errorCode);
         pRegisterContext->registrationStatus = RegistrationStatus_Unregistered;
-		OpcUa_Socket_Close(pRegisterContext->uaSocket);
+        OpcUa_Socket_Close(pRegisterContext->uaSocket);
         DNSServiceRefDeallocate(pRegisterContext->sdRef);
         pRegisterContext->uaSocket = OpcUa_Null;
         pRegisterContext->sdRef = OpcUa_Null;
@@ -96,58 +97,58 @@ void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
 
 void ualds_zeroconf_socketEventCallback(int* shutdown)
 {
-	OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+    OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
 
-	OpcUa_List_ResetCurrent(&g_registerServersSocketList);
+    OpcUa_List_ResetCurrent(&g_registerServersSocketList);
 
-	MulticastSocketCallbackStruct* socketCallbackStruct2 = OpcUa_Null;
+    MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Null;
 
-	socketCallbackStruct2 = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
-	while (socketCallbackStruct2)
-	{
-		if (*shutdown)
-		{
-			// exit ASAP
-			OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
-			return;
-		}
+    socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
+    while (socketCallbackStruct)
+    {
+        if (*shutdown)
+        {
+            // exit ASAP
+            OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+            return;
+        }
 
-		fd_set         readFDs;
-		struct timeval tv;
+        fd_set         readFDs;
+        struct timeval tv;
 
-		FD_ZERO(&readFDs);
-		FD_SET(socketCallbackStruct2->fd, &readFDs);
+        FD_ZERO(&readFDs);
+        FD_SET(socketCallbackStruct->fd, &readFDs);
 
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
 
-		int status = select(socketCallbackStruct2->fd + 1, &readFDs, NULL, NULL, &tv);
+        int status = select(socketCallbackStruct->fd + 1, &readFDs, NULL, NULL, &tv);
 
-		if (status == -1)
-		{
-			//fprintf(stderr, "status == -1\n");
-			//break;
-		}
-		else
-		if (status == 0)
-		{
-			//fprintf(stderr, "status == 0\n");
-		}
-		else
-		if (FD_ISSET(socketCallbackStruct2->fd, &readFDs))
-		{
-			int error = DNSServiceProcessResult(socketCallbackStruct2->sdRef);
+        if (status == -1)
+        {
+            //fprintf(stderr, "status == -1\n");
+            //break;
+        }
+        else
+        if (status == 0)
+        {
+            //fprintf(stderr, "status == 0\n");
+        }
+        else
+        if (FD_ISSET(socketCallbackStruct->fd, &readFDs))
+        {
+            int error = DNSServiceProcessResult(socketCallbackStruct->sdRef);
 
-			if (error != kDNSServiceErr_NoError)
-			{
-				fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
-				//break;
-			}
-		}
-		socketCallbackStruct2 = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
-	}
+            if (error != kDNSServiceErr_NoError)
+            {
+                fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
+                //break;
+            }
+        }
+        socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
+    }
 
-	OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+    OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
 }
 
 OpcUa_StatusCode ualds_parse_url(char *szUrl, char **szScheme, char **szHostname, uint16_t *port, char **szPath)
@@ -196,6 +197,7 @@ OpcUa_StatusCode ualds_parse_url(char *szUrl, char **szScheme, char **szHostname
 }
 
 OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
+                                              int discoveryUrlIndex,
                                               char *szMDNSServerName,
                                               unsigned int uMDNSServerNameLength,
                                               char *szServiceName,
@@ -244,9 +246,9 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
 
     /* split discovery URL */
     ualds_settings_beginreadarray("DiscoveryUrls", &numURLs);
-    if (numURLs > 0)
+    if ((numURLs > 0) && (discoveryUrlIndex < numURLs))
     {
-        ualds_settings_setarrayindex(0);
+        ualds_settings_setarrayindex(discoveryUrlIndex);
         ualds_settings_readstring("Url", szURL, UALDS_CONF_MAX_URI_LENGTH);
     }
     ualds_settings_endarray();
@@ -298,14 +300,14 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
         }
         else
         {
-			if (port != OpcUa_Null && *port == 4840)
-			{
-				TXTRecordSetValue(txtRecord, "caps", 3, "LDS");
-			}
-			else
-			{
-				TXTRecordSetValue(txtRecord, "caps", 2, "NA");
-			}
+            if (port != OpcUa_Null && *port == 4840)
+            {
+                TXTRecordSetValue(txtRecord, "caps", 3, "LDS");
+            }
+            else
+            {
+                TXTRecordSetValue(txtRecord, "caps", 2, "NA");
+            }
         }
         ualds_settings_endarray();
     }
@@ -332,7 +334,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
     UALDS_UNUSED(hTimer);
     UALDS_UNUSED(msecElapsed);
 
-	OpcUa_Mutex_Lock(g_mutex);
+    OpcUa_Mutex_Lock(g_mutex);
 
     ualds_expirationcheck();
 
@@ -355,6 +357,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
 
         /* get registration information */
         uStatus = ualds_zeroconf_getServerInfo(pRegisterContext->szServerUri,
+                                               pRegisterContext->discoveryUrlIndex,
                                                szMDNSServerName,
                                                UALDS_CONF_MAX_URI_LENGTH,
                                                szServiceName,
@@ -406,56 +409,56 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         {
             int fd = DNSServiceRefSockFD(pRegisterContext->sdRef);
 
-			pRegisterContext->registrationStatus = RegistrationStatus_Registering;
+            pRegisterContext->registrationStatus = RegistrationStatus_Registering;
 
-			fd_set         readFDs;
-			struct timeval tv;
-			FD_ZERO(&readFDs);
-			FD_SET(fd, &readFDs);
+            fd_set         readFDs;
+            struct timeval tv;
+            FD_ZERO(&readFDs);
+            FD_SET(fd, &readFDs);
 
-			tv.tv_sec = 1;
-			tv.tv_usec = 0;
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
 
-			int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
+            int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
 
-			if (status == -1)
-			{
-				//fprintf(stderr, "status == -1\n");
-				//break;
-			}
-			else
-			if (status == 0)
-			{
-				//fprintf(stderr, "status == 0\n");
-			}
-			else
-			if (FD_ISSET(fd, &readFDs))
-			{
-				int error = DNSServiceProcessResult(pRegisterContext->sdRef);
+            if (status == -1)
+            {
+                //fprintf(stderr, "status == -1\n");
+                //break;
+            }
+            else
+            if (status == 0)
+            {
+                //fprintf(stderr, "status == 0\n");
+            }
+            else
+            if (FD_ISSET(fd, &readFDs))
+            {
+                int error = DNSServiceProcessResult(pRegisterContext->sdRef);
 
-				if (error != kDNSServiceErr_NoError)
-				{
-					fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
-					break;
-				}
-			}
+                if (error != kDNSServiceErr_NoError)
+                {
+                    fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
+                    break;
+                }
+            }
 
-			if (pRegisterContext->sdRef)
-			{
-				MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
-				socketCallbackStruct->fd = fd;
-				socketCallbackStruct->sdRef = pRegisterContext->sdRef;
-
-				OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
-				uStatus = OpcUa_List_AddElementToEnd(&g_registerServersSocketList, socketCallbackStruct);
-				OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
-			}
+            if (pRegisterContext->sdRef)
+            {
+                MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
+                socketCallbackStruct->fd = fd;
+                socketCallbackStruct->sdRef = pRegisterContext->sdRef;
+                socketCallbackStruct->context = pRegisterContext;
+                OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+                uStatus = OpcUa_List_AddElementToEnd(&g_registerServersSocketList, socketCallbackStruct);
+                OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+            }
         }
 
         pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
     }
 
-	OpcUa_Mutex_Unlock(g_mutex);
+    OpcUa_Mutex_Unlock(g_mutex);
 
     return uStatus;
 }
@@ -470,7 +473,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
     UALDS_UNUSED(hTimer);
     UALDS_UNUSED(msecElapsed);
 
-	OpcUa_Mutex_Lock(g_mutex);
+    OpcUa_Mutex_Lock(g_mutex);
 
     OpcUa_List_ResetCurrent(&g_lstServers);
     pRegisterContext = (ualds_registerContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
@@ -479,26 +482,26 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
     {
         if (pRegisterContext->registrationStatus == RegistrationStatus_Registered)
         {
-			{
-				// remove element from g_registerServersSocketList
-				OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
-				OpcUa_List_ResetCurrent(&g_registerServersSocketList);
-				MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
-				while (socketCallbackStruct)
-				{
-					DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
-					if ((serviceRef == pRegisterContext->sdRef) || (serviceRef == OpcUa_Null))
-					{
-						OpcUa_Free(socketCallbackStruct);
-						OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
-						break;
-					}
+            {
+                // remove element from g_registerServersSocketList
+                OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+                OpcUa_List_ResetCurrent(&g_registerServersSocketList);
+                MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
+                while (socketCallbackStruct)
+                {
+                    DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
+                    if ((serviceRef == OpcUa_Null) || (socketCallbackStruct->context == pRegisterContext))
+                    {
+                        OpcUa_Free(socketCallbackStruct);
+                        OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
+                        break;
+                    }
 
-					socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
-				}
+                    socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
+                }
 
-				OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
-			}
+                OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+            }
 
             /* release ref for unregistering */
             ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_unregisterInternal: Call DNSServiceRefDeallocate to unregister server");
@@ -515,10 +518,10 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
 
     OpcUa_List_Clear(&g_lstServers);
 
-	OpcUa_List_Clear(&g_registerServersSocketList);
-	OpcUa_Mutex_Delete(&g_registerServersSocketListMutex);
+    OpcUa_List_Clear(&g_registerServersSocketList);
+    OpcUa_Mutex_Delete(&g_registerServersSocketListMutex);
 
-	OpcUa_Mutex_Unlock(g_mutex);
+    OpcUa_Mutex_Unlock(g_mutex);
 
     return OpcUa_Good;
 }
@@ -529,23 +532,53 @@ void ualds_zeroconf_init_servers()
     int     numServers = 0;
 
     OpcUa_List_Initialize(&g_lstServers);
+
     ualds_settings_begingroup("RegisteredServers");
     ualds_settings_beginreadarray("Servers", &numServers);
+
+    OpcUa_String* serverUri = OpcUa_Alloc(sizeof(OpcUa_String)* numServers);
     for (i = 0; i < numServers; i++)
     {
-        ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
-        OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));
-        pRegisterContext->registrationStatus = RegistrationStatus_Unregistered;
-
+        char szServerUriRaw[UALDS_CONF_MAX_URI_LENGTH];
         ualds_settings_setarrayindex(i);
-        ualds_settings_readstring("ServerUri", pRegisterContext->szServerUri, UALDS_CONF_MAX_URI_LENGTH);
-        OpcUa_List_AddElementToEnd(&g_lstServers, pRegisterContext);
+        ualds_settings_readstring("ServerUri", szServerUriRaw, UALDS_CONF_MAX_URI_LENGTH);
+
+        OpcUa_String_Initialize(&serverUri[i]);
+        OpcUa_String_AttachCopy(&serverUri[i], szServerUriRaw);
     }
     ualds_settings_endarray();
     ualds_settings_endgroup();
+    
+    for (i = 0; i < numServers; i++)
+    {
+        OpcUa_StringA rawServerUri = OpcUa_String_GetRawString(&serverUri[i]);
+        OpcUa_UInt32 numURLs = 0;
 
-	OpcUa_StatusCode status = OpcUa_Mutex_Create(&g_registerServersSocketListMutex);
-	OpcUa_List_Initialize(&g_registerServersSocketList);
+        ualds_settings_begingroup(rawServerUri);
+        ualds_settings_beginreadarray("DiscoveryUrls", &numURLs);
+        ualds_settings_endarray();
+        ualds_settings_endgroup();
+
+        for (OpcUa_UInt32 index = 0; index < numURLs; ++index)
+        {
+            ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
+            OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));
+            pRegisterContext->registrationStatus = RegistrationStatus_Unregistered;
+
+            strlcpy(pRegisterContext->szServerUri, rawServerUri, UALDS_CONF_MAX_URI_LENGTH);
+            pRegisterContext->discoveryUrlIndex = index;
+            OpcUa_List_AddElementToEnd(&g_lstServers, pRegisterContext);
+        }
+    }
+
+    for (i = 0; i < numServers; i++)
+    {
+        OpcUa_String_Clear(&serverUri[i]);
+    }
+    OpcUa_Free(serverUri);
+    
+    OpcUa_StatusCode status = OpcUa_Mutex_Create(&g_registerServersSocketListMutex);
+    OpcUa_List_Initialize(&g_registerServersSocketList);
 }
 
 OpcUa_StatusCode ualds_zeroconf_start_registration()
@@ -556,17 +589,17 @@ OpcUa_StatusCode ualds_zeroconf_start_registration()
     {
         int registrationInterval = 10;
 
-		OpcUa_Mutex_Lock(g_mutex);
+        OpcUa_Mutex_Lock(g_mutex);
 
         /* call ualds_zeroconf_registerInternal manually on startup */
         ualds_expirationcheck();
         ualds_zeroconf_init_servers();
 
-		OpcUa_Mutex_Unlock(g_mutex);
+        OpcUa_Mutex_Unlock(g_mutex);
 
         ualds_zeroconf_registerInternal(OpcUa_Null, OpcUa_Null, 0);
 
-		OpcUa_Mutex_Lock(g_mutex);
+        OpcUa_Mutex_Lock(g_mutex);
 
         /* get RegistrationInterval setting */
         ualds_settings_begingroup("Zeroconf");
@@ -577,7 +610,7 @@ OpcUa_StatusCode ualds_zeroconf_start_registration()
         }
         ualds_settings_endgroup();
 
-		OpcUa_Mutex_Unlock(g_mutex);
+        OpcUa_Mutex_Unlock(g_mutex);
 
         /* create timer for regular checking of registration */
         ualds_log(UALDS_LOG_INFO, "Create Zeroconf registration timer with interval %i", registrationInterval);
@@ -604,12 +637,21 @@ void ualds_zeroconf_stop_registration()
 
 void ualds_zeroconf_addRegistration(const char *szServerUri)
 {
-    ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
-    OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));
-    pRegisterContext->registrationStatus = RegistrationStatus_Unregistered;
+    int numURLs = 0;
+    ualds_settings_begingroup(szServerUri);
+    ualds_settings_beginreadarray("DiscoveryUrls", &numURLs);
+    ualds_settings_endgroup();
 
-    strlcpy(pRegisterContext->szServerUri, szServerUri, UALDS_CONF_MAX_URI_LENGTH);
-    OpcUa_List_AddElementToEnd(&g_lstServers, pRegisterContext);
+    for (int index = 0; index < numURLs; ++index)
+    {
+        ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
+        OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));
+        pRegisterContext->registrationStatus = RegistrationStatus_Unregistered;
+
+        strlcpy(pRegisterContext->szServerUri, szServerUri, UALDS_CONF_MAX_URI_LENGTH);
+        pRegisterContext->discoveryUrlIndex = index;
+        OpcUa_List_AddElementToEnd(&g_lstServers, pRegisterContext);
+    }
 
     /* call ualds_zeroconf_registerInternal manually to force registration */
     ualds_zeroconf_registerInternal(OpcUa_Null, OpcUa_Null, 0);
@@ -626,26 +668,26 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
     {
         if (strcmp(pRegisterContext->szServerUri, szServerUri) == 0)
         {
-			{
-				// remove element from g_registerServersSocketList
-				OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
-				OpcUa_List_ResetCurrent(&g_registerServersSocketList);
-				MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
-				while (socketCallbackStruct)
-				{
-					DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
-					if ((serviceRef == pRegisterContext->sdRef) || (serviceRef == OpcUa_Null))
-					{
-						OpcUa_Free(socketCallbackStruct);
-						OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
-						break;
-					}
+            {
+                // remove element from g_registerServersSocketList
+                OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+                OpcUa_List_ResetCurrent(&g_registerServersSocketList);
+                MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
+                while (socketCallbackStruct)
+                {
+                    DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
+                    if ((serviceRef == OpcUa_Null) || (socketCallbackStruct->context == pRegisterContext))
+                    {
+                        OpcUa_Free(socketCallbackStruct);
+                        OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
+                        break;
+                    }
 
-					socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
-				}
+                    socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
+                }
 
-				OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
-			}
+                OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+            }
 
             if (pRegisterContext->registrationStatus != RegistrationStatus_Unregistered)
             {
@@ -659,7 +701,6 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
 
             OpcUa_List_DeleteCurrentElement(&g_lstServers);
             OpcUa_Free(pRegisterContext);
-            break;
         }
         pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
     }

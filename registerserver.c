@@ -22,6 +22,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <opcua_core.h>
 #include <opcua_datetime.h>
 #include <opcua_memory.h>
+#include <opcua_securechannel_types.h>
 /* local includes */
 #include "config.h"
 #include "settings.h"
@@ -47,6 +48,13 @@ OpcUa_StatusCode ualds_registerserver(
     OpcUa_Void          **ppRequest,
     OpcUa_EncodeableType *pRequestType)
 {
+    OpcUa_Endpoint_SecurityPolicyConfiguration policy;
+    if (OpcUa_IsGood(OpcUa_Endpoint_GetMessageSecureChannelSecurityPolicy(hEndpoint, hContext, &policy)) &&
+        policy.uMessageSecurityModes == OPCUA_SECURECHANNEL_MESSAGESECURITYMODE_NONE)
+    {
+        return OpcUa_BadServiceUnsupported;
+    }
+
     OpcUa_RegisterServerRequest  *pRequest;
     OpcUa_RegisterServerResponse *pResponse;
     OpcUa_EncodeableType         *pResponseType = 0;
@@ -71,7 +79,7 @@ OpcUa_StatusCode ualds_registerserver(
 
     if (pResponse)
     {
-		OpcUa_Mutex_Lock(g_mutex);
+        OpcUa_Mutex_Lock(g_mutex);
 
         OpcUa_Boolean bIsOnline = OpcUa_False;
 
@@ -180,6 +188,7 @@ OpcUa_StatusCode ualds_registerserver(
                 ualds_settings_writeint("ServerType", pRequest->Server.ServerType);
                 ualds_settings_writestring("GatewayServerUri", OpcUa_String_GetRawString(&pRequest->Server.GatewayServerUri));
                 ualds_settings_beginwritearray("DiscoveryUrls", pRequest->Server.NoOfDiscoveryUrls);
+
                 for (i=0; i<pRequest->Server.NoOfDiscoveryUrls; i++)
                 {
                     ualds_settings_setarrayindex(i);
@@ -195,6 +204,7 @@ OpcUa_StatusCode ualds_registerserver(
                     ualds_zeroconf_addRegistration(pszServerUri);
                 }
 #endif
+
                 ualds_settings_flush();
             }
             else
@@ -210,7 +220,7 @@ OpcUa_StatusCode ualds_registerserver(
             }
         }
 
-		OpcUa_Mutex_Unlock(g_mutex);
+        OpcUa_Mutex_Unlock(g_mutex);
 
         UALDS_BUILDRESPONSEHEADER;
 
