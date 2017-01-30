@@ -202,20 +202,24 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
                                               unsigned int uMDNSServerNameLength,
                                               char *szServiceName,
                                               unsigned int uServiceNameLength,
+                                              char *szHostName,
+                                              unsigned int uHostNameLength,
                                               uint16_t *port,
                                               TXTRecordRef *txtRecord)
 {
     int   numURLs = 0, numCapabilities = 0;
     char  szURL[UALDS_CONF_MAX_URI_LENGTH] = {0};
     char *szScheme = OpcUa_Null;
-    char *szHostname = OpcUa_Null;
+    char *tmpHostname = OpcUa_Null;
     char *szPath = OpcUa_Null;
 
     OpcUa_ReturnErrorIfArgumentNull(szServerUri);
     OpcUa_ReturnErrorIfArgumentNull(szMDNSServerName);
     OpcUa_ReturnErrorIfArgumentNull(szServiceName);
+    OpcUa_ReturnErrorIfArgumentNull(szHostName);
     OpcUa_ReturnErrorIfTrue(uMDNSServerNameLength < UALDS_CONF_MAX_URI_LENGTH, OpcUa_BadInvalidArgument);
     OpcUa_ReturnErrorIfTrue(uServiceNameLength < UALDS_CONF_MAX_URI_LENGTH, OpcUa_BadInvalidArgument);
+    OpcUa_ReturnErrorIfTrue(uHostNameLength < UALDS_CONF_MAX_URI_LENGTH, OpcUa_BadInvalidArgument);
     OpcUa_ReturnErrorIfArgumentNull(port);
     OpcUa_ReturnErrorIfArgumentNull(txtRecord);
 
@@ -257,8 +261,11 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
         return OpcUa_BadInternalError;
     }
 
-    if (OpcUa_IsGood(ualds_parse_url(szURL, &szScheme, &szHostname, port, &szPath)))
+    if (OpcUa_IsGood(ualds_parse_url(szURL, &szScheme, &tmpHostname, port, &szPath)))
     {
+        /* set host name */
+        strlcpy(szHostName, tmpHostname, uHostNameLength);
+
         /* set scheme */
         if (OpcUa_StrCmpA(szScheme, "opc.tcp") == 0)
         {
@@ -345,6 +352,8 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
     {
         char szMDNSServerName[UALDS_CONF_MAX_URI_LENGTH];
         char szServiceName[UALDS_CONF_MAX_URI_LENGTH];
+        char szHostName[UALDS_CONF_MAX_URI_LENGTH];
+
         uint16_t port = 0;
         TXTRecordRef txtRecord;
 
@@ -362,6 +371,8 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
                                                UALDS_CONF_MAX_URI_LENGTH,
                                                szServiceName,
                                                UALDS_CONF_MAX_URI_LENGTH,
+                                               szHostName,
+                                               UALDS_CONF_MAX_URI_LENGTH,
                                                &port,
                                                &txtRecord);
         if (OpcUa_IsBad(uStatus))
@@ -375,21 +386,23 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         /* replace [gethostname] in own server name */
         if (bOwnRegistration != OpcUa_False)
         {
-            char szHostname[UALDS_CONF_MAX_URI_LENGTH] = {0};
-            ualds_platform_getfqhostname(szHostname, sizeof(szHostname));
-            replace_string(szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", szHostname);
+            char hostname[UALDS_CONF_MAX_URI_LENGTH] = {0};
+            ualds_platform_getfqhostname(hostname, sizeof(hostname));
+            replace_string(szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
+            replace_string(szHostName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
             bOwnRegistration = OpcUa_False;
         }
 
         /* register the server at the zeroconf service */
         ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister");
+
         retDnssd = DNSServiceRegister(&pRegisterContext->sdRef,
                                       0,
                                       0,
                                       szMDNSServerName,
                                       szServiceName,
                                       OpcUa_Null,
-                                      OpcUa_Null,
+                                      szHostName,
                                       htons(port),
                                       TXTRecordGetLength(&txtRecord),
                                       TXTRecordGetBytesPtr(&txtRecord),

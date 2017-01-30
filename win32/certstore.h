@@ -20,5 +20,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <opcua_proxystub.h>
 
 OpcUa_StatusCode ualds_verify_cert_win32(OpcUa_ByteString* pbsClientCertificate);
+OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode);
 
 #endif /* __CERTSTORE_H__ */

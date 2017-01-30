@@ -52,11 +52,13 @@ static OpcUa_P_OpenSSL_CertificateStore_Config g_Win32Config;
 static OpcUa_PKIProvider                       g_Win32Override;
 static char g_szCertificateFile[PATH_MAX];
 static char g_szCertificateKeyFile[PATH_MAX];
-static char g_szCertificateChainFile[PATH_MAX];
 static char g_szCRLPath[PATH_MAX];
 static char g_szTrustListPath[PATH_MAX];
 static char g_szIssuerPath[PATH_MAX];
 static char g_szRejectedPath[PATH_MAX];
+
+static char g_szCertificateStorePath[PATH_MAX];
+
 OpcUa_ByteString g_server_certificate = OPCUA_BYTESTRING_STATICINITIALIZER;
 static OpcUa_Key        g_server_key = { OpcUa_Crypto_KeyType_Rsa_Private, { 0, OpcUa_Null }, OpcUa_Null };
 extern OpcUa_P_TraceHook g_OpcUa_P_TraceHook;
@@ -325,6 +327,12 @@ static OpcUa_StatusCode ualds_create_security_policies()
             break;
         }
 
+        // check if there is a None secured configured. If not, it must be added manually.
+        char* findNoneSecured = strstr(szSecurityPolicies, "SecurityPolicy_None");
+        if (findNoneSecured == NULL)
+        {
+            strcat(szSecurityPolicies, ", SecurityPolicy_None");
+        }
         g_pEndpoints[n].nNoOfSecurityPolicies = split_string(szSecurityPolicies, ',', &szPolicyArray);
         if (g_pEndpoints[n].nNoOfSecurityPolicies < 1)
         {
@@ -333,7 +341,7 @@ static OpcUa_StatusCode ualds_create_security_policies()
             break;
         }
         /* allocate policy array */
-        size = sizeof(OpcUa_Endpoint_SecurityPolicyConfiguration) * (g_pEndpoints[n].nNoOfSecurityPolicies + 1);
+        size = sizeof(OpcUa_Endpoint_SecurityPolicyConfiguration) * (g_pEndpoints[n].nNoOfSecurityPolicies);
         g_pEndpoints[n].pSecurityPolicies = (OpcUa_Endpoint_SecurityPolicyConfiguration*)OpcUa_Alloc((OpcUa_UInt32)size);
         if (g_pEndpoints[n].pSecurityPolicies == 0)
         {
@@ -606,6 +614,17 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
   }
 #endif /* OPCUA_SUPPORT_PKI_WIN32 */
 
+  // Certificate store paths have changed at some point. 
+  // Make a check using the old paths, for backward compatibility
+  if (uStatus == OpcUa_BadCertificateUntrusted)
+  {
+      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old(pCertificate, g_szCRLPath, g_szRejectedPath, pValidationCode);
+      if (OpcUa_IsGood(uStatusVerify))
+      {
+          ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Verifying certificate in old store succeeded.");
+          uStatus = OpcUa_Good;
+      }
+  }
   return uStatus;
 }
 #endif /* _WIN32 */
@@ -620,13 +639,36 @@ static OpcUa_StatusCode ualds_security_initialize()
 OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
 
     ualds_settings_begingroup("PKI");
-    UALDS_SETTINGS_READSTRING(CertificateFile);
-    UALDS_SETTINGS_READSTRING(CertificateKeyFile);
-    UALDS_SETTINGS_READSTRING(CertificateChainFile);
-    UALDS_SETTINGS_READSTRING(CRLPath);
-    UALDS_SETTINGS_READSTRING(TrustListPath);
-    UALDS_SETTINGS_READSTRING(IssuerPath);
-    UALDS_SETTINGS_READSTRING(RejectedPath);
+
+    UALDS_SETTINGS_READSTRING(CertificateStorePath);
+    //check if path ends with dir separator
+    char directory_separator = '\\';
+    if (g_szCertificateStorePath[strlen(g_szCertificateStorePath) - 1] != directory_separator)
+    {
+        strncat(g_szCertificateStorePath, &directory_separator, 1);
+    }
+
+    // The folder structure of the CertificateStore is specified in OPC-UA Spec 1.03, Part 12, Table 48
+    strcpy(g_szCertificateFile, g_szCertificateStorePath);
+    strcat(g_szCertificateFile, "own\\certs\\");
+    strcat(g_szCertificateFile, "ualdscert.der");
+    
+    strcpy(g_szCertificateKeyFile, g_szCertificateStorePath);
+    strcat(g_szCertificateKeyFile, "own\\private\\");
+    strcat(g_szCertificateKeyFile, "ualdskey.nopass.pem");
+
+    strcpy(g_szTrustListPath, g_szCertificateStorePath);
+    strcat(g_szTrustListPath, "trusted\\certs\\");
+
+    strcpy(g_szCRLPath, g_szCertificateStorePath);
+    strcat(g_szCRLPath, "trusted\\crl\\");
+
+    strcpy(g_szRejectedPath, g_szCertificateStorePath);
+    strcat(g_szRejectedPath, "rejected\\certs\\");
+
+    strcpy(g_szIssuerPath, g_szCertificateStorePath);
+    strcat(g_szIssuerPath, "issuer\\certs\\");
+
 #ifdef _WIN32
     if (ualds_settings_readstring("Win32StoreCheck", szValue, sizeof(szValue)) == 0)
     {
@@ -647,6 +689,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     g_PKIConfig.PkiType = OpcUa_OpenSSL_PKI;
     g_PKIConfig.CertificateTrustListLocation = g_szTrustListPath;
     g_PKIConfig.CertificateRevocationListLocation = g_szCRLPath;
+    g_PKIConfig.CertificateUntrustedListLocation = g_szRejectedPath;
     g_PKIConfig.Flags = 0;
     g_PKIConfig.Override = OpcUa_Null;
 
@@ -979,9 +1022,6 @@ static OpcUa_StatusCode ualds_create_endpoints()
         {
             ret = OpcUa_Endpoint_Create(&pEP->hEndpoint, OpcUa_Endpoint_SerializerType_Binary, g_ServiceTable);
             OpcUa_ReturnErrorIfBad(ret);
-            OpcUa_String_AttachReadOnly(&pEP->pSecurityPolicies[pEP->nNoOfSecurityPolicies].sSecurityPolicy, OpcUa_SecurityPolicy_None);
-            pEP->pSecurityPolicies[pEP->nNoOfSecurityPolicies].uMessageSecurityModes = OPCUA_ENDPOINT_MESSAGESECURITYMODE_NONE;
-            pEP->nNoOfSecurityPolicies++;
         }
 
         ualds_log(UALDS_LOG_NOTICE, "Opening endpoint '%s'...", pEP->szUrl);
@@ -1237,7 +1277,7 @@ int ualds_serve()
         ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
     }
 
-  #ifdef HAVE_HDS
+#ifdef HAVE_HDS
     if (bEnableZeroconf)
     {
         ualds_zeroconf_stop_registration();

@@ -20,6 +20,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <opcua_pkifactory.h>
 #include <opcua_core.h>
 /* local platform includes */
+#include <platform.h>
 #include <../config.h>
 #include <log.h>
 
@@ -73,6 +74,63 @@ OpcUa_BeginErrorHandling;
     if (hCertificateStore != OpcUa_Null)
     {
         win32PkiProvider.CloseCertificateStore(&win32PkiProvider, &hCertificateStore);
+    }
+
+OpcUa_FinishErrorHandling;
+}
+
+
+OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode)
+{
+    OpcUa_P_OpenSSL_CertificateStore_Config oldPkiConfig;
+    OpcUa_PKIProvider                       oldPkiProvider;
+    OpcUa_Handle                            hCertificateStore = OpcUa_Null;
+
+    OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_old");
+
+    OpcUa_ReturnErrorIfArgumentNull(pbsClientCertificate);
+
+    uStatus = OpcUa_BadCertificateUntrusted;
+
+    memset(&oldPkiConfig, 0, sizeof(oldPkiConfig));
+
+    oldPkiConfig.PkiType = OpcUa_OpenSSL_PKI;
+
+    oldPkiConfig.CertificateTrustListLocation = "C:\\ProgramData\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs";
+    oldPkiConfig.CertificateRevocationListLocation = newCertificateStorePathCrl;
+    oldPkiConfig.CertificateUntrustedListLocation = newCertificateStorePathRejected;
+
+    oldPkiConfig.Flags = 0;
+    oldPkiConfig.Override = OpcUa_Null;
+
+    uStatus = OpcUa_PKIProvider_Create(&oldPkiConfig, &oldPkiProvider);
+    OpcUa_GotoErrorIfBad(uStatus);
+
+    uStatus = oldPkiProvider.OpenCertificateStore(&oldPkiProvider, &hCertificateStore);
+    if (OpcUa_IsBad(uStatus))
+    {
+        ualds_log(UALDS_LOG_ERR, "Failed to open windows certificate store! (0x%08X)", uStatus);
+        OpcUa_GotoError;
+    }
+
+    /* validate certificate, we only need the validation result, not the windows specific pValidationCode */
+    uStatus = oldPkiProvider.ValidateCertificate(&oldPkiProvider,
+        pbsClientCertificate,
+        hCertificateStore,
+        pValidationCode);
+
+    oldPkiProvider.CloseCertificateStore(&oldPkiProvider, &hCertificateStore);
+
+    ualds_log(UALDS_LOG_INFO, "Verifying certificate in old store returned 0x%08x.", uStatus);
+
+OpcUa_ReturnStatusCode;
+OpcUa_BeginErrorHandling;
+
+    ualds_log(UALDS_LOG_ERR, "Could not verify certificate in old certificate store (0x%08x).", uStatus);
+
+    if (hCertificateStore != OpcUa_Null)
+    {
+        oldPkiProvider.CloseCertificateStore(&oldPkiProvider, &hCertificateStore);
     }
 
 OpcUa_FinishErrorHandling;
