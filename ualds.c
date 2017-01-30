@@ -75,8 +75,6 @@ static int              g_MaxAgeRejectedCertificates = 1; /* days */
 static int              g_bWin32StoreCheck = 0;
 #endif /* _WIN32 */
 
-static OpcUa_SocketManager g_SocketManager = OpcUa_Null;
-
 OpcUa_Mutex g_mutex = OpcUa_Null;
 
 #if HAVE_OPENSSL
@@ -335,7 +333,7 @@ static OpcUa_StatusCode ualds_create_security_policies()
             break;
         }
         /* allocate policy array */
-        size = sizeof(OpcUa_Endpoint_SecurityPolicyConfiguration) * g_pEndpoints[n].nNoOfSecurityPolicies;
+        size = sizeof(OpcUa_Endpoint_SecurityPolicyConfiguration) * (g_pEndpoints[n].nNoOfSecurityPolicies + 1);
         g_pEndpoints[n].pSecurityPolicies = (OpcUa_Endpoint_SecurityPolicyConfiguration*)OpcUa_Alloc((OpcUa_UInt32)size);
         if (g_pEndpoints[n].pSecurityPolicies == 0)
         {
@@ -969,9 +967,6 @@ static OpcUa_StatusCode ualds_create_endpoints()
         return OpcUa_Bad;
     }
 
-    ret = OpcUa_SocketManager_Create(&g_SocketManager, 0, 0);
-    OpcUa_ReturnErrorIfBad(ret);
-
     for (i=0; i<g_numEndpoints; i++, pEP++)
     {
         /* only opc.tcp endpoints allow RegisterServer */
@@ -984,6 +979,9 @@ static OpcUa_StatusCode ualds_create_endpoints()
         {
             ret = OpcUa_Endpoint_Create(&pEP->hEndpoint, OpcUa_Endpoint_SerializerType_Binary, g_ServiceTable);
             OpcUa_ReturnErrorIfBad(ret);
+            OpcUa_String_AttachReadOnly(&pEP->pSecurityPolicies[pEP->nNoOfSecurityPolicies].sSecurityPolicy, OpcUa_SecurityPolicy_None);
+            pEP->pSecurityPolicies[pEP->nNoOfSecurityPolicies].uMessageSecurityModes = OPCUA_ENDPOINT_MESSAGESECURITYMODE_NONE;
+            pEP->nNoOfSecurityPolicies++;
         }
 
         ualds_log(UALDS_LOG_NOTICE, "Opening endpoint '%s'...", pEP->szUrl);
@@ -1034,8 +1032,6 @@ static OpcUa_StatusCode ualds_delete_endpoints()
         OpcUa_Endpoint_Delete(&g_pEndpoints[i].hEndpoint);
     }
 
-    OpcUa_SocketManager_Delete(&g_SocketManager);
-
     return ret;
 }
 
@@ -1078,7 +1074,6 @@ int ualds_serve()
     int ret = EXIT_SUCCESS;
     OpcUa_ProxyStubConfiguration stackconfig;
     OpcUa_StatusCode status;
-    OpcUa_UInt32 LoopTimeout = 1000;
     int numServerNames = 0;
     char szExeFileName[PATH_MAX];
     char szValue[10];
@@ -1238,13 +1233,6 @@ int ualds_serve()
 
     while (!g_shutdown)
     {
-        status = OpcUa_SocketManager_Loop(g_SocketManager, LoopTimeout, OpcUa_True);
-        if (OpcUa_IsBad(status))
-        {
-            ret = EXIT_FAILURE;
-            g_shutdown = 1;
-        }
-
         ualds_zeroconf_socketEventCallback(&g_shutdown);
         ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
     }
