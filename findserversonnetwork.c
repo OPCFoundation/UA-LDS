@@ -191,8 +191,8 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
         FD_ZERO(&readFDs);
         FD_SET(socketCallbackStruct->fd, &readFDs);
 
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
+        tv.tv_sec = 0;
+        tv.tv_usec = 100000;
 
         int status = select(socketCallbackStruct->fd + 1, &readFDs, NULL, NULL, &tv);
         ualds_resolveContext* context = (ualds_resolveContext*)socketCallbackStruct->context;
@@ -500,8 +500,8 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                    FD_ZERO(&readFDs);
                    FD_SET(fd, &readFDs);
 
-                   tv.tv_sec = 1;
-                   tv.tv_usec = 0;
+                   tv.tv_sec = 0;
+                   tv.tv_usec = 100000;
 
                    int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
 
@@ -692,8 +692,8 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_V
                     FD_ZERO(&readFDs);
                     FD_SET(fd, &readFDs);
 
-                    tv.tv_sec = 1;
-                    tv.tv_usec = 0;
+                    tv.tv_sec = 0;
+                    tv.tv_usec = 100000;
 
                     int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
 

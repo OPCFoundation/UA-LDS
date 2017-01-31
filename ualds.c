@@ -602,6 +602,18 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
     uStatus = OpcUa_Good;
   }
 
+  // Certificate store paths have changed at some point. 
+  // Make a check using the old paths, for backward compatibility
+  if (uStatus == OpcUa_BadCertificateUntrusted)
+  {
+      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old(pCertificate, g_szCRLPath, g_szRejectedPath, pValidationCode);
+      if (OpcUa_IsGood(uStatusVerify))
+      {
+          ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Verifying certificate in old store succeeded.");
+          uStatus = OpcUa_Good;
+      }
+  }
+
 #if OPCUA_SUPPORT_PKI_WIN32
   if (uStatus == OpcUa_BadCertificateUntrusted && g_bWin32StoreCheck)
   {
@@ -614,17 +626,6 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
   }
 #endif /* OPCUA_SUPPORT_PKI_WIN32 */
 
-  // Certificate store paths have changed at some point. 
-  // Make a check using the old paths, for backward compatibility
-  if (uStatus == OpcUa_BadCertificateUntrusted)
-  {
-      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old(pCertificate, g_szCRLPath, g_szRejectedPath, pValidationCode);
-      if (OpcUa_IsGood(uStatusVerify))
-      {
-          ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Verifying certificate in old store succeeded.");
-          uStatus = OpcUa_Good;
-      }
-  }
   return uStatus;
 }
 #endif /* _WIN32 */
@@ -690,7 +691,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     g_PKIConfig.CertificateTrustListLocation = g_szTrustListPath;
     g_PKIConfig.CertificateRevocationListLocation = g_szCRLPath;
     g_PKIConfig.CertificateUntrustedListLocation = g_szRejectedPath;
-    g_PKIConfig.Flags = 0;
+    g_PKIConfig.Flags = OPCUA_P_PKI_OPENSSL_ADD_UNTRUSTED_LIST_TO_ROOT_CERTIFICATES;
     g_PKIConfig.Override = OpcUa_Null;
 
     uStatus = OpcUa_PKIProvider_Create(&g_PKIConfig, &g_PkiProvider);

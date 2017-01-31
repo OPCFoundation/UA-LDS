@@ -119,8 +119,8 @@ void ualds_zeroconf_socketEventCallback(int* shutdown)
         FD_ZERO(&readFDs);
         FD_SET(socketCallbackStruct->fd, &readFDs);
 
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
+        tv.tv_sec = 0;
+        tv.tv_usec = 100000;
 
         int status = select(socketCallbackStruct->fd + 1, &readFDs, NULL, NULL, &tv);
 
@@ -429,8 +429,8 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
             FD_ZERO(&readFDs);
             FD_SET(fd, &readFDs);
 
-            tv.tv_sec = 1;
-            tv.tv_usec = 0;
+            tv.tv_sec = 0;
+            tv.tv_usec = 100000;
 
             int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
 

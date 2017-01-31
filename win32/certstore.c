@@ -100,7 +100,7 @@ OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, c
     oldPkiConfig.CertificateRevocationListLocation = newCertificateStorePathCrl;
     oldPkiConfig.CertificateUntrustedListLocation = newCertificateStorePathRejected;
 
-    oldPkiConfig.Flags = 0;
+    oldPkiConfig.Flags = OPCUA_P_PKI_OPENSSL_ADD_UNTRUSTED_LIST_TO_ROOT_CERTIFICATES;
     oldPkiConfig.Override = OpcUa_Null;
 
     uStatus = OpcUa_PKIProvider_Create(&oldPkiConfig, &oldPkiProvider);
