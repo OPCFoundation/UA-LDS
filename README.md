@@ -18,8 +18,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
 ## Build Dependencies
 
- * OPC UA Ansi C Stack 1.03.340: https://github.com/OPCFoundation/UA-AnsiC
-	   Please review official site page http://opcfoundation.github.io/UA-AnsiC
+ * OPC UA Ansi C Stack 1.03.340. Please review official site page http://opcfoundation.github.io/UA-AnsiC
  * OpenSSL 1.0.2j: https://www.openssl.org/source/
  * Mdns (Multicast Domain Name System) library
  
