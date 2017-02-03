@@ -18,11 +18,9 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
 ## Build Dependencies
 
- * OPC UA Ansi C Stack (1.03.340)
-       It can be downloaded from https://github.com/OPCFoundation/UA-AnsiC
+ * OPC UA Ansi C Stack 1.03.340: https://github.com/OPCFoundation/UA-AnsiC
 	   Please review official site page http://opcfoundation.github.io/UA-AnsiC
- * OpenSSL (1.0.2j)
-       It can be downloaded from https://www.openssl.org/source/
+ * OpenSSL 1.0.2j: https://www.openssl.org/source/
  * Mdns (Multicast Domain Name System) library
  
 ## Runtime Dependencies
@@ -31,8 +29,9 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
  
 ## Building the LDS
 
-Before building the LDS the stack respective openssl must be already compiled for the desired target. For details on how to build the stack please refer to the ANSI C Stack readme file.
-Copy (or move) the content of the  UaStack project folder (from the previous step) to LDS/stack folder. Visual studio 2013 solution is available for build.
+VisualStudio 2013 solution is available for build.
+Before building the LDS, the stack respective openssl must be already compiled for the desired target. Make sure that the proper submodule of the UaStack is extracted in the /stack folder.
+For details on how to build the stack please refer to the ANSI C Stack readme file (https://github.com/OPCFoundation/UA-AnsiC).
 
 ## Package file structure description
 
