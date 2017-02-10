@@ -1,4 +1,4 @@
-/* Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2017, OPC Foundation. All rights reserved.
 
 The source code in this file is covered under a dual - license scenario :
 - RCL: for OPC Foundation members in good - standing
@@ -42,7 +42,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <WinSock.h>
 
 static OpcUa_List g_findServersSocketList;
-OpcUa_Mutex g_findServersSocketListMutex = OpcUa_Null;
 
 typedef enum _ualds_contextType
 {
@@ -118,6 +117,7 @@ void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrows
 
             ualds_log(UALDS_LOG_DEBUG, "ualds_findserversonnetwork_removeServiceEntries: remove all entries of type %s", g_pszServiceTypes[i]);
 
+            OpcUa_List_Enter(&g_lstServers);
             OpcUa_List_ResetCurrent(&g_lstServers);
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
             while (pResolveContext)
@@ -126,7 +126,7 @@ void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrows
                 {
                     {
                         // remove element from g_findServersSocketList
-                        OpcUa_Mutex_Lock(g_findServersSocketListMutex);
+                        OpcUa_List_Enter(&g_findServersSocketList);
                         OpcUa_List_ResetCurrent(&g_findServersSocketList);
                         MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
                         while (socketCallbackStruct)
@@ -141,7 +141,7 @@ void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrows
                              
                             socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
                         }
-                        OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+                        OpcUa_List_Leave(&g_findServersSocketList);
                     }
 
                     /* cancel all outstanding service calls belonging to this service record */
@@ -163,6 +163,7 @@ void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrows
                     pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
                 }
             }
+            OpcUa_List_Leave(&g_lstServers);
             break;
         }
     }
@@ -170,7 +171,7 @@ void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrows
 
 void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
 {
-    OpcUa_Mutex_Lock(g_findServersSocketListMutex);
+    OpcUa_List_Enter(&g_findServersSocketList);
     OpcUa_List_ResetCurrent(&g_findServersSocketList);
 
     MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Null;
@@ -181,7 +182,7 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
         if (*shutdown)
         {
             // exit ASAP
-            OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+            OpcUa_List_Leave(&g_findServersSocketList);
             return;
         }
 
@@ -234,7 +235,7 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
         socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
     }
 
-    OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+    OpcUa_List_Leave(&g_findServersSocketList);
 }
 
 /* async DNSService callback for browse result resolving */
@@ -398,6 +399,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
 
         /* check if record is already known; this can happen if a service is delivered for two different
            network interfaces */
+        OpcUa_List_Enter(&g_lstServers);
         OpcUa_List_ResetCurrent(&g_lstServers);
         pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
         while (pResolveContext)
@@ -410,6 +412,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
             }
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
         }
+        OpcUa_List_Leave(&g_lstServers);
 
         if (bFound != OpcUa_False)
         {
@@ -458,6 +461,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                 g_lastCounterResetTime = OpcUa_DateTime_UtcNow();
 
                 /* reassign RecordIds to entries after overflow */
+                OpcUa_List_Enter(&g_lstServers);
                 OpcUa_List_ResetCurrent(&g_lstServers);
                 pExistingResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
                 while (pExistingResolveContext)
@@ -466,10 +470,13 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                     pExistingResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
                 }
                 pResolveContext->record.RecordId = g_currentRecordId++;
+                OpcUa_List_Leave(&g_lstServers);
             }
 
             /* append pResolveContext to list of services */
+            OpcUa_List_Enter(&g_lstServers);
             uStatus = OpcUa_List_AddElementToEnd(&g_lstServers, pResolveContext);
+            OpcUa_List_Leave(&g_lstServers);
             if (OpcUa_IsNotGood(uStatus))
             {
                 ualds_log(UALDS_LOG_ERR, "ualds_DNSServiceBrowseReply: could not add pResolveContext to list");
@@ -546,9 +553,9 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                    socketCallbackStruct->fd = fd;
                    socketCallbackStruct->sdRef = pResolveContext->sdRef;
                    socketCallbackStruct->context = pResolveContext;
-                   OpcUa_Mutex_Lock(g_findServersSocketListMutex);
+                   OpcUa_List_Enter(&g_findServersSocketList);
                    uStatus = OpcUa_List_AddElementToEnd(&g_findServersSocketList, socketCallbackStruct);
-                   OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+                   OpcUa_List_Leave(&g_findServersSocketList);
                }
             }
             else
@@ -592,6 +599,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
         }
 
         /* search for server and remove it */
+        OpcUa_List_Enter(&g_lstServers);
         OpcUa_List_ResetCurrent(&g_lstServers);
         pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
         while (pResolveContext)
@@ -601,7 +609,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
             {
                 {
                     // remove element from g_findServersSocketList
-                    OpcUa_Mutex_Lock(g_findServersSocketListMutex);
+                    OpcUa_List_Enter(&g_findServersSocketList);
                     OpcUa_List_ResetCurrent(&g_findServersSocketList);
                     MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
                     while (socketCallbackStruct)
@@ -616,7 +624,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
 
                         socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
                     }
-                    OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+                    OpcUa_List_Leave(&g_findServersSocketList);
                 }
 
                 /* cancel all outstanding service calls belonging to this service record */
@@ -636,6 +644,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
 
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
         }
+        OpcUa_List_Leave(&g_lstServers);
     }
 
 Error:
@@ -737,9 +746,9 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_V
                     socketCallbackStruct->sdRef = g_browseContexts[i].sdRef;
                     socketCallbackStruct->context = &g_browseContexts[i];
 
-                    OpcUa_Mutex_Lock(g_findServersSocketListMutex);
+                    OpcUa_List_Enter(&g_findServersSocketList);
                     uStatus = OpcUa_List_AddElementToEnd(&g_findServersSocketList, socketCallbackStruct);
-                    OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+                    OpcUa_List_Leave(&g_findServersSocketList);
                 }
             }
             else
@@ -794,7 +803,6 @@ OpcUa_StatusCode ualds_findserversonnetwork_start_listening()
         /* initialize */
         OpcUa_List_Initialize(&g_lstServers);
         OpcUa_List_Initialize(&g_findServersSocketList);
-        ret = OpcUa_Mutex_Create(&g_findServersSocketListMutex);
         g_lastCounterResetTime = OpcUa_DateTime_UtcNow();
 
         OpcUa_Mutex_Unlock(g_mutex);
@@ -839,8 +847,7 @@ void ualds_findserversonnetwork_stop_listening()
         g_hBrowseTimer = OpcUa_Null;
 
         /* cleanup */
-        OpcUa_Mutex_Lock(g_mutex);
-
+        OpcUa_List_Enter(&g_lstServers);
         OpcUa_List_ResetCurrent(&g_lstServers);
         pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
         while (pResolveContext)
@@ -858,10 +865,11 @@ void ualds_findserversonnetwork_stop_listening()
             OpcUa_Free(pResolveContext);
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
         }
+        OpcUa_List_Leave(&g_lstServers);
         OpcUa_List_Clear(&g_lstServers);
 
         // remove element from g_findServersSocketList
-        OpcUa_Mutex_Lock(g_findServersSocketListMutex);
+        OpcUa_List_Enter(&g_findServersSocketList);
         OpcUa_List_ResetCurrent(&g_findServersSocketList);
         MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
         while (socketCallbackStruct)
@@ -869,11 +877,9 @@ void ualds_findserversonnetwork_stop_listening()
             OpcUa_Free(socketCallbackStruct);
             socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
         }
-        OpcUa_Mutex_Unlock(g_findServersSocketListMutex);
+        OpcUa_List_Leave(&g_findServersSocketList);
 
         OpcUa_List_Clear(&g_findServersSocketList);
-        OpcUa_Mutex_Delete(&g_findServersSocketListMutex);
-        OpcUa_Mutex_Unlock(g_mutex);
     }
 }
 
@@ -916,6 +922,7 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
 
             pResponse->LastCounterResetTime = g_lastCounterResetTime;
 
+            OpcUa_List_Enter(&g_lstServers);
             OpcUa_List_ResetCurrent(&g_lstServers);
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
             while (pResolveContext)
@@ -1025,6 +1032,7 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
 
                 pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
             }
+            OpcUa_List_Leave(&g_lstServers);
         }
 
         UALDS_BUILDRESPONSEHEADER;

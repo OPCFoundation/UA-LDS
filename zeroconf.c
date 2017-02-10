@@ -1,4 +1,4 @@
-/* Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2017, OPC Foundation. All rights reserved.
 
 The source code in this file is covered under a dual - license scenario :
 - RCL: for OPC Foundation members in good - standing
@@ -38,7 +38,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 /* Globals for zeroconf registration */
 
 static OpcUa_List g_registerServersSocketList;
-OpcUa_Mutex g_registerServersSocketListMutex = OpcUa_Null;
 
 typedef enum _ualds_RegistrationStatus
 {
@@ -97,8 +96,7 @@ void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
 
 void ualds_zeroconf_socketEventCallback(int* shutdown)
 {
-    OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
-
+    OpcUa_List_Enter(&g_registerServersSocketList);
     OpcUa_List_ResetCurrent(&g_registerServersSocketList);
 
     MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Null;
@@ -109,7 +107,7 @@ void ualds_zeroconf_socketEventCallback(int* shutdown)
         if (*shutdown)
         {
             // exit ASAP
-            OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+            OpcUa_List_Leave(&g_registerServersSocketList);
             return;
         }
 
@@ -148,7 +146,7 @@ void ualds_zeroconf_socketEventCallback(int* shutdown)
         socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
     }
 
-    OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+    OpcUa_List_Leave(&g_registerServersSocketList);
 }
 
 OpcUa_StatusCode ualds_parse_url(char *szUrl, char **szScheme, char **szHostname, uint16_t *port, char **szPath)
@@ -342,9 +340,10 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
     UALDS_UNUSED(msecElapsed);
 
     OpcUa_Mutex_Lock(g_mutex);
-
     ualds_expirationcheck();
+    OpcUa_Mutex_Unlock(g_mutex);
 
+    OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_ResetCurrent(&g_lstServers);
     pRegisterContext = (ualds_registerContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
 
@@ -462,16 +461,16 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
                 socketCallbackStruct->fd = fd;
                 socketCallbackStruct->sdRef = pRegisterContext->sdRef;
                 socketCallbackStruct->context = pRegisterContext;
-                OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+                OpcUa_List_Enter(&g_registerServersSocketList);
                 uStatus = OpcUa_List_AddElementToEnd(&g_registerServersSocketList, socketCallbackStruct);
-                OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+                OpcUa_List_Leave(&g_registerServersSocketList);
             }
         }
 
         pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
     }
 
-    OpcUa_Mutex_Unlock(g_mutex);
+    OpcUa_List_Leave(&g_lstServers);
 
     return uStatus;
 }
@@ -486,8 +485,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
     UALDS_UNUSED(hTimer);
     UALDS_UNUSED(msecElapsed);
 
-    OpcUa_Mutex_Lock(g_mutex);
-
+    OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_ResetCurrent(&g_lstServers);
     pRegisterContext = (ualds_registerContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
 
@@ -497,7 +495,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
         {
             {
                 // remove element from g_registerServersSocketList
-                OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+                OpcUa_List_Enter(&g_registerServersSocketList);
                 OpcUa_List_ResetCurrent(&g_registerServersSocketList);
                 MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
                 while (socketCallbackStruct)
@@ -513,7 +511,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
                     socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
                 }
 
-                OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+                OpcUa_List_Leave(&g_registerServersSocketList);
             }
 
             /* release ref for unregistering */
@@ -528,13 +526,10 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
         OpcUa_Free(pRegisterContext);
         pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
     }
-
+    OpcUa_List_Leave(&g_lstServers);
     OpcUa_List_Clear(&g_lstServers);
 
     OpcUa_List_Clear(&g_registerServersSocketList);
-    OpcUa_Mutex_Delete(&g_registerServersSocketListMutex);
-
-    OpcUa_Mutex_Unlock(g_mutex);
 
     return OpcUa_Good;
 }
@@ -590,7 +585,6 @@ void ualds_zeroconf_init_servers()
     }
     OpcUa_Free(serverUri);
     
-    OpcUa_StatusCode status = OpcUa_Mutex_Create(&g_registerServersSocketListMutex);
     OpcUa_List_Initialize(&g_registerServersSocketList);
 }
 
@@ -674,6 +668,7 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
 {
     ualds_registerContext *pRegisterContext = OpcUa_Null;
 
+    OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_ResetCurrent(&g_lstServers);
     pRegisterContext = (ualds_registerContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
 
@@ -683,7 +678,7 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
         {
             {
                 // remove element from g_registerServersSocketList
-                OpcUa_Mutex_Lock(g_registerServersSocketListMutex);
+                OpcUa_List_Enter(&g_registerServersSocketList);
                 OpcUa_List_ResetCurrent(&g_registerServersSocketList);
                 MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
                 while (socketCallbackStruct)
@@ -699,7 +694,7 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
                     socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
                 }
 
-                OpcUa_Mutex_Unlock(g_registerServersSocketListMutex);
+                OpcUa_List_Leave(&g_registerServersSocketList);
             }
 
             if (pRegisterContext->registrationStatus != RegistrationStatus_Unregistered)
@@ -717,5 +712,6 @@ void ualds_zeroconf_removeRegistration(const char *szServerUri)
         }
         pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
     }
+    OpcUa_List_Leave(&g_lstServers);
 }
 
