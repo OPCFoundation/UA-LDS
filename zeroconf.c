@@ -284,6 +284,9 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
         {
             TXTRecordSetValue(txtRecord, "path", (uint8_t)strlen(szPath), szPath);
         }
+        else {
+            TXTRecordSetValue(txtRecord, "path", 1, "/");
+        }
 
         ualds_settings_beginreadarray("ServerCapabilities", &numCapabilities);
         if (numCapabilities > 0)
