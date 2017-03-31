@@ -389,7 +389,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
             char hostname[UALDS_CONF_MAX_URI_LENGTH+6] = {0};
             ualds_platform_getfqhostname(hostname, sizeof(hostname));
             replace_string(szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
-            // hostname must end with .local
+            // hostname must end with .local to be a FQDN
             sprintf(hostname + strlen(hostname), ".local");
             replace_string(szHostName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
             bOwnRegistration = OpcUa_False;
