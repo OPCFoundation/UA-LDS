@@ -1105,6 +1105,19 @@ static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(const OpcUa_CharA* szMess
     ualds_log(UALDS_LOG_DEBUG, "[uastack] %.*s", strlen(szMessage)-1, szMessage);
 }
 
+DWORD WINAPI MdsnThreadCallbackProc(LPVOID lpParam)
+{
+    // lpParam not used
+    UNREFERENCED_PARAMETER(lpParam);
+
+    while (!g_shutdown)
+    {
+        ualds_zeroconf_socketEventCallback(&g_shutdown);
+        ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
+        Sleep(100);
+    }
+}
+
 /** Main loop of UA LDS service.
  * The main.c file calls this function to start the UA LDS server.
  * This function does not return until shutdown.
@@ -1229,9 +1242,6 @@ int ualds_serve()
         return EXIT_FAILURE;
     }
 
-#if OPCUA_MULTITHREADED
-//# error "LDS requires single thread configuration! Set OPCUA_MULTITHREADED and OPCUA_USE_SYNCHRONISATION to OPCUA_CONFIG_NO and recompile all components."
-#endif
 #ifdef HAVE_HDS
     ualds_settings_begingroup("Zeroconf");
     if (ualds_settings_readstring("EnableZeroconf", szValue, sizeof(szValue)) == 0)
@@ -1270,15 +1280,29 @@ int ualds_serve()
             return EXIT_FAILURE;
         }
     }
+
+    DWORD dwThreadID;
+    HANDLE mdsnThreadHandle = CreateThread(
+        NULL,              // default security
+        0,                 // default stack size
+        MdsnThreadCallbackProc,        // name of the thread function
+        NULL,              // no thread parameters
+        0,                 // default startup flags
+        &dwThreadID);
+
 #endif
 
     while (!g_shutdown)
     {
-        ualds_zeroconf_socketEventCallback(&g_shutdown);
-        ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
+        // wait for exit command
+        Sleep(1000);
     }
 
 #ifdef HAVE_HDS
+    // wait for mdsn callback thread to finish
+    WaitForSingleObject(mdsnThreadHandle, INFINITE);
+    CloseHandle(mdsnThreadHandle);
+
     if (bEnableZeroconf)
     {
         ualds_zeroconf_stop_registration();
