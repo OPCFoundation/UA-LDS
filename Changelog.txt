@@ -1,9 +1,26 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
-Version 1.03.341
+Version 1.03.362
+	Fixed issues:
+		- Updated documentation: #12.
+		- Fixed high CPU load if Bonjour could not start: #10.
+		- Updated configuration file.
+
+	Open issues:
+		- Bonjour Fails to install: #10.
+		- Target field of SRV announce must end with .local: #11.
+		- Compatible for linux: #9.
+
+Version 1.03.355
         Highlights:
-                - Added Multicast Extension feature.
+		- Added Multicast Extension feature.
+		- Updated build environment to Visual Studio 2013.
+		- Moved Mantis bugs to Github.
 		
-        Mantis issues, resolved:	
-                -		
+        Mantis issues resolved:	
+		- ID 0002888: LDS is vulnerable to unquoted service path.
+		- ID 0002954: Log file size must be limited.
+		- ID 0003279: LDS crash when ini file contains no endpoints.
+		- ID 0003075: Wrong folder structure for own certificate.
+		- ID 0003074: Wrong TrustListPath in LDS.
