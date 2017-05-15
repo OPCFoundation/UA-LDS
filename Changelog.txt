@@ -1,6 +1,9 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
+Version 1.03.367
+	Fixed issues:
+		- Path to executable of OPC Bonjour service to enclose between quotes.
 Version 1.03.362
 	Fixed issues:
 		- Updated documentation: #12.
