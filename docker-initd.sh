@@ -1,3 +1,4 @@
+#!/bin/sh
 # Copyright (c) 1996-2016, OPC Foundation. All rights reserved.
 #
 #   The source code in this file is covered under a dual-license scenario:
@@ -13,26 +14,19 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
-# ignore generated files
 
-*bin/*
-.vscode/**
-build/**
-pki/**
-*/Debug/*
-*/Release/*
-*.o
-*.a
-*.lib
-*.obj
-*.db
-*.opendb
-*.log
-*.tlog
-*.idb
-*.suo
-*.pdb
-*.exe
-*.ilk
-*.iobj
-*.ipdb
+case "$1" in
+    start)
+        $DAEMON
+        ;;
+    stop|reload|restart|force-reload)
+        echo "Not supported"
+        exit 1
+        ;;
+    status)
+        exit 0
+        ;;
+    *)
+        exit 1
+        ;;
+esac

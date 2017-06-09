@@ -1,0 +1,124 @@
+/* Copyright (c) 1996-2017, OPC Foundation. All rights reserved.
+
+The source code in this file is covered under a dual-license scenario:
+- RCL: for OPC Foundation members in good-standing
+- GPL V2: everybody else
+
+RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
+
+GNU General Public License as published by the Free Software Foundation;
+version 2 of the License are accompanied with this source code. See http://opcfoundation.org/License/GPLv2
+
+This source code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
+
+/* system includes */
+#include <stdlib.h>
+/* local includes */
+#include "../config.h"
+#include "platform.h"
+#include "log.h"
+
+
+int ualds_platform_drop_privileges()
+{
+    if (getuid() == 0)
+    {
+        /* process is running as root, drop privileges */
+        if (setgid(getgid()) != 0)
+        {
+            fprintf(stderr, "setgid: Unable to drop group privileges: %s", strerror(errno));
+            return -1;
+        }
+        if (setuid(getuid()) != 0)
+        {
+            fprintf(stderr, "setuid: Unable to drop user privileges: %s", strerror(errno));
+            return -1;
+        }
+    }
+    return 0;
+}
+
+void ualds_platform_getconfigfile_path(char *szFilePath, size_t len)
+{
+    getcwd(szFilePath, len);
+    strlcat(szFilePath, "/ualds.conf", len);
+
+    if (!ualds_platform_fileexists(szFilePath))
+    {
+        szFilePath[0] = 0;
+    }
+}
+
+int ualds_platform_getfqhostname(char *szHostname, int len)
+{
+    struct hostent *pEnt = 0;
+    int ret = gethostname(szHostname, len);
+
+    if (ret != 0) return ret;
+
+    return ualds_platform_gethostbyname(szHostname, szHostname, len);
+}
+
+int ualds_platform_gethostbyname(const char* host, char* szHostname, int len)
+{
+    struct hostent *pEnt = 0;
+
+    pEnt = gethostbyname(szHostname);
+    if (pEnt == 0) return -1;
+
+    strncpy(szHostname, pEnt->h_name, len);
+    szHostname[len - 1] = 0;
+
+    return 0;
+}
+
+int ualds_platform_fileexists(const char *szFile)
+{
+    return 0 == access(szFile, 0);
+}
+
+int ualds_platform_mkpath(char *szFilePath)
+{
+    char *path = strdup(szFilePath);
+    int ret = 0;
+    char *szFind = path;
+    char *szFindNext = szFind;
+    int mode = UALDS_S_IRWXU | UALDS_S_IRWXG | UALDS_S_IRWXO;
+
+    /* create parent directories */
+    while ((ret == 0 || errno == EEXIST) && (szFindNext = strchr(szFind, '/')) != 0)
+    {
+        if (szFindNext != szFind)
+        {
+            *szFindNext = 0;   /* replace '/' with \0 */
+            ret = mkdir(path, mode);
+            if (ret < 0 && errno != EEXIST)
+            {
+                ualds_log(UALDS_LOG_WARNING, "Failed making %s error %s\n", path, strerror(errno));
+            }
+            *szFindNext = '/'; /* restore '/' */
+        }
+        szFind = szFindNext + 1;
+    }
+
+    /* create last dir */
+    if (ret == 0 || errno == EEXIST)
+    {
+        ret = mkdir(path, mode);
+        if (ret < 0 && errno != EEXIST)
+        {
+            ualds_log(UALDS_LOG_WARNING, "Failed making %s error %s\n", path, strerror(errno));
+        }
+    }
+
+    if (ret < 0 && errno == EEXIST)
+    {
+        ret = 0;
+    }
+
+    free(path);
+    return ret;
+}

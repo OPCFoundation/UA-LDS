@@ -32,7 +32,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 /* local includes */
 #include "config.h"
 #include "ualds.h"
+#ifdef _WIN32
 #include "service.h"
+#endif /* _WIN32 */
 #include "settings.h"
 #ifdef HAVE_HDS
 # include "zeroconf.h"
@@ -486,7 +488,7 @@ static OpcUa_StatusCode ualds_create_selfsigned_certificates(OpcUa_Handle hCerti
     char szState[50] = {0};
     char szCountry[5] = {0};
     int i = 0;
-    FILE* f;
+    UALDS_FILE* f;
 
     UALDS_UNUSED(hCertificateStore);
 
@@ -563,18 +565,18 @@ static OpcUa_StatusCode ualds_create_selfsigned_certificates(OpcUa_Handle hCerti
         &pCert);
     OpcUa_GotoErrorIfBad(ret);
 
-    f = fopen(g_szCertificateFile, "wb");
+    f = ualds_platform_fopen(g_szCertificateFile, "wb");
     if (f != NULL)
     {
-        fwrite(pCert.Data, 1, pCert.Length, f);
-        fclose(f);
+        ualds_platform_fwrite(pCert.Data, 1, pCert.Length, f);
+        ualds_platform_fclose(f);
     }
 
-    f = fopen(g_szCertificateKeyFile, "wb");
+    f = ualds_platform_fopen(g_szCertificateKeyFile, "wb");
     if (f != NULL)
     {
-        fwrite(prvKey.Key.Data, 1, prvKey.Key.Length, f);
-        fclose(f);
+        ualds_platform_fwrite(prvKey.Key.Data, 1, prvKey.Key.Length, f);
+        ualds_platform_fclose(f);
     }
 
 Error:
@@ -635,6 +637,9 @@ static OpcUa_StatusCode ualds_security_initialize()
     OpcUa_Handle hCertificateStore = OpcUa_Null;
 #ifdef _WIN32
     char         szValue[10];
+#define __ualds_plat_path_sep "\\"
+#else
+#define __ualds_plat_path_sep "/"
 #endif /* _WIN32 */
 
 OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
@@ -642,33 +647,52 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     ualds_settings_begingroup("PKI");
 
     UALDS_SETTINGS_READSTRING(CertificateStorePath);
+
     //check if path ends with dir separator
-    char directory_separator = '\\';
-    if (g_szCertificateStorePath[strlen(g_szCertificateStorePath) - 1] != directory_separator)
+    char* directory_separator = __ualds_plat_path_sep;
+    if (g_szCertificateStorePath[strlen(g_szCertificateStorePath) - 1] != *directory_separator)
     {
-        strncat(g_szCertificateStorePath, &directory_separator, 1);
+        strncat(g_szCertificateStorePath, directory_separator, 1);
+    }
+    
+    if (ualds_platform_mkpath(g_szCertificateStorePath) != 0)
+    {
+        g_szCertificateStorePath[0] = 0;
+        ualds_platform_getcwd(g_szCertificateStorePath, sizeof(g_szCertificateStorePath));
+        strcat(g_szCertificateStorePath, __ualds_plat_path_sep "pki" __ualds_plat_path_sep);
+        ualds_log(UALDS_LOG_ALERT, "Failed to create certificate store path - using %s as path...", g_szCertificateStorePath);
+    }
+    else
+    {
+        ualds_log(UALDS_LOG_NOTICE, "Using certificate store at %s...", g_szCertificateStorePath);
     }
 
     // The folder structure of the CertificateStore is specified in OPC-UA Spec 1.03, Part 12, Table 48
     strcpy(g_szCertificateFile, g_szCertificateStorePath);
-    strcat(g_szCertificateFile, "own\\certs\\");
+    strcat(g_szCertificateFile, "own" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    ualds_platform_mkpath(g_szCertificateFile);
     strcat(g_szCertificateFile, "ualdscert.der");
     
     strcpy(g_szCertificateKeyFile, g_szCertificateStorePath);
-    strcat(g_szCertificateKeyFile, "own\\private\\");
+    strcat(g_szCertificateKeyFile, "own" __ualds_plat_path_sep "private" __ualds_plat_path_sep);
+    ualds_platform_mkpath(g_szCertificateKeyFile);
     strcat(g_szCertificateKeyFile, "ualdskey.nopass.pem");
 
     strcpy(g_szTrustListPath, g_szCertificateStorePath);
-    strcat(g_szTrustListPath, "trusted\\certs\\");
+    strcat(g_szTrustListPath, "trusted" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    ualds_platform_mkpath(g_szTrustListPath);
 
     strcpy(g_szCRLPath, g_szCertificateStorePath);
-    strcat(g_szCRLPath, "trusted\\crl\\");
+    strcat(g_szCRLPath, "trusted" __ualds_plat_path_sep "crl" __ualds_plat_path_sep);
+    ualds_platform_mkpath(g_szCRLPath);
 
     strcpy(g_szRejectedPath, g_szCertificateStorePath);
-    strcat(g_szRejectedPath, "rejected\\certs\\");
+    strcat(g_szRejectedPath, "rejected" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    ualds_platform_mkpath(g_szRejectedPath);
 
     strcpy(g_szIssuerPath, g_szCertificateStorePath);
-    strcat(g_szIssuerPath, "issuer\\certs\\");
+    strcat(g_szIssuerPath, "issuer" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    ualds_platform_mkpath(g_szIssuerPath);
 
 #ifdef _WIN32
     if (ualds_settings_readstring("Win32StoreCheck", szValue, sizeof(szValue)) == 0)
@@ -831,7 +855,7 @@ static OpcUa_Void ualds_cleanup_rejected()
 {
     int ret;
     struct ualds_dirent **namelist;
-    struct ualds_stat stat;
+    struct ualds_stat statF;
     char szPath[PATH_MAX];
     int i;
     time_t now = time(0);
@@ -861,9 +885,9 @@ static OpcUa_Void ualds_cleanup_rejected()
             }
             else
             {
-                if (ualds_platform_stat(szPath, &stat) == 0)
+                if (ualds_platform_stat(szPath, &statF) == 0)
                 {
-                    time_t age = now - stat.st_ctime;
+                    time_t age = now - statF.st_ctime;
 
                     age /= 86000; /* convert to days */
                     if (age > g_MaxAgeRejectedCertificates)
@@ -1100,22 +1124,9 @@ static void ualds_initialize_proxystubconfig(OpcUa_ProxyStubConfiguration *pConf
     pConfig->bTcpStream_ExpectWriteToBlock         = OpcUa_True;
 }
 
-static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(const OpcUa_CharA* szMessage)
+static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(OpcUa_CharA* szMessage)
 {
     ualds_log(UALDS_LOG_DEBUG, "[uastack] %.*s", strlen(szMessage)-1, szMessage);
-}
-
-DWORD WINAPI MdsnThreadCallbackProc(LPVOID lpParam)
-{
-    // lpParam not used
-    UNREFERENCED_PARAMETER(lpParam);
-
-    while (!g_shutdown)
-    {
-        ualds_zeroconf_socketEventCallback(&g_shutdown);
-        ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
-        Sleep(100);
-    }
 }
 
 /** Main loop of UA LDS service.
@@ -1137,18 +1148,21 @@ int ualds_serve()
     int bEnableZeroconf = 1;
 #endif
 
+#ifdef _WIN32
     /*Precondition: Bonjour Service running.*/
     BOOL successBonjourServiceStart = StartBonjourService();
     if (successBonjourServiceStart == FALSE)
     {
         ualds_log(UALDS_LOG_ERR, "Could not start Bonjour Service");
     }
+#endif /* _WIN32 */
 
     /* Get fully qualified domain name */
     ualds_platform_getfqhostname(g_szHostname, sizeof(g_szHostname));
     ualds_log(UALDS_LOG_NOTICE, "Server startup complete. Host name is %s.", g_szHostname);
 
     /* Get executable filename for updating the semaphore file path .*/
+    szExeFileName[0] = 0;
     ualds_platform_getapplicationpath(szExeFileName, sizeof(szExeFileName));
 
     ualds_settings_begingroup("Log");
@@ -1208,7 +1222,10 @@ int ualds_serve()
         ualds_settings_readstring("Text", g_szApplicationName, sizeof(g_szApplicationName));
     }
     ualds_settings_endarray();
-    ualds_settings_writestring("SemaphoreFilePath", szExeFileName);
+    if (strlen(szExeFileName) > 0)
+    {
+        ualds_settings_writestring("SemaphoreFilePath", szExeFileName);
+    }
     ualds_settings_endgroup();
     ualds_settings_flush();
 
@@ -1280,29 +1297,18 @@ int ualds_serve()
             return EXIT_FAILURE;
         }
     }
-
-    DWORD dwThreadID;
-    HANDLE mdsnThreadHandle = CreateThread(
-        NULL,              // default security
-        0,                 // default stack size
-        MdsnThreadCallbackProc,        // name of the thread function
-        NULL,              // no thread parameters
-        0,                 // default startup flags
-        &dwThreadID);
-
 #endif
 
     while (!g_shutdown)
     {
-        // wait for exit command
-        Sleep(1000);
+#ifdef HAVE_HDS
+        ualds_zeroconf_socketEventCallback(&g_shutdown);
+        ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
+#endif
+        ualds_platform_sleep(1);
     }
 
 #ifdef HAVE_HDS
-    // wait for mdsn callback thread to finish
-    WaitForSingleObject(mdsnThreadHandle, INFINITE);
-    CloseHandle(mdsnThreadHandle);
-
     if (bEnableZeroconf)
     {
         ualds_zeroconf_stop_registration();
@@ -1410,28 +1416,16 @@ void ualds_expirationcheck()
 
             if (szSemaphoreFile[0] != 0)
             {
-                FILE *f = fopen(szSemaphoreFile, "r");
-                if (f)
+                if (szSemaphoreFile[0] != '*' &&
+                    !ualds_platform_fileexists(szSemaphoreFile))
                 {
-                    /* file exists */
-                    fclose(f);
-                }
-                else
-                {
-                    if (errno == ENOENT)
-                    {
-                        /* file does not exist, remove entry */
-                        ualds_settings_removegroup(szServerUriArray[i]);
+                    /* file does not exist, remove entry */
+                    ualds_settings_removegroup(szServerUriArray[i]);
 #ifdef HAVE_HDS
-                        ualds_zeroconf_removeRegistration(szServerUriArray[i]);
+                    ualds_zeroconf_removeRegistration(szServerUriArray[i]);
 #endif
-                        RemovedServers[i] = 1;
-                        numRemoved++;
-                    }
-                    else
-                    {
-                        ualds_log(UALDS_LOG_ERR, "Cannot open semaphore file '%s' read-only (errno %i).", szSemaphoreFile, errno);
-                    }
+                    RemovedServers[i] = 1;
+                    numRemoved++;
                 }
             }
             else

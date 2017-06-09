@@ -33,9 +33,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 int ualds_platform_initialize()
 {
 #ifdef HAVE_OPCUA_STACK
-    /* Oh, how do I love this Microsoft crap  ...
-     * In a world without walls and fences, who needs windows and gates?
-     */
     WORD wVersionRequested;
     WSADATA wsaData;
     int err;
@@ -87,10 +84,17 @@ void ualds_platform_getconfigfile_path(char *szFilePath, size_t len)
         strlcpy(szFilePath, pszAppData, len);
         strlcat(szFilePath, "\\OPC Foundation\\UA\\Discovery\\ualds.ini", len);
     }
-    else
+    
+    if (!pszAppData || !ualds_platform_fileexists(szFilePath))
     {
         /* fallback to working directory */
-        pszAppData = "ualds.ini";
+        strlcpy(szFilePath, "ualds.ini", len);
+    }
+
+    if (!ualds_platform_fileexists(szFilePath))
+    {
+        /* Results in lds exiting */
+        szFilePath[0] = 0;
     }
 }
 
@@ -100,19 +104,39 @@ void ualds_platform_getapplicationpath(char *szFilePath, size_t len)
     GetModuleFileNameA(NULL, szFilePath, len);
 }
 
-#ifdef HAVE_OPCUA_STACK
-/** Get fully qualified hostname.
- * gethostname() can return the short hostname, so we use gethostbyname()
- * to get FQDN. This functions works exactly the same on Windows and Linux.
- * Only the system headers are different, that's why we are wrapping this
- * in UALDS platform function.
- */
+/** Windows specific function for retrieving the path the current running executable file .*/
+void ualds_platform_getcwd(char *szFilePath, size_t len)
+{
+    GetCurrentDirectoryA((DWORD)len, szFilePath);
+}
+
+/** Rename file by moving it */
+int ualds_platform_rename(const char* from, const char* to)
+{
+    return MoveFileA(from, to) ? 0 : -1;
+}
+
+/** Sleep */
+void ualds_platform_sleep(int seconds)
+{
+    Sleep(seconds * 1000);
+}
+
+/** Get fully qualified hostname. */
 int ualds_platform_getfqhostname(char *szHostname, int len)
 {
     struct hostent *pEnt = 0;
     int ret = gethostname(szHostname, len);
 
     if (ret != 0) return ret;
+
+    return ualds_platform_gethostbyname(szHostname, szHostname, len);
+}
+
+/** Get fully qualified name by using gethostbyname. */
+int ualds_platform_gethostbyname(const char* host, char* szHostname, int len)
+{
+    struct hostent *pEnt = 0;
 
     pEnt = gethostbyname(szHostname);
     if (pEnt == 0) return -1;
@@ -122,22 +146,11 @@ int ualds_platform_getfqhostname(char *szHostname, int len)
 
     return 0;
 }
-#endif /* HAVE_OPCUA_STACK */
 
 /** Returns one if the given file exists, zero otherwise. */
 int ualds_platform_fileexists(const char *szFile)
 {
-    FILE *f = fopen(szFile, "r");
-    if (f)
-    {
-        fclose(f);
-    }
-    else
-    {
-        if (errno == ENOENT) return 0;
-    }
-
-    return 1;
+    return GetFileAttributesA(szFile) != INVALID_FILE_ATTRIBUTES;
 }
 
 /** Windows specific function for converting an error code from GetLastError()
@@ -151,51 +164,19 @@ void ualds_platform_errorstring(DWORD err, TCHAR *szMessage, size_t len)
 
 int ualds_platform_rm(char *szFilePath)
 {
-    return unlink(szFilePath);
+    return DeleteFileA(szFilePath) ? 0 : -1;
 }
 
-int ualds_platform_mkdir(char *szFilePath, uint8_t mode)
+int ualds_platform_mkdir(char *szFilePath, int mode)
 {
-    BOOL bCreated;
+	/* Not supported on windows - return failure to caller */
+    return -1;
+}
 
-    UALDS_UNUSED(mode); /* not used on windows */
-
-    /* TODO */
-    bCreated = CreateDirectoryA(szFilePath, NULL);
-    if (bCreated == FALSE) return -1;
+int ualds_platform_mkpath(char *szFilePath)
+{
+	/* Not supported - do as if making path succeeded */
     return 0;
-}
-
-int ualds_platform_mkpath(char *szFilePath, uint8_t mode)
-{
-    char *path = strdup(szFilePath);
-    int ret = 0;
-    char *szFind = path;
-    char *szFindNext = szFind;
-
-    UALDS_UNUSED(mode); /* not used on windows */
-
-    /* create parent directories */
-    while ((ret == 0 || errno == EEXIST) && (szFindNext = strchr(szFind, '/')) != 0)
-    {
-        if (szFindNext != szFind)
-        {
-            *szFindNext = 0;   /* replace '/' with \0 */
-            /* TODO: ret = mkdir(path, mode); */
-            *szFindNext = '/'; /* restore '/' */
-        }
-        szFind = szFindNext + 1;
-    }
-    /* create last dir */
-    if (ret == 0 || errno == EEXIST)
-    {
-        /* TODO: */
-        //ret = mkdir(path, mode);
-    }
-
-    free(path);
-
-    return ret;
 }
 
 UALDS_FILE* ualds_platform_fopen(const char *path, const char *mode)

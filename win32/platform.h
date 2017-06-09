@@ -85,6 +85,10 @@ struct ualds_dirent
     unsigned char d_type;
 };
 
+#define UALDS_S_IRWXU 0x1
+#define UALDS_S_IRWXG 0x2
+#define UALDS_S_IRWXO 0x4
+
 #define UALDS_UNUSED(xParameter) (void)(xParameter)
 
 /* Detecting the size of time_t on Windows is really complicated.
@@ -117,7 +121,7 @@ struct ualds_dirent
 # define TTINTTYPE unsigned int
 # else
 /* time_t is 64bit */
-# define PRITT "uI64"
+# define PRITT "llu"
 # define TTINTTYPE unsigned __int64
 # endif
 #else
@@ -128,19 +132,23 @@ struct ualds_dirent
 
 int ualds_platform_initialize();
 void ualds_platform_cleanup();
+int ualds_platform_gethostbyname(const char* host, char* fqdn, int len);
 int ualds_platform_getfqhostname(char *szHostname, int len);
 int ualds_platform_fileexists(const char *szFile);
 int ualds_platform_drop_privileges();
 void ualds_platform_getconfigfile_path(char *szFilePath, size_t len);
 
 #define UALDS_FILE FILE
+int ualds_platform_rename(const char* from, const char* to);
 int ualds_platform_rm(char *szFilePath);
-int ualds_platform_mkdir(char *szFilePath, uint8_t mode);
-int ualds_platform_mkpath(char *szFilePath, uint8_t mode);
+int ualds_platform_mkdir(char *szFilePath, int mode);
+int ualds_platform_mkpath(char *szFilePath);
 UALDS_FILE* ualds_platform_fopen(const char *path, const char *mode);
 int ualds_platform_fclose(UALDS_FILE *fp);
 size_t ualds_platform_fread(void *ptr, size_t size, size_t nmemb, UALDS_FILE *fp);
 size_t ualds_platform_fwrite(const void *ptr, size_t size, size_t nmemb, UALDS_FILE *fp);
+// int ualds_platform_fprintf(UALDS_FILE *fp, const char* fmt, ...);
+#define ualds_platform_fprintf fprintf
 int ualds_platform_stat(const char *path, struct ualds_stat *buf);
 int ualds_platform_fstat(UALDS_FILE *fp, struct ualds_stat *buf);
 int ualds_platform_scandir(const char *dirp, struct ualds_dirent ***namelist,
@@ -149,6 +157,8 @@ int ualds_platform_scandir(const char *dirp, struct ualds_dirent ***namelist,
 
 void ualds_platform_errorstring(DWORD err, TCHAR *szMessage, size_t len);
 void ualds_platform_getapplicationpath(char *szFilePath, size_t len);
+void ualds_platform_getcwd(char *szFilePath, size_t len);
+void ualds_platform_sleep(int seconds);
 
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t len);
