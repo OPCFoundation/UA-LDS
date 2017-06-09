@@ -1,2 +1,0 @@
-Before building the LDS the stack respective openssl needs to be already compiled for the desired target.
-For details on how to build the stack please refer to the ANSI C Stack readme file.

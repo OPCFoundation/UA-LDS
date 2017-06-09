@@ -24,9 +24,9 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
  * CMake version 3.6.2 or later.
  * OpenSSL 1.0.2j: https://www.openssl.org/source/
  * Windows:
-    - Mdns/dnssd (Multicast Domain Name System) client library (included)
+    - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
  * Linux:
-    - Avahi-client library 0.62 or later (e.g. through libavahi-client-dev package)
+    - Avahi-client library 0.61 or later (e.g. through libavahi-compat-libdnssd-dev package)
  
 ## Building the LDS
 
@@ -40,7 +40,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 ## Runtime Dependencies
 
  * Windows: Bonjour Service (576.30.4)
- * Linux: Avahi Daemon
+ * Linux: Avahi Daemon (0.61 or later)
 
 After a successful build binary files will be in <build-folder>\bin\[config] and should work as is.
 
