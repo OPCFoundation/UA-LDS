@@ -127,12 +127,9 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
             /* ignore IsOnline if SemaphoreFilePath is set */
             if (OpcUa_String_StrLen(&pRequest->Server.SemaphoreFilePath) > 0)
             {
-                FILE *f = fopen(OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath), "r");
-                if (f)
+                if (ualds_platform_fileexists(OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath)))
                 {
-                    /* file exists */
                     bIsOnline = OpcUa_True;
-                    fclose(f);
                 }
                 else
                 {
@@ -237,7 +234,9 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 /* unregister */
                 ualds_log(UALDS_LOG_INFO, "Unregistering server %s.", pszServerUri);
                 ualds_settings_removegroup(pszServerUri);
+#ifdef HAVE_HDS
                 ualds_zeroconf_removeRegistration(pszServerUri);
+#endif
                 ualds_settings_flush();
                 ualds_expirationcheck();
             }

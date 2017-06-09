@@ -85,6 +85,8 @@ OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, c
     OpcUa_P_OpenSSL_CertificateStore_Config oldPkiConfig;
     OpcUa_PKIProvider                       oldPkiProvider;
     OpcUa_Handle                            hCertificateStore = OpcUa_Null;
+    char                                    oldTrustListPath[MAX_PATH];
+    const char *                            root;
 
     OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_old");
 
@@ -96,7 +98,16 @@ OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, c
 
     oldPkiConfig.PkiType = OpcUa_OpenSSL_PKI;
 
-    oldPkiConfig.CertificateTrustListLocation = "C:\\ProgramData\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs";
+    root = getenv("ALLUSERSPROFILE");
+    if (root)
+    {
+        /* Fall back to fixed path */
+        root = "C:\\ProgramData";
+    }
+    strcpy(oldTrustListPath, root);
+    strcat(oldTrustListPath, "\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs");
+
+    oldPkiConfig.CertificateTrustListLocation = oldTrustListPath;
     oldPkiConfig.CertificateRevocationListLocation = newCertificateStorePathCrl;
     oldPkiConfig.CertificateUntrustedListLocation = newCertificateStorePathRejected;
 

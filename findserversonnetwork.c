@@ -39,8 +39,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <log.h>
 #include <opcua_p_socket.h>
 
-#include <WinSock.h>
-
 static OpcUa_List g_findServersSocketList;
 
 typedef enum _ualds_contextType
@@ -124,26 +122,6 @@ void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrows
             {
                 if (OpcUa_StrnCmpA(g_pszServiceSchemes[i], OpcUa_String_GetRawString(&pResolveContext->record.DiscoveryUrl), OpcUa_StrLenA(g_pszServiceSchemes[i])) == 0)
                 {
-                    {
-                        // remove element from g_findServersSocketList
-                        OpcUa_List_Enter(&g_findServersSocketList);
-                        OpcUa_List_ResetCurrent(&g_findServersSocketList);
-                        MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
-                        while (socketCallbackStruct)
-                        {
-                            DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
-                            if ((serviceRef == OpcUa_Null) || (socketCallbackStruct->context == pResolveContext))
-                            {
-                                OpcUa_Free(socketCallbackStruct);
-                                OpcUa_List_DeleteCurrentElement(&g_findServersSocketList);
-                                break;
-                            }
-                             
-                            socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
-                        }
-                        OpcUa_List_Leave(&g_findServersSocketList);
-                    }
-
                     /* cancel all outstanding service calls belonging to this service record */
                     if (pResolveContext->sdRef != OpcUa_Null)
                     {
@@ -171,71 +149,61 @@ void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrows
 
 void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
 {
+    fd_set readFDs;
+    struct timeval tv;
+    int fd, status;
+    ualds_genericContext* context;
+    MulticastSocketCallbackStruct* socketCallbackStruct;
+
+
+    /*
+    TODO:
+    This should be combined with zerconf socket callback into one "poll" loop that builds 
+    pollfd or select bitmask from the socket cb list. This would then be driven from main.
+    */
+    
+
+    /* Lock access to shared sdref/fd from server processing thread */
+    OpcUa_Mutex_Lock(g_mutex);
     OpcUa_List_Enter(&g_findServersSocketList);
     OpcUa_List_ResetCurrent(&g_findServersSocketList);
-
-    MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Null;
 
     socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
     while (socketCallbackStruct)
     {
-        if (*shutdown)
+        context = (ualds_genericContext*)socketCallbackStruct->context;
+        if (*shutdown || context == OpcUa_Null || context->sdRef == OpcUa_Null)
         {
-            // exit ASAP
-            OpcUa_List_Leave(&g_findServersSocketList);
-            return;
+            /* browse or resolve failed or was stopped - remove socket from poll list */
+            OpcUa_Free(socketCallbackStruct);
+            OpcUa_List_DeleteCurrentElement(&g_findServersSocketList);
+            socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
+            continue;
         }
 
-        fd_set         readFDs;
-        struct timeval tv;
-
+        fd = DNSServiceRefSockFD(socketCallbackStruct->sdRef);
         FD_ZERO(&readFDs);
-        FD_SET(socketCallbackStruct->fd, &readFDs);
+        FD_SET(fd, &readFDs);
 
         tv.tv_sec = 0;
         tv.tv_usec = 100000;
-
-        int status = select(socketCallbackStruct->fd + 1, &readFDs, NULL, NULL, &tv);
-        ualds_resolveContext* context = (ualds_resolveContext*)socketCallbackStruct->context;
-        if (status == -1)
+        status = select(fd + 1, &readFDs, NULL, NULL, &tv);
+        if (status > 0)
         {
-            //fprintf(stderr, "status == -1\n");
-        }
-        else
-        if (status == 0)
-        {
-            //fprintf(stderr, "status == 0\n");
-        }
-        else
-        if (FD_ISSET(socketCallbackStruct->fd, &readFDs))
-        {
-            int error = DNSServiceProcessResult(socketCallbackStruct->sdRef);
-
-            if (error != kDNSServiceErr_NoError)
+            if (FD_ISSET(fd, &readFDs))
             {
-
-                ualds_log(UALDS_LOG_ERR, "ualds_findserversonnetwork_socketEventCallback: DNSServiceProcessResult returned error %i", error);
-                /*if (pResolveContext)
+                int error = DNSServiceProcessResult(socketCallbackStruct->sdRef);
+                if (error != kDNSServiceErr_NoError)
                 {
-                    OpcUa_Socket_Close(context->uaSocket);
-                    DNSServiceRefDeallocate(context->sdRef);
-                    context->uaSocket = OpcUa_Null;
-                    context->sdRef = OpcUa_Null;
-
-                    // when cancelling a Browse call, remove according entries in service list
-                    if (context->contextType == ContextType_Browse)
-                    {
-                        ualds_findserversonnetwork_removeServiceEntries((ualds_browseContext*)pResolveContext);
-                    }
-                }*/
-                //break;
+                    ualds_log(UALDS_LOG_ERR, "ualds_findserversonnetwork_socketEventCallback: DNSServiceProcessResult returned error %i", error);
+                }
             }
         }
-
         socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
     }
 
     OpcUa_List_Leave(&g_findServersSocketList);
+    OpcUa_Mutex_Unlock(g_mutex);
 }
 
 /* async DNSService callback for browse result resolving */
@@ -290,7 +258,11 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
     }
 
     char szPort[40] = { 0 };
+#if OPCUA_USE_SAFE_FUNCTIONS
     OpcUa_SnPrintfA(szPort, 40, 40, ":%hu", hostOrderPort);
+#else
+    OpcUa_SnPrintfA(szPort, 40, ":%hu", hostOrderPort);
+#endif
     OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
         OpcUa_String_FromCString(szPort),
         OPCUA_STRING_LENDONTCARE);
@@ -497,66 +469,17 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
             /* process results */
             if (retDnssd == kDNSServiceErr_NoError)
             {
-                OpcUa_StatusCode uStatus = OpcUa_Good;
-                int fd = DNSServiceRefSockFD(pResolveContext->sdRef);
-
-               fd_set         readFDs;
-               struct timeval tv;
-
-               {
-                   FD_ZERO(&readFDs);
-                   FD_SET(fd, &readFDs);
-
-                   tv.tv_sec = 0;
-                   tv.tv_usec = 100000;
-
-                   int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
-
-                   if (status == -1)
-                   {
-                       //fprintf(stderr, "status == -1\n");
-                       //break;
-                   }
-                   else
-                   if (status == 0)
-                   {
-                       //fprintf(stderr, "status == 0\n");
-                       //break;
-                   }
-                   else
-                   if (FD_ISSET(fd, &readFDs))
-                   {
-                       int error = DNSServiceProcessResult(pResolveContext->sdRef);
-
-                       if (error != kDNSServiceErr_NoError)
-                       {
-                           ualds_log(UALDS_LOG_ERR, "ualds_findserversonnetwork_socketEventCallback: DNSServiceProcessResult returned error %i", retDnssd);
-                           OpcUa_Socket_Close(pResolveContext->uaSocket);
-                           DNSServiceRefDeallocate(pResolveContext->sdRef);
-                           pResolveContext->uaSocket = OpcUa_Null;
-                           pResolveContext->sdRef = OpcUa_Null;
-
-                           /* when cancelling a Browse call, remove according entries in service list */
-                           if (pResolveContext->contextType == ContextType_Browse)
-                           {
-                               ualds_findserversonnetwork_removeServiceEntries((ualds_browseContext*)pResolveContext);
-                           }
-                           //break;
-                           goto Error;
-                       }
-                   }
-               }
-
-               if (pResolveContext->sdRef)
-               {
-                   MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
-                   socketCallbackStruct->fd = fd;
-                   socketCallbackStruct->sdRef = pResolveContext->sdRef;
-                   socketCallbackStruct->context = pResolveContext;
-                   OpcUa_List_Enter(&g_findServersSocketList);
-                   uStatus = OpcUa_List_AddElementToEnd(&g_findServersSocketList, socketCallbackStruct);
-                   OpcUa_List_Leave(&g_findServersSocketList);
-               }
+                if (pResolveContext->sdRef)
+                {
+                    MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
+                    socketCallbackStruct->sdRef = pResolveContext->sdRef;
+                    socketCallbackStruct->context = pResolveContext;
+   
+                    /* Lock is not needed - called on poll thread so just add to end and be done with it... */
+                    /* OpcUa_List_Enter(&g_findServersSocketList); */
+                    uStatus = OpcUa_List_AddElementToEnd(&g_findServersSocketList, socketCallbackStruct);
+                    /* OpcUa_List_Leave(&g_findServersSocketList); */
+                }
             }
             else
             {
@@ -607,26 +530,6 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
             if (OpcUa_StrCmpA(serviceName, OpcUa_String_GetRawString(&pResolveContext->record.ServerName)) == 0 &&
                 OpcUa_StrnCmpA(szDiscoveryUrl, OpcUa_String_GetRawString(&pResolveContext->record.DiscoveryUrl), strlen(szDiscoveryUrl)) == 0)
             {
-                {
-                    // remove element from g_findServersSocketList
-                    OpcUa_List_Enter(&g_findServersSocketList);
-                    OpcUa_List_ResetCurrent(&g_findServersSocketList);
-                    MulticastSocketCallbackStruct* socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_findServersSocketList);
-                    while (socketCallbackStruct)
-                    {
-                        DNSServiceRef* serviceRef = (DNSServiceRef*)socketCallbackStruct->sdRef;
-                        if ((serviceRef == OpcUa_Null) || (socketCallbackStruct->context == pResolveContext))
-                        {
-                            OpcUa_Free(socketCallbackStruct);
-                            OpcUa_List_DeleteCurrentElement(&g_findServersSocketList);
-                            break;
-                        }
-
-                        socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_findServersSocketList);
-                    }
-                    OpcUa_List_Leave(&g_findServersSocketList);
-                }
-
                 /* cancel all outstanding service calls belonging to this service record */
                 if (pResolveContext->sdRef != OpcUa_Null)
                 {
@@ -692,57 +595,9 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_V
 
             if (retDnssd == kDNSServiceErr_NoError)
             {
-                int fd = DNSServiceRefSockFD(g_browseContexts[i].sdRef);
-
-                fd_set         readFDs;
-                struct timeval tv;
-
-                {
-                    FD_ZERO(&readFDs);
-                    FD_SET(fd, &readFDs);
-
-                    tv.tv_sec = 0;
-                    tv.tv_usec = 100000;
-
-                    int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
-
-                    if (status == -1)
-                    {
-                        //fprintf(stderr, "status == -1\n");
-                        //break;
-                    }
-                    else
-                    if (status == 0)
-                    {
-                        //fprintf(stderr, "status == 0\n");
-                    }
-                    else
-                    if (FD_ISSET(fd, &readFDs))
-                    {
-                        int error = DNSServiceProcessResult(g_browseContexts[i].sdRef);
-
-                        if (error != kDNSServiceErr_NoError)
-                        {
-                            ualds_log(UALDS_LOG_ERR, "ualds_findserversonnetwork_socketEventCallback: DNSServiceProcessResult returned error %i", retDnssd);
-                            OpcUa_Socket_Close(g_browseContexts[i].uaSocket);
-                            DNSServiceRefDeallocate(g_browseContexts[i].sdRef);
-                            g_browseContexts[i].uaSocket = OpcUa_Null;
-                            g_browseContexts[i].sdRef = OpcUa_Null;
-
-                            /* when cancelling a Browse call, remove according entries in service list */
-                            if (g_browseContexts[i].contextType == ContextType_Browse)
-                            {
-                                ualds_findserversonnetwork_removeServiceEntries((ualds_browseContext*)&g_browseContexts[i]);
-                            }
-                            break;
-                        }
-                    }
-                }
-
                 if (g_browseContexts[i].sdRef)
                 {
                     MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
-                    socketCallbackStruct->fd = fd;
                     socketCallbackStruct->sdRef = g_browseContexts[i].sdRef;
                     socketCallbackStruct->context = &g_browseContexts[i];
 
@@ -807,7 +662,7 @@ OpcUa_StatusCode ualds_findserversonnetwork_start_listening()
 
         OpcUa_Mutex_Unlock(g_mutex);
 
-        /* call ualds_zeroconf_registerInternal manually on startup */
+        /* First ever browse - unlock mutex we internal browse will lock it again */
         ualds_findserversonnetwork_start_internal(OpcUa_Null, OpcUa_Null, 0);
 
         OpcUa_Mutex_Lock(g_mutex);

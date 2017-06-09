@@ -128,14 +128,14 @@ OpcUa_StatusCode ualds_getendpoints(
 
                         OpcUa_EndpointDescription_Initialize(&pResponse->Endpoints[index]);
                         /* fill endpoint url */
-                        OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].EndpointUrl, pEP[i].szUrl);
+                        OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].EndpointUrl, (const OpcUa_StringA)pEP[i].szUrl);
                         /* fill application description */
                         OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].Server.ApplicationName.Locale, "en-US");
-                        OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].Server.ApplicationName.Text, ualds_applicationname("en-US"));
+                        OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].Server.ApplicationName.Text, (const OpcUa_StringA)ualds_applicationname("en-US"));
                         strlcpy(szApplicationUri, ualds_serveruri(), UALDS_CONF_MAX_URI_LENGTH);
                         replace_string(szApplicationUri, sizeof(szApplicationUri), "[gethostname]", szHostname);
                         OpcUa_String_AttachCopy(&pResponse->Endpoints[index].Server.ApplicationUri, szApplicationUri);
-                        OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].Server.ProductUri, ualds_producturi());
+                        OpcUa_String_AttachReadOnly(&pResponse->Endpoints[index].Server.ProductUri, (const OpcUa_StringA)ualds_producturi());
                         pResponse->Endpoints[index].Server.ApplicationType = OpcUa_ApplicationType_DiscoveryServer;
 
 						OpcUa_Mutex_Lock(g_mutex);

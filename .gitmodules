@@ -1,3 +1,6 @@
 [submodule "stack"]
 	path = stack
 	url = https://github.com/OPCFoundation/UA-AnsiC
+[submodule "dnssd"]
+	path = dnssd
+	url = https://github.com/marcschier/dnssd.git

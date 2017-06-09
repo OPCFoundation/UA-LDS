@@ -207,7 +207,7 @@ static char *trim(char *szText)
     iLen--;
 
     /* remove ending white spaces */
-    while (iLen >= 0 && (szText[iLen] == ' ' || szText[iLen] == '\t' || szText[iLen] == '\n'))
+    while (iLen >= 0 && (szText[iLen] == ' ' || szText[iLen] == '\t' || szText[iLen] == '\n' || szText[iLen] == '\r'))
     {
         iLen--;
     }
@@ -353,7 +353,7 @@ static int UaServer_FSBE_FindSection(FileSettings *pFS, const char *szSection)
 static int UaServer_FSBE_ParseConfigFile()
 {
     FileSettings *pFS = &g_settings;
-    FILE *f = fopen(pFS->szPath, "r");
+    UALDS_FILE *f = ualds_platform_fopen(pFS->szPath, "r");
     char szLine[4096];
     char *pszSep, *pszKey, *pszValue;
     int iLine = 0;
@@ -383,8 +383,24 @@ static int UaServer_FSBE_ParseConfigFile()
             }
             continue;
         }
+
+        len = strlen(szLine);
+        /* remove trailing whitespace and line breaks */
+        while (len > 0)
+        {
+            if (szLine[len - 1] != '\r' &&
+                szLine[len - 1] != '\n' &&
+                szLine[len - 1] != '\t' &&
+                szLine[len - 1] != ' ')
+            {
+                break;
+            }
+            szLine[len - 1] = 0;
+            len--;
+        }
+
         /* skip empty lines */
-        if (szLine[0] == '\n')
+        if (len == 0)
         {
             pEntry = UaServer_FSBE_AddEmptyLine(pFS);
             if (pEntry)
@@ -398,14 +414,6 @@ static int UaServer_FSBE_ParseConfigFile()
                 break;
             }
             continue;
-        }
-
-        len = strlen(szLine);
-        /* remove trailing \n */
-        if (szLine[len-1] == '\n')
-        {
-            szLine[len-1] = 0;
-            len--;
         }
 
         /* parse section names */
@@ -455,7 +463,7 @@ static int UaServer_FSBE_ParseConfigFile()
         }
     }
 
-    fclose(f);
+    ualds_platform_fclose(f);
 
     /* reset current group */
     pFS->CurrentGroup = -1;
@@ -466,7 +474,7 @@ static int UaServer_FSBE_ParseConfigFile()
 static int UaServer_FSBE_WriteConfigFile()
 {
     FileSettings *pFS = &g_settings;
-    FILE *f = fopen(pFS->szPath, "w");
+    UALDS_FILE *f = ualds_platform_fopen(pFS->szPath, "w");
     int i, j;
 
     if (f)
@@ -479,13 +487,13 @@ static int UaServer_FSBE_WriteConfigFile()
             switch (pFS->pEntries[i].type)
             {
             case KeyValuePair:
-                fprintf(f, "%s = %s\n", pFS->pEntries[i].pszKey, pFS->pEntries[i].pszValue);
+                ualds_platform_fprintf(f, "%s = %s\n", pFS->pEntries[i].pszKey, pFS->pEntries[i].pszValue);
                 break;
             case CommentLine:
-                fprintf(f, "%s", pFS->pEntries[i].pszKey);
+                ualds_platform_fprintf(f, "%s", pFS->pEntries[i].pszKey);
                 break;
             case EmptyLine:
-                fprintf(f, "\n");
+                ualds_platform_fprintf(f, "\n");
                 break;
             default:
                 break;
@@ -497,7 +505,7 @@ static int UaServer_FSBE_WriteConfigFile()
         {
             if (pFS->pEntries[i].type == Section)
             {
-                fprintf(f, "[%s]\n", pFS->pEntries[i].pszKey);
+                ualds_platform_fprintf(f, "[%s]\n", pFS->pEntries[i].pszKey);
 
                 /* write all entries for this section */
                 for (j=0; j<pFS->numEntries; j++)
@@ -507,13 +515,13 @@ static int UaServer_FSBE_WriteConfigFile()
                     switch (pFS->pEntries[j].type)
                     {
                     case KeyValuePair:
-                        fprintf(f, "%s = %s\n", pFS->pEntries[j].pszKey, pFS->pEntries[j].pszValue);
+                        ualds_platform_fprintf(f, "%s = %s\n", pFS->pEntries[j].pszKey, pFS->pEntries[j].pszValue);
                         break;
                     case CommentLine:
-                        fprintf(f, "%s", pFS->pEntries[j].pszKey);
+                        ualds_platform_fprintf(f, "%s", pFS->pEntries[j].pszKey);
                         break;
                     case EmptyLine:
-                        fprintf(f, "\n");
+                        ualds_platform_fprintf(f, "\n");
                         break;
                     default:
                         break;
@@ -521,7 +529,7 @@ static int UaServer_FSBE_WriteConfigFile()
                 }
             }
         }
-        fclose(f);
+        ualds_platform_fclose(f);
     }
 
     return 0;
