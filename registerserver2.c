@@ -222,10 +222,12 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 }
 
                 ualds_settings_endgroup();
+#ifdef HAVE_HDS
                 if (bExists == 0)
                 {
                     ualds_zeroconf_addRegistration(pszServerUri);
                 }
+#endif
 
                 ualds_settings_flush();
             }
