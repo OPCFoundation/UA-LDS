@@ -757,6 +757,7 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
     OpcUa_EncodeableType                *pResponseType = 0;
     OpcUa_StatusCode                     uStatus = OpcUa_Good;
     OpcUa_UInt32                         i;
+    OpcUa_Boolean                        bIncludeRecord;
     UALDS_UNUSED(pRequestType);
 
     OpcUa_ReturnErrorIfArgumentNull(ppRequest);
@@ -782,54 +783,59 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
             while (pResolveContext)
             {
-                //check if DiscoveryUrl is ready
+                // check if DiscoveryUrl is ready
                 if ( (OpcUa_String_IsNull(&(pResolveContext->record.DiscoveryUrl)) == OpcUa_True) ||
                     (OpcUa_String_IsEmpty(&(pResolveContext->record.DiscoveryUrl)) == OpcUa_True))
                 {
-                    pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
-                    continue;
+                    bIncludeRecord = OpcUa_False;
                 }
-                //check if DiscoveryUrl is ready
-                for (i = 0; i < g_noOfServiceTypes; i++)
+                else 
                 {
-                    if (OpcUa_StrnCmpA(g_pszServiceSchemes[i], OpcUa_String_GetRawString(&pResolveContext->record.DiscoveryUrl), 
-                               OpcUa_String_StrLen(&pResolveContext->record.DiscoveryUrl)) == 0)
+                    bIncludeRecord = OpcUa_True;
+
+                    // check if DiscoveryUrl is not just the scheme, but has a resolved name...
+                    for (i = 0; i < g_noOfServiceTypes; i++)
                     {
-                        pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
-                        continue;
+                        if (OpcUa_StrnCmpA(g_pszServiceSchemes[i], OpcUa_String_GetRawString(&pResolveContext->record.DiscoveryUrl),
+                            OpcUa_String_StrLen(&pResolveContext->record.DiscoveryUrl)) == 0)
+                        {
+                            ualds_log(UALDS_LOG_DEBUG, "ualds_findserversonnetwork: skip record as discovery url is not set.");
+                            bIncludeRecord = OpcUa_False;
+                            break;
+                        }
                     }
                 }
                 
-                OpcUa_Boolean bIncludeRecord = OpcUa_True;
-
-                if (pRequest->StartingRecordId != 0 &&
-                    pResolveContext->record.RecordId < pRequest->StartingRecordId)
+                if (bIncludeRecord != OpcUa_False)
                 {
-                    ualds_log(UALDS_LOG_DEBUG, "ualds_findserversonnetwork: skip record as StartingRecordId is set (%u)", pRequest->StartingRecordId);
-                    pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
-                    continue;
-                }
-
-                if (pRequest->NoOfServerCapabilityFilter > 0)
-                {
-                    OpcUa_Int32 iFilter = 0, iCap = 0;
-                    for (iFilter = 0; iFilter < pRequest->NoOfServerCapabilityFilter; iFilter++)
+                    if (pRequest->StartingRecordId != 0 &&
+                        pResolveContext->record.RecordId < pRequest->StartingRecordId)
                     {
-                        OpcUa_Boolean bFoundCap = OpcUa_False;
-                        OpcUa_String *pFilter = &pRequest->ServerCapabilityFilter[iFilter];
-                        for (iCap = 0; iCap < pResolveContext->record.NoOfServerCapabilities; iCap++)
+                        ualds_log(UALDS_LOG_DEBUG, "ualds_findserversonnetwork: skip record as StartingRecordId is set (%u)", pRequest->StartingRecordId);
+                        bIncludeRecord = OpcUa_False;
+                    }
+
+                    else if (pRequest->NoOfServerCapabilityFilter > 0)
+                    {
+                        OpcUa_Int32 iFilter = 0, iCap = 0;
+                        for (iFilter = 0; iFilter < pRequest->NoOfServerCapabilityFilter; iFilter++)
                         {
-                            OpcUa_String *pCap = &pResolveContext->record.ServerCapabilities[iCap];
-                            if (OpcUa_String_StrnCmp(pFilter, pCap, OPCUA_STRING_LENDONTCARE, OpcUa_True) == 0)
+                            OpcUa_Boolean bFoundCap = OpcUa_False;
+                            OpcUa_String *pFilter = &pRequest->ServerCapabilityFilter[iFilter];
+                            for (iCap = 0; iCap < pResolveContext->record.NoOfServerCapabilities; iCap++)
                             {
-                                bFoundCap = OpcUa_True;
+                                OpcUa_String *pCap = &pResolveContext->record.ServerCapabilities[iCap];
+                                if (OpcUa_String_StrnCmp(pFilter, pCap, OPCUA_STRING_LENDONTCARE, OpcUa_True) == 0)
+                                {
+                                    bFoundCap = OpcUa_True;
+                                    break;
+                                }
+                            }
+                            if (bFoundCap == OpcUa_False)
+                            {
+                                bIncludeRecord = OpcUa_False;
                                 break;
                             }
-                        }
-                        if (bFoundCap == OpcUa_False)
-                        {
-                            bIncludeRecord = OpcUa_False;
-                            break;
                         }
                     }
                 }
