@@ -513,6 +513,7 @@ void ualds_zeroconf_init_servers()
 {
     int i;
     int     numServers = 0;
+    OpcUa_UInt32 index;
 
     OpcUa_List_Initialize(&g_lstServers);
 
@@ -542,7 +543,7 @@ void ualds_zeroconf_init_servers()
         ualds_settings_endarray();
         ualds_settings_endgroup();
 
-        for (OpcUa_UInt32 index = 0; index < numURLs; ++index)
+        for (index = 0; index < numURLs; ++index)
         {
             ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
             OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));
@@ -620,11 +621,13 @@ void ualds_zeroconf_stop_registration()
 void ualds_zeroconf_addRegistration(const char *szServerUri)
 {
     int numURLs = 0;
+    int index;
+
     ualds_settings_begingroup(szServerUri);
     ualds_settings_beginreadarray("DiscoveryUrls", &numURLs);
     ualds_settings_endgroup();
 
-    for (int index = 0; index < numURLs; ++index)
+    for (index = 0; index < numURLs; ++index)
     {
         ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
         OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));

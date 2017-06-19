@@ -56,7 +56,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
     OpcUa_RegisterServer2Response *pResponse;
     OpcUa_EncodeableType          *pResponseType = 0;
     OpcUa_StatusCode               uStatus = OpcUa_Good;
-    int i;
+    int i, k;
     int numServers = 0;
     int bExists = 0;
     char szServerUri[UALDS_CONF_MAX_URI_LENGTH];
@@ -192,7 +192,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 ualds_settings_writestring("SemaphoreFilePath", OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath));
                 ualds_settings_writetime_t("UpdateTime", time(0));
 
-                for (int k = 0; k < pRequest->NoOfDiscoveryConfiguration; ++k)
+                for (k = 0; k < pRequest->NoOfDiscoveryConfiguration; ++k)
                 {
                     OpcUa_ExtensionObject* discoveryConfiguration = &pRequest->DiscoveryConfiguration[k];
                     if (discoveryConfiguration && discoveryConfiguration->Encoding == OpcUa_ExtensionObjectEncoding_EncodeableObject)

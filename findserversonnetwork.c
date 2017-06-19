@@ -756,7 +756,7 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
     OpcUa_FindServersOnNetworkResponse  *pResponse;
     OpcUa_EncodeableType                *pResponseType = 0;
     OpcUa_StatusCode                     uStatus = OpcUa_Good;
-
+    OpcUa_UInt32                         i;
     UALDS_UNUSED(pRequestType);
 
     OpcUa_ReturnErrorIfArgumentNull(ppRequest);
@@ -790,7 +790,7 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
                     continue;
                 }
                 //check if DiscoveryUrl is ready
-                for (OpcUa_UInt32 i = 0; i < g_noOfServiceTypes; i++)
+                for (i = 0; i < g_noOfServiceTypes; i++)
                 {
                     if (OpcUa_StrnCmpA(g_pszServiceSchemes[i], OpcUa_String_GetRawString(&pResolveContext->record.DiscoveryUrl), 
                                OpcUa_String_StrLen(&pResolveContext->record.DiscoveryUrl)) == 0)
