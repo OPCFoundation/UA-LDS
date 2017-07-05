@@ -61,6 +61,7 @@ int ualds_platform_getfqhostname(char *szHostname, int len);
 int ualds_platform_fileexists(const char *szFile);
 int ualds_platform_drop_privileges();
 void ualds_platform_getconfigfile_path(char *szFilePath, size_t len);
+int ualds_platform_convertIP4ToHostname(char* host, int len);
 
 #define UALDS_FILE FILE
 #define ualds_platform_rename rename

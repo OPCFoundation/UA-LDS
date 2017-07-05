@@ -98,6 +98,27 @@ void ualds_platform_getconfigfile_path(char *szFilePath, size_t len)
     }
 }
 
+/** Windows specific function for onvert IP4 to hostname .*/
+int ualds_platform_convertIP4ToHostname(char* host, int len)
+{
+    struct hostent *hp;
+    struct in_addr addr = { 0 };
+    addr.s_addr = inet_addr(host);
+    if (addr.s_addr == INADDR_NONE) {
+        return -1;
+    }
+    else
+    {
+        hp = gethostbyaddr((char *)&addr, 4, AF_INET);
+        if (hp == 0) return -1;
+
+        strncpy(host, hp->h_name, len);
+        host[len - 1] = 0;
+    }
+    
+    return 0;
+}
+
 /** Windows specific function for retrieving the path the current running executable file .*/
 void ualds_platform_getapplicationpath(char *szFilePath, size_t len)
 {

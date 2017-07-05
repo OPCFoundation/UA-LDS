@@ -60,6 +60,37 @@ static OpcUa_Timer          g_hRegistrationTimer = OpcUa_Null;
 /* list of ualds_registerContext representing servers announced via zeroconf */
 static OpcUa_List           g_lstServers;
 
+int is_Host_IP4Address(const char* host)
+{
+    int a1, b1, c1, d1;
+
+    if (sscanf(host, "%d.%d.%d.%d", &a1, &b1, &c1, &d1) != 4)
+    {
+        return -1;
+    }
+
+    if (a1 < 0 || a1 > 255)
+    {
+        return -1;
+    }
+
+    if (b1 < 0 || b1 > 255)
+    {
+        return -1;
+    }
+
+    if (c1 < 0 || c1 > 255)
+    {
+        return -1;
+    }
+
+    if (d1 < 0 || d1 > 255)
+    {
+        return -1;
+    }
+    return 0;
+}
+
 void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
                                              DNSServiceFlags flags,
                                              DNSServiceErrorType errorCode,
@@ -399,6 +430,21 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         }
         else
         {
+            /* If IP4 => convert it to hostname */
+            int isIP4 = is_Host_IP4Address(szHostName);
+            if (isIP4 == 0)
+            {
+                ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Found IP4: '%s'. Converting it to hostname.",
+                    szHostName);
+                int convertSuccess = ualds_platform_convertIP4ToHostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
+                if (convertSuccess != 0)
+                {
+                    ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_registerInternal: Convert IP4 to hostname failed for '%s'",
+                        szHostName);
+                    return uStatus;
+                }
+            }
+
             /* Make sure we pass a fq host name as registered host or else register or resolve will fail */
             /* Check whether there is a domain label in the name */
             domain = strrchr(szHostName, '.');
