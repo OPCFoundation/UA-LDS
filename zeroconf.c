@@ -354,7 +354,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         char szMDNSServerName[UALDS_CONF_MAX_URI_LENGTH];
         char szServiceName[UALDS_CONF_MAX_URI_LENGTH];
         char szHostName[UALDS_CONF_MAX_URI_LENGTH];
-        char* domain, *registeredHostName;
+        char* domain;
 
         uint16_t port = 0;
         TXTRecordRef txtRecord;
@@ -391,50 +391,43 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
             char hostname[UALDS_CONF_MAX_URI_LENGTH] = {0};
             ualds_platform_getfqhostname(hostname, sizeof(hostname));
             replace_string(szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
+            replace_string(szHostName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
             bOwnRegistration = OpcUa_False;
-            
-            registeredHostName = OpcUa_Null;  /* Causes DNSServiceRegister to use this machine's host name */
-            ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister to register ourselves as '%s'", 
-                szServiceName);
         }
-        else
+        
+        /* Make sure we pass a fq host name as registered host or else register or resolve will fail */
+        /* Check whether there is a domain label in the name */
+        domain = strrchr(szHostName, '.');
+        
+        if (domain && 0 == strcmp(domain, ".local") && domain != strchr(szHostName, '.'))
         {
-            /* Make sure we pass a fq host name as registered host or else register or resolve will fail */
-            /* Check whether there is a domain label in the name */
-            domain = strrchr(szHostName, '.');
-            
-            if (domain && 0 == strcmp(domain, ".local") && domain != strchr(szHostName, '.'))
-            {
-                /* 
-                   Special case:
-                   Some fqdn's end in .local, but rather than being link local they are in effect  
-                   intranet domain names, e.g. foo.bar.local. So if we have more than one label 
-                   (i.e. sub domains), strip the name down to just the node name and make it link local.
-                */
-                domain = strchr(szHostName, '.');
-                *domain = '\0';
-                domain = NULL; /* This will make below add .local to the node name left in szHostName */
-            }
-            
-            /* If no domain labels in host name, make link local fqdn by adding .local domain */
-            if (!domain)
-            {
-                strlcat(szHostName, ".local", UALDS_CONF_MAX_URI_LENGTH);
-            }
-            
-            registeredHostName = szHostName;
-            ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister to register service '%s' on '%s'", 
-                szServiceName, registeredHostName);
+            /* 
+               Special case:
+               Some fqdn's end in .local, but rather than being link local they are in effect  
+               intranet domain names, e.g. foo.bar.local. So if we have more than one label 
+               (i.e. sub domains), strip the name down to just the node name and make it link local.
+            */
+            domain = strchr(szHostName, '.');
+            *domain = '\0';
+            domain = NULL; /* This will make below add .local to the node name left in szHostName */
         }
-
+        
+        /* If no domain labels in host name, make link local fqdn by adding .local domain */
+        if (!domain)
+        {
+            strlcat(szHostName, ".local", UALDS_CONF_MAX_URI_LENGTH);
+        }
+        
         /* register the server at the zeroconf service */
+        ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister to register service '%s' on '%s'", 
+            szServiceName, szHostName);
         retDnssd = DNSServiceRegister(&pRegisterContext->sdRef,
                                       0,
                                       0,
                                       szMDNSServerName,
                                       szServiceName,
                                       OpcUa_Null,
-                                      registeredHostName,
+                                      szHostName,
                                       htons(port),
                                       TXTRecordGetLength(&txtRecord),
                                       TXTRecordGetBytesPtr(&txtRecord),
