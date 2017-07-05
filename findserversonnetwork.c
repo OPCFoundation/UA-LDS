@@ -240,58 +240,21 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
 
     /* fill results */
 
-    char resolvedHostName[UALDS_CONF_MAX_URI_LENGTH];
-    memset(resolvedHostName, 0, UALDS_CONF_MAX_URI_LENGTH);
-    strncpy(resolvedHostName, hosttarget, strlen(hosttarget));
-
-    char dotLocaldot[] = ".local.";
-    int _endsWithDotLocalDot = string_ends_with(resolvedHostName, dotLocaldot);
-    if (_endsWithDotLocalDot == 0)
+    // Mdns/Bonjour adds a dot character at the end of the hosttarget. 
+    // Althow this is a correct hostname, it is not exactly as the original server has registered. So it will be removed.
+    char dot[] = ".";
+    int _endsWithDot = string_ends_with(hosttarget, dot);
+    if (_endsWithDot == 0)
     {
-        // hosttarget == LABELS.local.
-        memset(resolvedHostName, 0, UALDS_CONF_MAX_URI_LENGTH);
-        strncpy(resolvedHostName, hosttarget, strlen(hosttarget) - strlen(dotLocaldot));
-
-        int retCode = ualds_platform_gethostbyname(resolvedHostName, resolvedHostName, UALDS_CONF_MAX_URI_LENGTH);
-        if (retCode == 0)
-        {
-            // hosttarget == myhostname.local.
-
-            memset(resolvedHostName, 0, UALDS_CONF_MAX_URI_LENGTH);
-            strncpy(resolvedHostName, hosttarget, strlen(hosttarget) - strlen(dotLocaldot));
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
-                OPCUA_STRING_LENDONTCARE);
-        }
-        else
-        {
-            // hosttarget == myhostname.company.local. (This is for older LDS versions)
-            // Mdns/Bonjour adds a dot character at the end of the hosttarget. 
-            // Althow this is a correct hostname, it is not exactly as the original server has registered. So it will be removed.
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
-                strlen(hosttarget) - strlen("."));
-        }
+        OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+            OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
+            strlen(hosttarget) - strlen(dot));
     }
     else
     {
-        // hosttarget == myhostname. (This is for older LDS versions)
-        char dot[] = ".";
-        int _endsWithDot = string_ends_with(resolvedHostName, dot);
-        if (_endsWithDot == 0)
-        {
-            // Mdns/Bonjour adds a dot character at the end of the hosttarget. 
-            // Althow this is a correct hostname, it is not exactly as the original server has registered. So it will be removed.
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
-                strlen(resolvedHostName) - strlen(dot));
-        }
-        else
-        {
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
-                OPCUA_STRING_LENDONTCARE);
-        }
+        OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+            OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
+            OPCUA_STRING_LENDONTCARE);
     }
 
     char szPort[40] = { 0 };
