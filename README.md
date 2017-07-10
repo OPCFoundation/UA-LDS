@@ -20,13 +20,14 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
 ## Build Dependencies
 
- * OPC UA Ansi C Stack 1.03.340. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC
- * CMake version 3.6.2 or later.
- * OpenSSL 1.0.2j: https://www.openssl.org/source/
+ * OPC UA Ansi C Stack 1.03.340. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC.
+ * CMake version 3.6.2 or later from https://cmake.org/install/.
  * Windows:
+    - OpenSSL 1.0.2j (or later) -> either built from source or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
     - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
  * Linux:
-    - Avahi-client library 0.61 or later (e.g. through libavahi-compat-libdnssd-dev package)
+    - OpenSSL 1.0.2j (or later) -> (```sudo apt-get install libssl-dev```).
+    - Avahi 0.61 (or later) libdnssd compatibility layer -> (```sudo apt-get install libavahi-compat-libdnssd-dev```)
  
 ## Building the LDS
 
