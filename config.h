@@ -30,11 +30,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define xstr(s) str(s)
 #define str(s) #s
 
+#include "buildversion.h"
+
 /* define version information */
 #define UALDS_CONF_VERSION_MAJOR 1
 #define UALDS_CONF_VERSION_MINOR 03
 #define UALDS_CONF_VERSION_PATCH 341
-#define UALDS_CONF_VERSION_BUILD 0
+#define UALDS_CONF_VERSION_BUILD BUILD_VERSION
 #define UALDS_VERSION_SUFFIX " Release"
 #define UALDS_CONF_VERSION_STRING xstr(UALDS_CONF_VERSION_MAJOR) "." \
     xstr(UALDS_CONF_VERSION_MINOR) "." xstr(UALDS_CONF_VERSION_PATCH) "." \
