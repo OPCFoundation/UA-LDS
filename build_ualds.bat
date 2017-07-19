@@ -26,7 +26,6 @@ CALL build_win32.bat
 
 ECHO STEP 4) Building LDS
 cd %SRCDIR%
-IF %BUILD_NUMBER% EQU "" SET BUILD_NUMBER=0
 IF %BUILD_NUMBER% GTR 0 ECHO #define BUILD_NUMBER %BUILD_NUMBER% > buildversion.h
 msbuild ualds.sln /p:Configuration=Release
 
