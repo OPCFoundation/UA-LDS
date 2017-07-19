@@ -1116,6 +1116,8 @@ DWORD WINAPI MdsnThreadCallbackProc(LPVOID lpParam)
         ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
         Sleep(100);
     }
+
+	return 0;
 }
 
 /** Main loop of UA LDS service.
