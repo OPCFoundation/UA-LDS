@@ -130,12 +130,9 @@ OpcUa_StatusCode ualds_registerserver(
             /* ignore IsOnline if SemaphoreFilePath is set */
             if (OpcUa_String_StrLen(&pRequest->Server.SemaphoreFilePath) > 0)
             {
-                FILE *f = fopen(OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath), "r");
-                if (f)
+                if (ualds_platform_fileexists(OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath)))
                 {
-                    /* file exists */
                     bIsOnline = OpcUa_True;
-                    fclose(f);
                 }
                 else
                 {
@@ -204,7 +201,6 @@ OpcUa_StatusCode ualds_registerserver(
                     ualds_zeroconf_addRegistration(pszServerUri);
                 }
 #endif
-
                 ualds_settings_flush();
             }
             else

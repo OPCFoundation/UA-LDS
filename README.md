@@ -16,41 +16,56 @@ You must agree to the contributor license agreement before we can accept your ch
 
 OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
+# Building and running the LDS
+
 ## Build Dependencies
 
- * OPC UA Ansi C Stack 1.03.340. Please review official site page http://opcfoundation.github.io/UA-AnsiC
- * OpenSSL 1.0.2j: https://www.openssl.org/source/
- * Mdns (Multicast Domain Name System) library
- 
-## Runtime Dependencies
-
- * Bonjour Service (576.30.4)
+ * OPC UA Ansi C Stack 1.03.340. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC.
+ * CMake version 3.6.2 or later from https://cmake.org/install/.
+ * Windows:
+    - OpenSSL 1.0.2j (or later) -> either built from source or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
+    - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
+ * Linux:
+    - OpenSSL 1.0.2j (or later) -> (```sudo apt-get install libssl-dev```).
+    - Avahi 0.61 (or later) libdnssd compatibility layer -> (```sudo apt-get install libavahi-compat-libdnssd-dev```)
  
 ## Building the LDS
 
-VisualStudio 2013 solution is available for build.
-Before building the LDS, the stack respective openssl must be already compiled for the desired target. Make sure that the proper submodule of the UaStack is extracted in the /stack folder.
-For details on how to build the stack please refer to the ANSI C Stack readme file (https://github.com/OPCFoundation/UA-AnsiC).
+```bash
+- mkdir <build-folder>
+- cd <build-folder>
+- cmake ..
+- cmake --build .
+```
+
+## Runtime Dependencies
+
+ * Windows: Bonjour Service (576.30.4)
+ * Linux: Avahi Daemon (0.61 or later)
+
+After a successful build binary files will be in <build-folder>\bin\[config] and should work as is.
 
 ## Package file structure description
 
-The following tree shows the directory layout as required by the included project:
+The following tree shows the directory layout of this repo:
 
 ```
-- /-- ualds
-- |  |- AnsiCStack               OPC UA Ansi C Stack
-- |    ||- core                  Configuration and utilities
-- |    ||- platforms
-- |      |||- linux              Platform adaption to OpenSSL and linux API
-- |      |||- win32              Platform adaption to OpenSSL and Win32 API
-- |    ||- proxystub
-- |    ||- clientproxy           Client side top level API (optional)
-- |    ||- serverstub            Server side top level API (optional)
-- |    ||- securechannel         OPC UA secure conversation
-- |    ||- stackcore             Base types and interfaces
-- |    ||- transport
-- |      |||- https              HTTPS transport (optional)
-- |      |||- tcp                OPC TCP Binary transport
-- |  |- mdns                     Multicast Domain Name System
-- |  |- ualds                    Local Discovery Server
+- /-- ualds                      LDS platform independent code
+- |  |- stack                    OPC UA Ansi C Stack (https://github.com/OPCFoundation/UA-AnsiC)
+- |    ||- stack
+- |      |||- core                  Configuration and utilities
+- |      |||- platforms
+- |        ||||- linux              Platform adaption to OpenSSL and linux API
+- |        ||||- win32              Platform adaption to OpenSSL and Win32 API
+- |      |||- proxystub
+- |      |||- clientproxy           Client side top level API (optional)
+- |      |||- serverstub            Server side top level API (optional)
+- |      |||- securechannel         OPC UA secure conversation
+- |      |||- stackcore             Base types and interfaces
+- |      |||- transport
+- |        ||||- https              HTTPS transport (optional)
+- |        ||||- tcp                OPC TCP Binary transport
+- |  |- dnssd                    mdnsresponder (Bonjour) client library (Windows)
+- |  |- win32                    Local Discovery Server Windows platform implementation
+- |  |- linux                    Local Discovery Server Linux platform implementation
 ```

@@ -56,7 +56,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
     OpcUa_RegisterServer2Response *pResponse;
     OpcUa_EncodeableType          *pResponseType = 0;
     OpcUa_StatusCode               uStatus = OpcUa_Good;
-    int i;
+    int i, k;
     int numServers = 0;
     int bExists = 0;
     char szServerUri[UALDS_CONF_MAX_URI_LENGTH];
@@ -127,12 +127,9 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
             /* ignore IsOnline if SemaphoreFilePath is set */
             if (OpcUa_String_StrLen(&pRequest->Server.SemaphoreFilePath) > 0)
             {
-                FILE *f = fopen(OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath), "r");
-                if (f)
+                if (ualds_platform_fileexists(OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath)))
                 {
-                    /* file exists */
                     bIsOnline = OpcUa_True;
-                    fclose(f);
                 }
                 else
                 {
@@ -195,7 +192,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 ualds_settings_writestring("SemaphoreFilePath", OpcUa_String_GetRawString(&pRequest->Server.SemaphoreFilePath));
                 ualds_settings_writetime_t("UpdateTime", time(0));
 
-                for (int k = 0; k < pRequest->NoOfDiscoveryConfiguration; ++k)
+                for (k = 0; k < pRequest->NoOfDiscoveryConfiguration; ++k)
                 {
                     OpcUa_ExtensionObject* discoveryConfiguration = &pRequest->DiscoveryConfiguration[k];
                     if (discoveryConfiguration && discoveryConfiguration->Encoding == OpcUa_ExtensionObjectEncoding_EncodeableObject)
@@ -225,10 +222,12 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 }
 
                 ualds_settings_endgroup();
+#ifdef HAVE_HDS
                 if (bExists == 0)
                 {
                     ualds_zeroconf_addRegistration(pszServerUri);
                 }
+#endif
 
                 ualds_settings_flush();
             }
@@ -237,7 +236,9 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                 /* unregister */
                 ualds_log(UALDS_LOG_INFO, "Unregistering server %s.", pszServerUri);
                 ualds_settings_removegroup(pszServerUri);
+#ifdef HAVE_HDS
                 ualds_zeroconf_removeRegistration(pszServerUri);
+#endif
                 ualds_settings_flush();
                 ualds_expirationcheck();
             }

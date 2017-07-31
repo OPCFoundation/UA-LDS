@@ -14,6 +14,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
+#include <stdlib.h>
 #include "zeroconf.h"
 
 /* DNS-SD includes */
@@ -59,6 +60,37 @@ static OpcUa_Timer          g_hRegistrationTimer = OpcUa_Null;
 /* list of ualds_registerContext representing servers announced via zeroconf */
 static OpcUa_List           g_lstServers;
 
+int is_Host_IP4Address(const char* host)
+{
+    int a1, b1, c1, d1;
+
+    if (sscanf(host, "%d.%d.%d.%d", &a1, &b1, &c1, &d1) != 4)
+    {
+        return -1;
+    }
+
+    if (a1 < 0 || a1 > 255)
+    {
+        return -1;
+    }
+
+    if (b1 < 0 || b1 > 255)
+    {
+        return -1;
+    }
+
+    if (c1 < 0 || c1 > 255)
+    {
+        return -1;
+    }
+
+    if (d1 < 0 || d1 > 255)
+    {
+        return -1;
+    }
+    return 0;
+}
+
 void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
                                              DNSServiceFlags flags,
                                              DNSServiceErrorType errorCode,
@@ -96,57 +128,55 @@ void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
 
 void ualds_zeroconf_socketEventCallback(int* shutdown)
 {
+    fd_set readFDs;
+    struct timeval tv;
+    int fd, status;
+    ualds_registerContext* context;
+    MulticastSocketCallbackStruct* socketCallbackStruct;
+
+    /* Need to synchronize access to shared fd/sdref between this main thread
+      and registration thread - the g_lstServers list is convinient for that. */
+    OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_Enter(&g_registerServersSocketList);
     OpcUa_List_ResetCurrent(&g_registerServersSocketList);
-
-    MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Null;
 
     socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
     while (socketCallbackStruct)
     {
-        if (*shutdown)
+        context = (ualds_registerContext*)socketCallbackStruct->context;
+        if (*shutdown || context == OpcUa_Null || context->sdRef == OpcUa_Null)
         {
-            // exit ASAP
-            OpcUa_List_Leave(&g_registerServersSocketList);
-            return;
+            /* previously a registration failed or was stopped - remove socket from poll list */
+            OpcUa_Free(socketCallbackStruct);
+            OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
+            socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetCurrentElement(&g_registerServersSocketList);
+            continue;
         }
 
-        fd_set         readFDs;
-        struct timeval tv;
-
+        fd = DNSServiceRefSockFD(socketCallbackStruct->sdRef);
         FD_ZERO(&readFDs);
-        FD_SET(socketCallbackStruct->fd, &readFDs);
+        FD_SET(fd, &readFDs);
 
         tv.tv_sec = 0;
         tv.tv_usec = 100000;
 
-        int status = select(socketCallbackStruct->fd + 1, &readFDs, NULL, NULL, &tv);
-
-        if (status == -1)
+        status = select(fd + 1, &readFDs, NULL, NULL, &tv);
+        if (status > 0)
         {
-            //fprintf(stderr, "status == -1\n");
-            //break;
-        }
-        else
-        if (status == 0)
-        {
-            //fprintf(stderr, "status == 0\n");
-        }
-        else
-        if (FD_ISSET(socketCallbackStruct->fd, &readFDs))
-        {
-            int error = DNSServiceProcessResult(socketCallbackStruct->sdRef);
-
-            if (error != kDNSServiceErr_NoError)
+            if (FD_ISSET(fd, &readFDs))
             {
-                fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
-                //break;
+                int error = DNSServiceProcessResult(socketCallbackStruct->sdRef);
+                if (error != kDNSServiceErr_NoError)
+                {
+                    ualds_log(UALDS_LOG_ERR, "DNSServiceProcessResult: error == %d\n", error);
+                }
             }
         }
         socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
     }
 
     OpcUa_List_Leave(&g_registerServersSocketList);
+    OpcUa_List_Leave(&g_lstServers);
 }
 
 OpcUa_StatusCode ualds_parse_url(char *szUrl, char **szScheme, char **szHostname, uint16_t *port, char **szPath)
@@ -355,6 +385,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         char szMDNSServerName[UALDS_CONF_MAX_URI_LENGTH];
         char szServiceName[UALDS_CONF_MAX_URI_LENGTH];
         char szHostName[UALDS_CONF_MAX_URI_LENGTH];
+        char* domain, *registeredHostName;
 
         uint16_t port = 0;
         TXTRecordRef txtRecord;
@@ -385,26 +416,71 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
             continue;
         }
 
-        /* replace [gethostname] in own server name */
         if (bOwnRegistration != OpcUa_False)
         {
+            /* replace [gethostname] in own server name */
             char hostname[UALDS_CONF_MAX_URI_LENGTH] = {0};
             ualds_platform_getfqhostname(hostname, sizeof(hostname));
             replace_string(szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
-            replace_string(szHostName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", hostname);
             bOwnRegistration = OpcUa_False;
+            
+            registeredHostName = OpcUa_Null;  /* Causes DNSServiceRegister to use this machine's host name */
+            ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister to register ourselves as '%s'", 
+                szServiceName);
+        }
+        else
+        {
+            /* If IP4 => convert it to hostname */
+            int isIP4 = is_Host_IP4Address(szHostName);
+            if (isIP4 == 0)
+            {
+                ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Found IP4: '%s'. Converting it to hostname.",
+                    szHostName);
+                int convertSuccess = ualds_platform_convertIP4ToHostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
+                if (convertSuccess != 0)
+                {
+                    ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_registerInternal: Convert IP4 to hostname failed for '%s'",
+                        szHostName);
+                    return uStatus;
+                }
+            }
+
+            /* Make sure we pass a fq host name as registered host or else register or resolve will fail */
+            /* Check whether there is a domain label in the name */
+            domain = strrchr(szHostName, '.');
+            
+            if (domain && 0 == strcmp(domain, ".local") && domain != strchr(szHostName, '.'))
+            {
+                /* 
+                   Special case:
+                   Some fqdn's end in .local, but rather than being link local they are in effect  
+                   intranet domain names, e.g. foo.bar.local. So if we have more than one label 
+                   (i.e. sub domains), strip the name down to just the node name and make it link local.
+                */
+                domain = strchr(szHostName, '.');
+                *domain = '\0';
+                domain = NULL; /* This will make below add .local to the node name left in szHostName */
+            }
+            
+            /* If no domain labels in host name, make link local fqdn by adding .local domain */
+            if (!domain)
+            {
+                strlcat(szHostName, ".local", UALDS_CONF_MAX_URI_LENGTH);
+            }
+            
+            registeredHostName = szHostName;
+            ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister to register service '%s' on '%s'", 
+                szServiceName, registeredHostName);
         }
 
         /* register the server at the zeroconf service */
-        ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister");
-
         retDnssd = DNSServiceRegister(&pRegisterContext->sdRef,
                                       0,
                                       0,
                                       szMDNSServerName,
                                       szServiceName,
                                       OpcUa_Null,
-                                      szHostName,
+                                      registeredHostName,
                                       htons(port),
                                       TXTRecordGetLength(&txtRecord),
                                       TXTRecordGetBytesPtr(&txtRecord),
@@ -422,46 +498,10 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         }
         else
         {
-            int fd = DNSServiceRefSockFD(pRegisterContext->sdRef);
-
             pRegisterContext->registrationStatus = RegistrationStatus_Registering;
-
-            fd_set         readFDs;
-            struct timeval tv;
-            FD_ZERO(&readFDs);
-            FD_SET(fd, &readFDs);
-
-            tv.tv_sec = 0;
-            tv.tv_usec = 100000;
-
-            int status = select(fd + 1, &readFDs, NULL, NULL, &tv);
-
-            if (status == -1)
-            {
-                //fprintf(stderr, "status == -1\n");
-                //break;
-            }
-            else
-            if (status == 0)
-            {
-                //fprintf(stderr, "status == 0\n");
-            }
-            else
-            if (FD_ISSET(fd, &readFDs))
-            {
-                int error = DNSServiceProcessResult(pRegisterContext->sdRef);
-
-                if (error != kDNSServiceErr_NoError)
-                {
-                    fprintf(stderr, "DNSServiceProcessResult: error == %d\n", error);
-                    break;
-                }
-            }
-
             if (pRegisterContext->sdRef)
             {
                 MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
-                socketCallbackStruct->fd = fd;
                 socketCallbackStruct->sdRef = pRegisterContext->sdRef;
                 socketCallbackStruct->context = pRegisterContext;
                 OpcUa_List_Enter(&g_registerServersSocketList);
@@ -510,7 +550,6 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
                         OpcUa_List_DeleteCurrentElement(&g_registerServersSocketList);
                         break;
                     }
-
                     socketCallbackStruct = (MulticastSocketCallbackStruct*)OpcUa_List_GetNextElement(&g_registerServersSocketList);
                 }
 
@@ -541,6 +580,7 @@ void ualds_zeroconf_init_servers()
 {
     int i;
     int     numServers = 0;
+    OpcUa_UInt32 index;
 
     OpcUa_List_Initialize(&g_lstServers);
 
@@ -570,7 +610,7 @@ void ualds_zeroconf_init_servers()
         ualds_settings_endarray();
         ualds_settings_endgroup();
 
-        for (OpcUa_UInt32 index = 0; index < numURLs; ++index)
+        for (index = 0; index < numURLs; ++index)
         {
             ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
             OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));
@@ -648,11 +688,13 @@ void ualds_zeroconf_stop_registration()
 void ualds_zeroconf_addRegistration(const char *szServerUri)
 {
     int numURLs = 0;
+    int index;
+
     ualds_settings_begingroup(szServerUri);
     ualds_settings_beginreadarray("DiscoveryUrls", &numURLs);
     ualds_settings_endgroup();
 
-    for (int index = 0; index < numURLs; ++index)
+    for (index = 0; index < numURLs; ++index)
     {
         ualds_registerContext *pRegisterContext = OpcUa_Alloc(sizeof(ualds_registerContext));
         OpcUa_MemSet(pRegisterContext, 0, sizeof(ualds_registerContext));

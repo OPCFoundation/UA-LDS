@@ -1,0 +1,6 @@
+* text=auto
+*.c text
+*.sln text eol=crlf
+*.sh text eol=lf
+*.conf eol=lf
+Dockerfile eol=lf

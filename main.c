@@ -30,7 +30,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <platform.h>
 #include <daemon.h>
 #include <log.h>
+#ifdef _WIN32
 #include <crtdbg.h>
+#endif /* _WIN32 */
 
 void version()
 {
@@ -41,22 +43,43 @@ void version()
 
 void usage(const char *szAppName)
 {
-    fprintf(stderr, "Usage: %s [-c configfile] [-d] [-v] [-i <account>] [-p <password>][-u] [-h] <command>\n", szAppName);
+    fprintf(stderr, "Usage: %s [-h] [-c configfile] [-d] [-v] ", szAppName);
+#ifdef HAVE_SERVICE_REGISTER
+    fprintf(stderr, "[-i <account>] [-p <password>] ");
+#endif
+#ifdef HAVE_SERVICE_UNREGISTER
+    fprintf(stderr, "[-u] ");
+#endif
+#if defined(HAVE_SERVICE_START) || defined(HAVE_SERVICE_STOP) || defined(HAVE_SERVICE_STATUS)
+    fprintf(stderr,"<command>\n");
+#endif
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -d: Debug mode. The server sends verbose output to standard error, "
             "and does not go into background.\n");
     fprintf(stderr, "  -D: No detach. When this options is specified, ualds will not detach "
             "and does not become a daemon (or service on Windows).\n");
     fprintf(stderr, "  -v: Prints version information.\n");
-    fprintf(stderr, "  -i: Installs the UA LDS as service (Windows only). As account you can either specify SYSTEM,\n"
+#ifdef HAVE_SERVICE_REGISTER
+    fprintf(stderr, "  -i: Installs the UA LDS as service. As account you can either specify SYSTEM,\n"
             "      or any other user account. Use option -p to specify a password for the account.\n");
-    fprintf(stderr, "  -p: Specifies password for service account (Windows only).\n");
-    fprintf(stderr, "  -u: Uninstalls the UA LDS service (Windows only).\n");
+    fprintf(stderr, "  -p: Specifies password for service account.\n");
+#endif
+#ifdef HAVE_SERVICE_UNREGISTER
+    fprintf(stderr, "  -u: Uninstalls the UA LDS service.\n");
+#endif
     fprintf(stderr, "  -h: Prints the synopsis and a short description of the possible options.\n");
+#if defined(HAVE_SERVICE_START) || defined(HAVE_SERVICE_STOP) || defined(HAVE_SERVICE_STATUS)
     fprintf(stderr, "Commands:\n");
-    fprintf(stderr, "  start: Starts the Windows service.\n");
-    fprintf(stderr, "  stop: Stops the Windows service.\n");
-    fprintf(stderr, "  status: Prints status information about Windows service.\n");
+#ifdef HAVE_SERVICE_START
+    fprintf(stderr, "  start: Starts the service.\n");
+#endif
+#ifdef HAVE_SERVICE_STOP
+    fprintf(stderr, "  stop: Stops the service.\n");
+#endif
+#ifdef HAVE_SERVICE_STATUS
+    fprintf(stderr, "  status: Prints status information about service.\n");
+#endif
+#endif
 }
 
 int main(int argc, char* argv[])
@@ -76,10 +99,9 @@ int main(int argc, char* argv[])
     LogTarget logtarget = UALDS_CONF_LOG_TARGET;
     LogLevel loglevel = UALDS_CONF_LOG_LEVEL;
 
-#if _DEBUG
+#if defined(_WIN32) && defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(11656); // Comment or un-comment on need basis
-	/*Sleep(10000);*/ /* give some time for attaching with debugger */
 #endif
     
     /* parse commandline arguments */
@@ -131,7 +153,9 @@ int main(int argc, char* argv[])
     }
 
 #if _DEBUG
-    /*Sleep(10000);*/ /* give some time for attaching with debugger */
+    debug = 1;
+    nodetach = 1;
+    /*ualds_platform_sleep(60);*/ /* give some time for attaching with debugger */
 #endif
 
     ualds_platform_initialize();
@@ -202,18 +226,6 @@ int main(int argc, char* argv[])
     /* initialize logger with correct settings */
     ualds_openlog(logtarget, loglevel);
 
-    /* drop privileges when started as root or with SETUID */
-    ret = ualds_platform_drop_privileges();
-    if (ret != 0) {
-        ualds_log(UALDS_LOG_ERR, "Dropping privileges failed.");
-        ualds_closelog();
-        ualds_settings_close();
-        ualds_platform_cleanup();
-        ret = EXIT_FAILURE;
-        ualds_log(UALDS_LOG_NOTICE, "Terminating with exitcode=%i", ret);
-        exit(ret);
-    }
-
     if (install == 1) {
 #ifdef HAVE_SERVICE_REGISTER
 		/* force an unregister first	*/
@@ -252,15 +264,25 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Service status command is not supported on this platform.\n");
         ret = EXIT_FAILURE;
 #endif
-    } else if (nodetach == 0) {
-        /* daemonize / start service */
-        ret = daemonize();
-    } else {
-        /* no detach, run as console application */
-        ret = run();
+    } 
+    
+    if (!install && !uninstall && !start && !stop && !status) {
+        /* drop privileges when started as root or with SETUID */
+        ret = ualds_platform_drop_privileges();
+        if (ret != 0) {
+            ualds_log(UALDS_LOG_ERR, "Dropping privileges failed.");
+            ret = EXIT_FAILURE;
+        }
+        else if (nodetach == 0) {
+            /* daemonize / start service */
+            ret = daemonize();
+        } else {
+            /* no detach, run as console application */
+            ret = run();
+        }
+        ualds_log(UALDS_LOG_NOTICE, "Terminating with exitcode=%i", ret);
     }
 
-    ualds_log(UALDS_LOG_NOTICE, "Terminating with exitcode=%i", ret);
     ualds_closelog();
     ualds_settings_close();
     ualds_platform_cleanup();

@@ -118,7 +118,7 @@ BOOL StartBonjourService()
     {
         lastErrorCode = GetLastError();
         ualds_platform_errorstring(lastErrorCode, szMessage, sizeof(szMessage));
-        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"), UALDS_CONF_SERVICE_NAME);
+        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"));
         ualds_log(UALDS_LOG_ERR, "Error: Could not open Service Control Manager. (Missing Admin privileges). ErrorCode: %S", szMessage);
         return FALSE;
     }
@@ -566,7 +566,7 @@ int ServiceRegister(const char *szUser, const char *szPass)
     hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (hSCM == NULL)
     {
-        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"), UALDS_CONF_SERVICE_NAME);
+        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"));
         return 1;
     }
 
@@ -687,7 +687,7 @@ int ServiceUnregister()
     hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (hSCM == NULL)
     {
-        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"), UALDS_CONF_SERVICE_NAME);
+        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"));
         return 1;
     }
 
@@ -743,13 +743,13 @@ int ServiceStart()
     BOOL successBonjourServiceStart = StartBonjourService();
     if (successBonjourServiceStart == FALSE)
     {
-        _ftprintf(stderr, _T("Error: Could not start Bonjour Service.\n"), UALDS_CONF_SERVICE_NAME);
+        _ftprintf(stderr, _T("Error: Could not start Bonjour Service.\n"));
     }
 
     hSCM = OpenSCManager(NULL, NULL, SERVICE_START);
     if (hSCM == NULL)
     {
-        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"), UALDS_CONF_SERVICE_NAME);
+        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"));
         return 1;
     }
 
@@ -795,7 +795,7 @@ int ServiceStop()
     hSCM = OpenSCManager(NULL, NULL, SERVICE_STOP);
     if (hSCM == NULL)
     {
-        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"), UALDS_CONF_SERVICE_NAME);
+        _ftprintf(stderr, _T("Error: Could not open Service Control Manager. (Missing Admin privileges)\n"));
         return 1;
     }
 
