@@ -259,18 +259,48 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
 
             memset(resolvedHostName, 0, UALDS_CONF_MAX_URI_LENGTH);
             strncpy(resolvedHostName, hosttarget, strlen(hosttarget) - strlen(dotLocaldot));
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
-                OPCUA_STRING_LENDONTCARE);
+
+            char resolvedHostNameToIP4[UALDS_CONF_MAX_URI_LENGTH];
+            memset(resolvedHostNameToIP4, 0, UALDS_CONF_MAX_URI_LENGTH);
+            int retCode = ualds_platform_convertHostnameToIP4(resolvedHostName, resolvedHostNameToIP4);
+            if (retCode == 0)
+            {
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)resolvedHostNameToIP4),
+                    OPCUA_STRING_LENDONTCARE);
+            }
+            else
+            {
+                // this should not happen
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
+                    OPCUA_STRING_LENDONTCARE);
+                ualds_log(UALDS_LOG_ERR, "Couldn't convert hostname %s to IP", resolvedHostName);
+            }
         }
         else
         {
             // hosttarget == myhostname.company.local. (This is for older LDS versions)
             // Mdns/Bonjour adds a dot character at the end of the hosttarget. 
             // Althow this is a correct hostname, it is not exactly as the original server has registered. So it will be removed.
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
-                strlen(hosttarget) - strlen("."));
+
+            char resolvedHostNameToIP4[UALDS_CONF_MAX_URI_LENGTH];
+            memset(resolvedHostNameToIP4, 0, UALDS_CONF_MAX_URI_LENGTH);
+            int retCode = ualds_platform_convertHostnameToIP4(hosttarget, resolvedHostNameToIP4);
+            if (retCode == 0)
+            {
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)resolvedHostNameToIP4),
+                    OPCUA_STRING_LENDONTCARE);
+            }
+            else
+            {
+                // this should not happen
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
+                    strlen(hosttarget) - strlen("."));
+                ualds_log(UALDS_LOG_ERR, "Couldn't convert hostname %s to IP", hosttarget);
+            }
         }
     }
     else
@@ -282,15 +312,44 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
         {
             // Mdns/Bonjour adds a dot character at the end of the hosttarget. 
             // Althow this is a correct hostname, it is not exactly as the original server has registered. So it will be removed.
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
-                strlen(resolvedHostName) - strlen(dot));
+
+            char resolvedHostNameToIP4[UALDS_CONF_MAX_URI_LENGTH];
+            memset(resolvedHostNameToIP4, 0, UALDS_CONF_MAX_URI_LENGTH);
+            int retCode = ualds_platform_convertHostnameToIP4(resolvedHostName, resolvedHostNameToIP4);
+            if (retCode == 0)
+            {
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)resolvedHostNameToIP4),
+                    OPCUA_STRING_LENDONTCARE);
+            }
+            else
+            {
+                // this should not happen
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
+                    strlen(resolvedHostName) - strlen(dot));
+                ualds_log(UALDS_LOG_ERR, "Couldn't convert hostname %s to IP", resolvedHostName);
+            }
         }
         else
         {
-            OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
-                OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
-                OPCUA_STRING_LENDONTCARE);
+            char resolvedHostNameToIP4[UALDS_CONF_MAX_URI_LENGTH];
+            memset(resolvedHostNameToIP4, 0, UALDS_CONF_MAX_URI_LENGTH);
+            int retCode = ualds_platform_convertHostnameToIP4(resolvedHostName, resolvedHostNameToIP4);
+            if (retCode == 0)
+            {
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)resolvedHostNameToIP4),
+                    OPCUA_STRING_LENDONTCARE);
+            }
+            else
+            {
+                // this should not happen
+                OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
+                    OpcUa_String_FromCString((OpcUa_StringA)resolvedHostName),
+                    OPCUA_STRING_LENDONTCARE);
+                ualds_log(UALDS_LOG_ERR, "Couldn't convert hostname %s to IP", resolvedHostName);
+            }
         }
     }
 

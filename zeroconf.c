@@ -445,29 +445,26 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
                 }
             }
 
-            /* Make sure we pass a fq host name as registered host or else register or resolve will fail */
+            /* Make sure we pass hostname.local. as registered host or else register or resolve will fail */
             /* Check whether there is a domain label in the name */
             domain = strrchr(szHostName, '.');
             
-            if (domain && 0 == strcmp(domain, ".local") && domain != strchr(szHostName, '.'))
+            if (domain)
             {
                 /* 
-                   Special case:
-                   Some fqdn's end in .local, but rather than being link local they are in effect  
-                   intranet domain names, e.g. foo.bar.local. So if we have more than one label 
-                   (i.e. sub domains), strip the name down to just the node name and make it link local.
+                   Strip the name down to just the node name and make it link local.
                 */
                 domain = strchr(szHostName, '.');
                 *domain = '\0';
                 domain = NULL; /* This will make below add .local to the node name left in szHostName */
             }
             
-            /* If no domain labels in host name, make link local fqdn by adding .local domain */
+            /* If no domain labels in hostname, make link local by adding .local domain */
             if (!domain)
             {
-                strlcat(szHostName, ".local", UALDS_CONF_MAX_URI_LENGTH);
+                strlcat(szHostName, ".local.", UALDS_CONF_MAX_URI_LENGTH);
             }
-            
+
             registeredHostName = szHostName;
             ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Call DNSServiceRegister to register service '%s' on '%s'", 
                 szServiceName, registeredHostName);

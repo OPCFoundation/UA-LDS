@@ -16,12 +16,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 /* system includes */
 #include <stdio.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <errno.h>
 #include <sys/stat.h>
 /* local includes */
 #include "../config.h"
 #include "service.h"
 #include "platform.h"
+
 
 #ifdef HAVE_VISUAL_LEAK_DETECTOR
 # include <vld.h>
@@ -117,6 +120,43 @@ int ualds_platform_convertIP4ToHostname(char* host, int len)
     }
     
     return 0;
+}
+
+int ualds_platform_convertHostnameToIP4(const char* host, char* ip)
+{
+    struct addrinfo* result;
+    struct addrinfo* res;
+    int ret_error;
+
+    /* resolve the domain name into a list of addresses */
+    ret_error = getaddrinfo(host, NULL, NULL, &result);
+    if (ret_error != 0) {
+        return ret_error;
+    }
+
+    /* loop over all returned results and do inverse lookup */
+    for (res = result; res != NULL; res = res->ai_next) {
+        char hostname[1024];
+        int error = getnameinfo(res->ai_addr, res->ai_addrlen, hostname, 1024, NULL, 0, 0);
+        if (error != 0) {
+            //fprintf(stderr, "error in getnameinfo: %s\n", gai_strerror(error));
+            ret_error = error;
+            continue;
+        }
+
+        if (res->ai_family == AF_INET)
+        {
+            struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in *) res->ai_addr;
+            char* IP4 = inet_ntoa(sockaddr_ipv4->sin_addr);
+            strncpy(ip, IP4, strlen(IP4));
+            ret_error = 0;
+            break;
+        }
+    }
+
+    freeaddrinfo(result);
+
+    return ret_error;
 }
 
 /** Windows specific function for retrieving the path the current running executable file .*/
