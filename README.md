@@ -23,18 +23,26 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
  * OPC UA Ansi C Stack 1.03.340. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC.
  * CMake version 3.6.2 or later from https://cmake.org/install/.
  * Windows:
-    - OpenSSL 1.0.2j was used in development and testing -> either built from source or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
+    - OpenSSL 1.0.2j was used in development and testing 
+	<br/>
+	-> either built from source https://www.openssl.org/source/ 
+	<br/>
+	-> or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
     - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
  * Linux:
-    - OpenSSL 1.0.2j was used in development and testing -> (```sudo apt-get install libssl-dev```)  -> (```sudo yum install openssl-devel```)  
-    - Avahi 0.61 (or later) libdnssd compatibility layer  -> (```sudo apt-get install libavahi-compat-libdnssd-dev```)  -> (```sudo yum install avahi-compat-libdns_sd-devel```)  
+    - OpenSSL 1.0.2j was used in development and testing 
+	<br/>
+	-> (```sudo apt-get install libssl-dev```) 
+	<br/>
+	-> (```sudo yum install openssl-devel```)  
+    - Avahi 0.61 (or later) libdnssd compatibility layer 
+<br/>-> (```sudo apt-get install libavahi-compat-libdnssd-dev```) <br/>-> (```sudo yum install avahi-compat-libdns_sd-devel```)  
  
 ## Building the LDS
 
-```bash
-Make sure that openssl is installed or build. See [UA-AnsiC] (https://github.com/OPCFoundation/UA-AnsiC/) build instructions.
-Predefined scripts are available based on CMake. See build_win32.bat, build_win64.bat and build_linux.sh
-```
+Make sure that openssl is installed or build. See [UA-AnsiC](https://github.com/OPCFoundation/UA-AnsiC/) build instructions.
+<br/>
+Predefined scripts are available based on CMake. See build\_win32.bat, build\_win64.bat and build\_linux.sh
 
 ## Runtime Dependencies
 
