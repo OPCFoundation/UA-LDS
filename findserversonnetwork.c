@@ -851,7 +851,6 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
                         ualds_log(UALDS_LOG_DEBUG, "ualds_findserversonnetwork: skip record as StartingRecordId is set (%u)", pRequest->StartingRecordId);
                         bIncludeRecord = OpcUa_False;
                     }
-
                     else if (pRequest->NoOfServerCapabilityFilter > 0)
                     {
                         OpcUa_Int32 iFilter = 0, iCap = 0;
@@ -870,8 +869,18 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
                             }
                             if (bFoundCap == OpcUa_False)
                             {
-                                bIncludeRecord = OpcUa_False;
-                                break;
+                                // No caps match. Check if NA is requested and there are no caps available
+                                if (pResolveContext->record.NoOfServerCapabilities == 0 &&
+                                    (OpcUa_String_StrnCmp(pFilter, OpcUa_String_FromCString("NA"), OPCUA_STRING_LENDONTCARE, OpcUa_True) == 0))
+                                {
+                                    bFoundCap = OpcUa_True;
+                                    break;
+                                }
+                                else
+                                {
+                                    bIncludeRecord = OpcUa_False;
+                                    break;
+                                }
                             }
                         }
                     }
