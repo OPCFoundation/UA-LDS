@@ -90,7 +90,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
     bRet = ServiceSetStatus(SERVICE_START_PENDING, NO_ERROR, 0);
     bRet = ServiceSetStatus(SERVICE_RUNNING, NO_ERROR, 0);
 
-    exitcode = ualds_serve();
+    exitcode = ualds_server();
 
     bRet = ServiceSetStatus(SERVICE_STOPPED, exitcode, 0);
 }

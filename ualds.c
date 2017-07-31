@@ -61,6 +61,8 @@ static char g_szRejectedPath[PATH_MAX];
 
 static char g_szCertificateStorePath[PATH_MAX];
 
+static char g_szTrustListPathOldEditedLocation[PATH_MAX];
+
 OpcUa_ByteString g_server_certificate = OPCUA_BYTESTRING_STATICINITIALIZER;
 static OpcUa_Key        g_server_key = { OpcUa_Crypto_KeyType_Rsa_Private, { 0, OpcUa_Null }, OpcUa_Null };
 extern OpcUa_P_TraceHook g_OpcUa_P_TraceHook;
@@ -600,18 +602,30 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
 
   if (uStatus == OpcUa_BadCertificateUntrusted && g_bAllowLocalRegistration)
   {
-    ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Ignoring BadCertificateUntrusted error, because AllowLocalRegistration is set to yes.");
-    uStatus = OpcUa_Good;
+      ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Ignoring BadCertificateUntrusted error, because AllowLocalRegistration is set to yes.");
+      uStatus = OpcUa_Good;
   }
 
   // Certificate store paths have changed at some point. 
-  // Make a check using the old paths, for backward compatibility
+  // Make a check using the old standard paths, for backward compatibility
   if (uStatus == OpcUa_BadCertificateUntrusted)
   {
-      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old(pCertificate, g_szCRLPath, g_szRejectedPath, pValidationCode);
+      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old_defualt_location(pCertificate, g_szCRLPath, g_szRejectedPath, pValidationCode);
       if (OpcUa_IsGood(uStatusVerify))
       {
-          ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Verifying certificate in old store succeeded.");
+          ualds_log(UALDS_LOG_DEBUG, "Verifying certificate in old default store succeeded.");
+          uStatus = OpcUa_Good;
+      }
+  }
+
+  // Certificate store paths have changed at some point. 
+  // Make a check using the old edited paths, for backward compatibility
+  if (uStatus == OpcUa_BadCertificateUntrusted)
+  {
+      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old_edited_location(pCertificate, g_szCRLPath, g_szRejectedPath, g_szTrustListPathOldEditedLocation, pValidationCode);
+      if (OpcUa_IsGood(uStatusVerify))
+      {
+          ualds_log(UALDS_LOG_DEBUG, "Verifying certificate in old edited store succeeded.");
           uStatus = OpcUa_Good;
       }
   }
@@ -622,7 +636,7 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
     OpcUa_StatusCode uStatusVerify = ualds_verify_cert_win32(pCertificate);
     if (OpcUa_IsGood(uStatusVerify))
     {
-      ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Verifying certificate in windows store succeeded.");
+      ualds_log(UALDS_LOG_DEBUG, "Verifying certificate in windows store succeeded.");
       uStatus = OpcUa_Good;
     }
   }
@@ -694,6 +708,8 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     strcat(g_szIssuerPath, "issuer" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
     ualds_platform_mkpath(g_szIssuerPath);
 
+    ualds_settings_readstring("TrustListPath", g_szTrustListPathOldEditedLocation, PATH_MAX);
+
 #ifdef _WIN32
     if (ualds_settings_readstring("Win32StoreCheck", szValue, sizeof(szValue)) == 0)
     {
@@ -715,7 +731,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     g_PKIConfig.CertificateTrustListLocation = g_szTrustListPath;
     g_PKIConfig.CertificateRevocationListLocation = g_szCRLPath;
     g_PKIConfig.CertificateUntrustedListLocation = g_szRejectedPath;
-    g_PKIConfig.Flags = OPCUA_P_PKI_OPENSSL_ADD_UNTRUSTED_LIST_TO_ROOT_CERTIFICATES;
+    g_PKIConfig.Flags = OPCUA_P_PKI_OPENSSL_USE_DEFAULT_CERT_CRL_LOOKUP_METHOD;
     g_PKIConfig.Override = OpcUa_Null;
 
     uStatus = OpcUa_PKIProvider_Create(&g_PKIConfig, &g_PkiProvider);
@@ -1134,7 +1150,7 @@ static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(OpcUa_CharA* szMessage)
  * This function does not return until shutdown.
  * @see ualds_shutdown
  */
-int ualds_serve()
+int ualds_server()
 {
     int ret = EXIT_SUCCESS;
     OpcUa_ProxyStubConfiguration stackconfig;

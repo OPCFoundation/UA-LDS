@@ -80,15 +80,16 @@ OpcUa_FinishErrorHandling;
 }
 
 
-OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode)
+OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsClientCertificate, 
+    char* newCertificateStorePathCrl, char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode)
 {
     OpcUa_P_OpenSSL_CertificateStore_Config oldPkiConfig;
     OpcUa_PKIProvider                       oldPkiProvider;
     OpcUa_Handle                            hCertificateStore = OpcUa_Null;
     char                                    oldTrustListPath[MAX_PATH];
-    const char *                            root;
+    char *                                  root;
 
-    OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_old");
+    OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_old_defualt_location");
 
     OpcUa_ReturnErrorIfArgumentNull(pbsClientCertificate);
 
@@ -99,10 +100,11 @@ OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, c
     oldPkiConfig.PkiType = OpcUa_OpenSSL_PKI;
 
     root = getenv("ALLUSERSPROFILE");
-    if (root)
+    char rootFixedPath[MAX_PATH] = "C:\\ProgramData";
+    if (!root)
     {
         /* Fall back to fixed path */
-        root = "C:\\ProgramData";
+        root = rootFixedPath;
     }
     strcpy(oldTrustListPath, root);
     strcat(oldTrustListPath, "\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs");
@@ -111,7 +113,7 @@ OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, c
     oldPkiConfig.CertificateRevocationListLocation = newCertificateStorePathCrl;
     oldPkiConfig.CertificateUntrustedListLocation = newCertificateStorePathRejected;
 
-    oldPkiConfig.Flags = OPCUA_P_PKI_OPENSSL_ADD_UNTRUSTED_LIST_TO_ROOT_CERTIFICATES;
+    oldPkiConfig.Flags = OPCUA_P_PKI_OPENSSL_USE_DEFAULT_CERT_CRL_LOOKUP_METHOD;
     oldPkiConfig.Override = OpcUa_Null;
 
     uStatus = OpcUa_PKIProvider_Create(&oldPkiConfig, &oldPkiProvider);
@@ -120,7 +122,7 @@ OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, c
     uStatus = oldPkiProvider.OpenCertificateStore(&oldPkiProvider, &hCertificateStore);
     if (OpcUa_IsBad(uStatus))
     {
-        ualds_log(UALDS_LOG_ERR, "Failed to open windows certificate store! (0x%08X)", uStatus);
+        ualds_log(UALDS_LOG_ERR, "Failed to open old defualt certificate store! (0x%08X)", uStatus);
         OpcUa_GotoError;
     }
 
@@ -130,19 +132,98 @@ OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, c
         hCertificateStore,
         pValidationCode);
 
+    OpcUa_GotoErrorIfBad(uStatus);
+
     oldPkiProvider.CloseCertificateStore(&oldPkiProvider, &hCertificateStore);
 
-    ualds_log(UALDS_LOG_INFO, "Verifying certificate in old store returned 0x%08x.", uStatus);
+    ualds_log(UALDS_LOG_INFO, "Verifying certificate in old defualt certificate store returned 0x%08x.", uStatus);
+
+    uStatus = OpcUa_PKIProvider_Delete(&oldPkiProvider);
 
 OpcUa_ReturnStatusCode;
 OpcUa_BeginErrorHandling;
 
-    ualds_log(UALDS_LOG_ERR, "Could not verify certificate in old certificate store (0x%08x).", uStatus);
+    ualds_log(UALDS_LOG_ERR, "Could not verify certificate in old defualt certificate store (0x%08x).", uStatus);
 
     if (hCertificateStore != OpcUa_Null)
     {
         oldPkiProvider.CloseCertificateStore(&oldPkiProvider, &hCertificateStore);
     }
+    OpcUa_PKIProvider_Delete(&oldPkiProvider);
 
 OpcUa_FinishErrorHandling;
+}
+
+OpcUa_StatusCode ualds_verify_cert_old_edited_location(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, 
+    char* newCertificateStorePathRejected, char* trustListPathOldEditedLocation, OpcUa_Int* pValidationCode)
+{
+    OpcUa_P_OpenSSL_CertificateStore_Config oldPkiConfig;
+    OpcUa_PKIProvider                       oldPkiProvider;
+    OpcUa_Handle                            hCertificateStore = OpcUa_Null;
+
+    OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_old_edited_location");
+
+    OpcUa_ReturnErrorIfArgumentNull(pbsClientCertificate);
+
+    uStatus = OpcUa_BadCertificateUntrusted;
+
+    memset(&oldPkiConfig, 0, sizeof(oldPkiConfig));
+
+    oldPkiConfig.PkiType = OpcUa_OpenSSL_PKI;
+
+    if (strlen(trustListPathOldEditedLocation) == 0)
+    {
+        char *root = getenv("ALLUSERSPROFILE");
+        char rootFixedPath[MAX_PATH] = "C:\\ProgramData";
+        if (!root)
+        {
+            /* Fall back to fixed path */
+            root = rootFixedPath;
+        }
+        strcpy(trustListPathOldEditedLocation, root);
+        strcat(trustListPathOldEditedLocation, "\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs");
+    }
+
+    oldPkiConfig.CertificateTrustListLocation = trustListPathOldEditedLocation;
+    oldPkiConfig.CertificateRevocationListLocation = newCertificateStorePathCrl;
+    oldPkiConfig.CertificateUntrustedListLocation = newCertificateStorePathRejected;
+
+    oldPkiConfig.Flags = OPCUA_P_PKI_OPENSSL_USE_DEFAULT_CERT_CRL_LOOKUP_METHOD;
+    oldPkiConfig.Override = OpcUa_Null;
+
+    uStatus = OpcUa_PKIProvider_Create(&oldPkiConfig, &oldPkiProvider);
+    OpcUa_GotoErrorIfBad(uStatus);
+
+    uStatus = oldPkiProvider.OpenCertificateStore(&oldPkiProvider, &hCertificateStore);
+    if (OpcUa_IsBad(uStatus))
+    {
+        ualds_log(UALDS_LOG_ERR, "Failed to open old edited certificate store! (0x%08X)", uStatus);
+        OpcUa_GotoError;
+    }
+
+    /* validate certificate, we only need the validation result, not the windows specific pValidationCode */
+    uStatus = oldPkiProvider.ValidateCertificate(&oldPkiProvider,
+        pbsClientCertificate,
+        hCertificateStore,
+        pValidationCode);
+    OpcUa_GotoErrorIfBad(uStatus);
+
+    oldPkiProvider.CloseCertificateStore(&oldPkiProvider, &hCertificateStore);
+
+    ualds_log(UALDS_LOG_INFO, "Verifying certificate in old edited  certificate store returned 0x%08x.", uStatus);
+
+    uStatus = OpcUa_PKIProvider_Delete(&oldPkiProvider);
+
+ OpcUa_ReturnStatusCode;
+ OpcUa_BeginErrorHandling;
+
+    ualds_log(UALDS_LOG_ERR, "Could not verify certificate in old edited certificate store (0x%08x).", uStatus);
+
+    if (hCertificateStore != OpcUa_Null)
+    {
+        oldPkiProvider.CloseCertificateStore(&oldPkiProvider, &hCertificateStore);
+    }
+    OpcUa_PKIProvider_Delete(&oldPkiProvider);
+
+ OpcUa_FinishErrorHandling;
 }

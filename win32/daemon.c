@@ -93,6 +93,6 @@ int daemonize()
 int run()
 {
     install_signal_handlers();
-    return ualds_serve();
+    return ualds_server();
 }
 

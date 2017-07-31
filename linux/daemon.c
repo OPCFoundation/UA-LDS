@@ -33,13 +33,13 @@ void signal_handler(int sig)
 int daemonize()
 {
     daemon(0, 0);
-    return ualds_serve();
+    return ualds_server();
 }
 
 /** just runs the application without daemonizing. */
 int run()
 {
     signal(SIGINT, signal_handler);
-    return ualds_serve();
+    return ualds_server();
 }
 

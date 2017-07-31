@@ -20,6 +20,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <opcua_proxystub.h>
 
 OpcUa_StatusCode ualds_verify_cert_win32(OpcUa_ByteString* pbsClientCertificate);
-OpcUa_StatusCode ualds_verify_cert_old(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode);
+
+// the below checks are for backward compatibility woth older LDS versions
+OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, 
+    char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode);
+OpcUa_StatusCode ualds_verify_cert_old_edited_location(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, 
+    char* newCertificateStorePathRejected, char* trustListPathOldEditedLocation, OpcUa_Int* pValidationCode);
 
 #endif /* __CERTSTORE_H__ */

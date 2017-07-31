@@ -38,11 +38,11 @@ static int       g_logger_state = 0; /* 0=closed, 1=open */
 static LogTarget g_target = UALDS_LOG_STDERR;
 static LogLevel  g_level = UALDS_LOG_EMERG;
 static FILE     *g_f = 0;
+static char     szLogfile[PATH_MAX];
 
 int ualds_openlog(LogTarget target, LogLevel level)
 {
     int ret = 0;
-    char szLogfile[PATH_MAX];
     char szLogfileSize[10];
     int success;
 
@@ -116,7 +116,6 @@ void ualds_log(LogLevel level, const char *format, ...)
     time_t now;
     va_list ap;
     long currentPos;
-    char szLogfile[PATH_MAX];
     char szLogfile_backup[PATH_MAX];
     time_t rawtime;
     struct tm * timeinfo;
@@ -153,11 +152,6 @@ void ualds_log(LogLevel level, const char *format, ...)
 
                 // close log file
                 ualds_closelog();
-
-                // get name/path of log file
-                ualds_settings_begingroup("Log");
-                ualds_settings_readstring("LogFile", szLogfile, sizeof(szLogfile));
-                ualds_settings_endgroup();
 
                 strcpy(szLogfile_backup, szLogfile);
 

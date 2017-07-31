@@ -46,7 +46,7 @@ extern OpcUa_Mutex g_mutex;
 void ualds_endpoint_initialize(ualds_endpoint *pEndpoint);
 void ualds_endpoint_clear(ualds_endpoint *pEndpoint);
 
-int ualds_serve();
+int ualds_server();
 void ualds_shutdown();
 void ualds_reload();
 void ualds_expirationcheck();
