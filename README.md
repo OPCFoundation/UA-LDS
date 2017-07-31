@@ -26,12 +26,8 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
     - OpenSSL 1.0.2j (or later) -> either built from source or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
     - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
  * Linux:
-    - OpenSSL 1.0.2j (or later) 
-		-> (```sudo apt-get install libssl-dev```).
-		-> (```sudo yum install openssl-devel```).
-    - Avahi 0.61 (or later) libdnssd compatibility layer 
-		-> (```sudo apt-get install libavahi-compat-libdnssd-dev```)
-		-> (```sudo yum install avahi-compat-libdns_sd-devel```)
+    - OpenSSL 1.0.2j (or later)  -> (```sudo apt-get install libssl-dev```)  -> (```sudo yum install openssl-devel```)  
+    - Avahi 0.61 (or later) libdnssd compatibility layer  -> (```sudo apt-get install libavahi-compat-libdnssd-dev```)  -> (```sudo yum install avahi-compat-libdns_sd-devel```)  
  
 ## Building the LDS
 
