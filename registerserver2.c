@@ -46,6 +46,7 @@ OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                                        OpcUa_EncodeableType *pRequestType)
 {
     OpcUa_Endpoint_SecurityPolicyConfiguration policy;
+    memset(&policy, 0, sizeof(OpcUa_Endpoint_SecurityPolicyConfiguration));
     if (OpcUa_IsGood(OpcUa_Endpoint_GetMessageSecureChannelSecurityPolicy(hEndpoint, hContext, &policy)) &&
         policy.uMessageSecurityModes == OPCUA_SECURECHANNEL_MESSAGESECURITYMODE_NONE)
     {
