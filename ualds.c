@@ -1199,6 +1199,13 @@ int ualds_serve()
         return EXIT_FAILURE;
     }
 
+    status = OpcUa_Mutex_Create(&g_mutex);
+    if (OpcUa_IsBad(status))
+    {
+        OpcUa_P_Clean(&pcalltab);
+        return EXIT_FAILURE;
+    }
+
     /* read settings */
     ualds_settings_begingroup("General");
     UALDS_SETTINGS_READSTRING(ServerUri);
@@ -1238,21 +1245,12 @@ int ualds_serve()
         return EXIT_FAILURE;
     }
 
-    /* create mutex before opening any endpoint */
-    status = OpcUa_Mutex_Create(&g_mutex);
-    if (OpcUa_IsBad(status))
-    {
-        ualds_security_uninitialize();
-        OpcUa_ProxyStub_Clear();
-        OpcUa_P_Clean(&pcalltab);
-        return EXIT_FAILURE;
-    }
-
     /* Open Endpoints */
     status = ualds_create_endpoints();
     if (OpcUa_IsBad(status))
     {
         ualds_security_uninitialize();
+        ualds_settings_cleanup();
         OpcUa_Mutex_Delete(&g_mutex);
         OpcUa_ProxyStub_Clear();
         OpcUa_P_Clean(&pcalltab);
@@ -1278,6 +1276,7 @@ int ualds_serve()
         {
             ualds_delete_endpoints();
             ualds_security_uninitialize();
+            ualds_settings_cleanup();
             OpcUa_Mutex_Delete(&g_mutex);
             OpcUa_ProxyStub_Clear();
             OpcUa_P_Clean(&pcalltab);
@@ -1291,6 +1290,7 @@ int ualds_serve()
             ualds_zeroconf_stop_registration();
             ualds_delete_endpoints();
             ualds_security_uninitialize();
+            ualds_settings_cleanup();
             OpcUa_Mutex_Delete(&g_mutex);
             OpcUa_ProxyStub_Clear();
             OpcUa_P_Clean(&pcalltab);
@@ -1308,6 +1308,8 @@ int ualds_serve()
         ualds_platform_sleep(1);
     }
 
+    ualds_delete_endpoints();
+
 #ifdef HAVE_HDS
     if (bEnableZeroconf)
     {
@@ -1318,8 +1320,8 @@ int ualds_serve()
     }
 #endif
 
-    ualds_delete_endpoints();
     ualds_security_uninitialize();
+    ualds_settings_cleanup();
     OpcUa_Mutex_Delete(&g_mutex);
     OpcUa_ProxyStub_Clear();
     OpcUa_P_Clean(&pcalltab);
@@ -1480,4 +1482,15 @@ void ualds_expirationcheck()
         free(RemovedServers);
         RemovedServers = 0;
     }
+}
+
+int ualds_settings_cleanup()
+{
+    int status = 0;
+
+    OpcUa_Mutex_Lock(g_mutex);
+    status = ualds_settings_close();
+    OpcUa_Mutex_Unlock(g_mutex);
+
+    return status;
 }

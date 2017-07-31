@@ -567,6 +567,9 @@ int ualds_settings_close()
         ualds_settings_flush();
     }
 
+    free(pFS->szPath);
+    pFS->szPath = 0;
+
     if (pFS->pEntries)
     {
         for (i=0; i<pFS->numEntries; i++)
@@ -597,8 +600,6 @@ int ualds_settings_close()
         ret = EINVAL;
     }
 
-    free(pFS->szPath);
-    pFS->szPath = 0;
     pFS->szArrayKey = 0;
     pFS->iArrayIndex = 0;
     pFS->EntrySize = 0;

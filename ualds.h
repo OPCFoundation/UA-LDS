@@ -56,6 +56,8 @@ const char* ualds_serveruri();
 const char* ualds_producturi();
 const char* ualds_applicationname(const char *szLocale);
 
+int ualds_settings_cleanup();
+
 /*============================================================================
  * Helper Macro For Building Response Header
  *===========================================================================*/

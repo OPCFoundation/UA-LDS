@@ -63,8 +63,7 @@ OpcUa_StatusCode ualds_findservers(
     pRequest = *ppRequest;
 
     ualds_platform_getfqhostname(szHostname, 50);
-    ualds_expirationcheck();
-
+    
     uStatus = OpcUa_Endpoint_BeginSendResponse(
         hEndpoint,
         hContext,
@@ -75,6 +74,8 @@ OpcUa_StatusCode ualds_findservers(
     if ( pResponse )
     {
 		OpcUa_Mutex_Lock(g_mutex);
+
+        ualds_expirationcheck();
 
         ualds_settings_begingroup("RegisteredServers");
         ualds_settings_beginreadarray("Servers", &numServers);

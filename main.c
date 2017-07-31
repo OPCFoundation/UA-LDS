@@ -284,7 +284,6 @@ int main(int argc, char* argv[])
     }
 
     ualds_closelog();
-    ualds_settings_close();
     ualds_platform_cleanup();
 
     return ret;
