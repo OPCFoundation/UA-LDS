@@ -7,7 +7,7 @@ SETLOCAL
 
 set SRCDIR=%~dp0
 set INSTALLDIR=%~dp0
-set GIT=C:\Program Files (x86)\Git\bin\git.exe
+set GIT=C:\Program Files\Git\bin\git.exe
 set SIGNTOOL=C:\Build\sign_output.bat
 
 IF "%1"=="no-clean" GOTO noClean
@@ -24,13 +24,18 @@ cd %SRCDIR%\stack
 CALL build_win32.bat
 :noStack
 
+ECHO STEP 4) Update Build Number
+IF NOT DEFINED BUILD_VERSION SET BUILD_VERSION=341
+IF NOT DEFINED BUILD_NUMBER  SET BUILD_NUMBER=1
+ECHO Building Version: %BUILD_VERSION%.%BUILD_NUMBER
+IF %BUILD_NUMBER% GTR 0 ECHO #define BUILD_NUMBER %BUILD_NUMBER% > buildversion.h
+
 ECHO STEP 4) Building LDS
 cd %SRCDIR%
-IF %BUILD_NUMBER% GTR 0 ECHO #define BUILD_NUMBER %BUILD_NUMBER% > buildversion.h
 msbuild ualds.sln /p:Configuration=Release
 
 ECHO STEP 5) Sign the Binaries
-IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\bin\Release\*.exe /sha1
+IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\bin\Release\*.exe /dual
 
 ECHO *** ALL DONE ***
 GOTO theEnd
