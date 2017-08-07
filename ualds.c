@@ -661,6 +661,10 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     ualds_settings_begingroup("PKI");
 
     UALDS_SETTINGS_READSTRING(CertificateStorePath);
+    if (g_szCertificateStorePath[0] == 0)
+    {
+        ualds_log(UALDS_LOG_WARNING, "Certificate store path (Section: 'PKI', Key: 'CertificateStorePath') is not set in the settings file!");
+    }
 
     //check if path ends with dir separator
     char* directory_separator = __ualds_plat_path_sep;
