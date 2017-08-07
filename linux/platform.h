@@ -69,6 +69,7 @@ int ualds_platform_convertHostnameToIP4(const char* host, char* ip);
 #define ualds_platform_rm rmdir
 #define ualds_platform_mkdir mkdir
 int ualds_platform_mkpath(char *szFilePath);
+void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, size_t bufSize, int maxRotateCount);
 #define ualds_platform_fopen fopen
 #define ualds_platform_fclose fclose
 #define ualds_platform_fread fread
