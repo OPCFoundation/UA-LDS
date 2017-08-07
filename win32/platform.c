@@ -16,6 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 /* system includes */
 #include <stdio.h>
+#include <direct.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <errno.h>
@@ -24,6 +25,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "../config.h"
 #include "service.h"
 #include "platform.h"
+#include "log.h"
 
 
 #ifdef HAVE_VISUAL_LEAK_DETECTOR
@@ -230,14 +232,59 @@ int ualds_platform_rm(char *szFilePath)
 
 int ualds_platform_mkdir(char *szFilePath, int mode)
 {
-	/* Not supported on windows - return failure to caller */
+    /* Not supported on windows - return failure to caller */
     return -1;
 }
 
 int ualds_platform_mkpath(char *szFilePath)
 {
-	/* Not supported - do as if making path succeeded */
-    return 0;
+	char *path = strdup(szFilePath);
+	int ret = 0;
+	char *szFind = path;
+	char *szFindNext = szFind;
+
+	/* be sure to not have a normal backspace */
+	char *szRepl;
+	szRepl = path;
+	while (*szRepl)
+	{
+		if (*szRepl == '/') *szRepl = '\\';
+		szRepl++;
+	}
+
+	/* create parent directories */
+	while ((ret == 0 || errno == EEXIST) && ((szFindNext = strchr(szFind, '\\')) != NULL))
+	{
+		if (szFindNext != szFind)
+		{
+			*szFindNext = 0;   /* replace '/' with \0 */
+			ret = _mkdir(path);
+			if (ret < 0 && errno != EEXIST)
+			{
+				ualds_log(UALDS_LOG_WARNING, "Failed making %s error %s\n", path, strerror(errno));
+			}
+			*szFindNext = '\\'; /* restore '/' */
+		}
+		szFind = szFindNext + 1;
+	}
+
+	/* create last dir */
+	if (ret == 0 || errno == EEXIST)
+	{
+		ret = _mkdir(path);
+		if (ret < 0 && errno != EEXIST)
+		{
+			ualds_log(UALDS_LOG_WARNING, "Failed making %s error %s\n", path, strerror(errno));
+		}
+	}
+
+	if (ret < 0 && errno == EEXIST)
+	{
+		ret = 0;
+	}
+
+	free(path);
+	return ret;
 }
 
 UALDS_FILE* ualds_platform_fopen(const char *path, const char *mode)
