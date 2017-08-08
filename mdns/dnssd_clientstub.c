@@ -57,12 +57,9 @@ static int gDaemonErr = kDNSServiceErr_NoError;
 // Disable warning: "nonstandard extension, function/data pointer conversion in expression"
     #pragma warning(disable:4152)
 
-extern BOOL IsSystemServiceDisabled();
-
-BOOL
-IsSystemServiceDisabled()
+static BOOL IsSystemServiceDisabled()
 {
-    ENUM_SERVICE_STATUS    lpService = NULL;
+    ENUM_SERVICE_STATUS    *lpService = NULL;
     SC_HANDLE              sc;
     BOOL                   ret = FALSE;
     BOOL                   ok;
@@ -86,7 +83,7 @@ IsSystemServiceDisabled()
     {
         // Call EnumServicesStatus using the handle returned by OpenSCManager
 
-        ok = EnumServicesStatus(sc, srvType, srvState, lpService, dwBytes, &bytesNeeded, &srvCount, &resumeHandle);
+        ok = EnumServicesStatusA(sc, srvType, srvState, lpService, dwBytes, &bytesNeeded, &srvCount, &resumeHandle);
 
         if (ok || (GetLastError() != ERROR_MORE_DATA))
         {
