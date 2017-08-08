@@ -59,6 +59,82 @@ static int gDaemonErr = kDNSServiceErr_NoError;
 
 extern BOOL IsSystemServiceDisabled();
 
+BOOL
+IsSystemServiceDisabled()
+{
+    ENUM_SERVICE_STATUS    lpService = NULL;
+    SC_HANDLE              sc;
+    BOOL                   ret = FALSE;
+    BOOL                   ok;
+    DWORD                  bytesNeeded = 0;
+    DWORD                  srvCount;
+    DWORD                  resumeHandle = 0;
+    DWORD                  srvType;
+    DWORD                  srvState;
+    DWORD                  dwBytes = 0;
+    DWORD                  i;
+    OSStatus               err;
+
+    sc = OpenSCManager(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
+    err = translate_errno(sc, GetLastError(), kUnknownErr);
+    require_noerr(err, exit);
+
+    srvType = SERVICE_WIN32;
+    srvState = SERVICE_STATE_ALL;
+
+    for (;; )
+    {
+        // Call EnumServicesStatus using the handle returned by OpenSCManager
+
+        ok = EnumServicesStatus(sc, srvType, srvState, lpService, dwBytes, &bytesNeeded, &srvCount, &resumeHandle);
+
+        if (ok || (GetLastError() != ERROR_MORE_DATA))
+        {
+            break;
+        }
+
+        if (lpService)
+        {
+            free(lpService);
+        }
+
+        dwBytes = bytesNeeded;
+
+        lpService = (ENUM_SERVICE_STATUS*)malloc(dwBytes);
+        require_action(lpService, exit, ret = FALSE);
+    }
+
+    err = translate_errno(ok, GetLastError(), kUnknownErr);
+    require_noerr(err, exit);
+
+    for (i = 0; i < srvCount; i++)
+    {
+        if (strcmp(lpService[i].lpServiceName, "Bonjour Service") == 0)
+        {
+            if ((lpService[i].ServiceStatus.dwCurrentState == SERVICE_PAUSED) || (lpService[i].ServiceStatus.dwCurrentState == SERVICE_STOPPED))
+            {
+                ret = TRUE;
+            }
+
+            break;
+        }
+    }
+
+exit:
+
+    if (lpService)
+    {
+        free(lpService);
+    }
+
+    if (sc)
+    {
+        CloseServiceHandle(sc);
+    }
+
+    return ret;
+}
+
     #define sleep(X) Sleep((X) * 1000)
 
 static int g_initWinsock = 0;
