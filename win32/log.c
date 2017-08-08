@@ -165,7 +165,7 @@ void ualds_log(LogLevel level, const char *format, ...)
                 strcat(szLogfile_backup, ".log");
 
                 // rename file
-                MoveFileA(szLogfile, szLogfile_backup);
+                ualds_platform_rename(szLogfile, szLogfile_backup);
 
                 // open log file
                 ualds_openlog(tmp_target, tmp_level);

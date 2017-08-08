@@ -84,6 +84,7 @@ endif()
         )
     endif()
     add_executable(ualds ${_ualds_src})
+	set_target_properties(ualds PROPERTIES OUTPUT_NAME  "opcualds")
     target_link_libraries(ualds PUBLIC uastack)
     target_compile_definitions(ualds
         PUBLIC HAVE_OPCUA_STACK

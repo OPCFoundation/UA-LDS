@@ -563,6 +563,8 @@ int ServiceRegister(const char *szUser, const char *szPass)
     SC_HANDLE hSCM = NULL;
     SC_HANDLE hService = NULL;
 
+    _ftprintf(stderr, _T("Trying to register a service with the name '%s'.\n"), UALDS_CONF_SERVICE_NAME);
+
     hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (hSCM == NULL)
     {
@@ -684,6 +686,8 @@ int ServiceUnregister()
     DWORD err = 0;
     TCHAR szMessage[100];
 
+    _ftprintf(stderr, _T("Trying to unregister a service with the name '%s'.\n"), UALDS_CONF_SERVICE_NAME);
+
     hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (hSCM == NULL)
     {
@@ -692,21 +696,86 @@ int ServiceUnregister()
     }
 
     /* test if service already exists */
-    hService = OpenService(hSCM, UALDS_CONF_SERVICE_NAME, SERVICE_STOP | DELETE);
+    hService = OpenService(hSCM, UALDS_CONF_SERVICE_NAME, SERVICE_QUERY_STATUS | SERVICE_STOP | DELETE);
 
     if (hService != NULL)
     {
-        SERVICE_STATUS status;
-        ZeroMemory(&status, sizeof(status));
-        bRet = ControlService(hService, SERVICE_CONTROL_STOP, &status);
-        if (bRet == FALSE)
+        // verify if LDS is running
+        SERVICE_STATUS_PROCESS _status;
+        DWORD bytesNeeded;
+        BOOL queryLDSServiceRetCode = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO,
+            (LPBYTE)&_status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
+        if (queryLDSServiceRetCode == FALSE)
         {
             err = GetLastError();
             ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
-            fprintf(stderr, "Error: Stopping service '%s' failed with error(%i): %s.\n", UALDS_CONF_SERVICE_NAME, err, szMessage);
+            _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+            ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+            CloseServiceHandle(hService);
+            CloseServiceHandle(hSCM);
+            return FALSE;
         }
 
-        /* Mark service for deletion. It will b deleted when all handles are closed. */
+        if (_status.dwCurrentState != SERVICE_STOPPED)
+        {
+            // Stop the LDS
+            SERVICE_STATUS status;
+            ZeroMemory(&status, sizeof(status));
+            bRet = ControlService(hService, SERVICE_CONTROL_STOP, &status);
+            if (bRet == FALSE)
+            {
+                err = GetLastError();
+                ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
+                fprintf(stderr, "Error: Stopping service '%s' failed with error(%i): %s.\n", UALDS_CONF_SERVICE_NAME, err, szMessage);
+            }
+
+            // verify if LDS is stopped
+            SERVICE_STATUS_PROCESS _status;
+            DWORD bytesNeeded;
+            BOOL queryLDSServiceRetCode = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO,
+                (LPBYTE)&_status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
+            if (queryLDSServiceRetCode == FALSE)
+            {
+                err = GetLastError();
+                ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
+                _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+                ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+                CloseServiceHandle(hService);
+                CloseServiceHandle(hSCM);
+                return FALSE;
+            }
+
+            // Wait for LDS to stop.
+            DWORD dwStartTime = GetTickCount();
+            DWORD dwTimeout = 30000; // 30-second time-out
+            while (_status.dwCurrentState != SERVICE_STOPPED)
+            {
+                DWORD sleep_millis = _status.dwWaitHint;
+                if (sleep_millis == 0)
+                {
+                    sleep_millis = 1000;
+                }
+                Sleep(sleep_millis);
+                if (!QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO,
+                    (LPBYTE)&_status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded))
+                {
+                    printf("QueryServiceStatusEx failed (%d)\n", GetLastError());
+                    break;
+                }
+
+                if (_status.dwCurrentState == SERVICE_STOPPED)
+                    break;
+
+                if (GetTickCount() - dwStartTime > dwTimeout)
+                {
+                    printf("Wait timed out\n");
+                    break;
+                }
+            }
+            printf("Service stopped successfully\n");
+        }
+
+        /* Mark service for deletion. It will be deleted when all handles are closed. */
         bRet = DeleteService(hService);
         if (bRet == TRUE)
         {
@@ -723,8 +792,8 @@ int ServiceUnregister()
     }
     else
     {
-        _ftprintf(stderr, _T("Error: A service with the name '%s' does not exist.\n"), UALDS_CONF_SERVICE_NAME);
-        ret = 1;
+        _ftprintf(stderr, _T("Warning: A service with the name '%s' does not exist.\n"), UALDS_CONF_SERVICE_NAME);
+        ret = 0;
     }
     CloseServiceHandle(hSCM);
 
@@ -754,20 +823,40 @@ int ServiceStart()
     }
 
     /* get service handle */
-    hService = OpenService(hSCM, UALDS_CONF_SERVICE_NAME, SERVICE_START);
+    hService = OpenService(hSCM, UALDS_CONF_SERVICE_NAME, SERVICE_START | SERVICE_QUERY_STATUS);
     if (hService != NULL)
     {
-        bRet = StartService(hService, 0, NULL);
-        if (bRet)
-        {
-            printf("Service started successfully.\n");
-        }
-        else
+        // verify if LDS is running
+        SERVICE_STATUS_PROCESS _status;
+        DWORD bytesNeeded;
+        BOOL queryLDSServiceRetCode = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO,
+            (LPBYTE)&_status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
+        if (queryLDSServiceRetCode == FALSE)
         {
             err = GetLastError();
             ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
-            _ftprintf(stderr, _T("Error: StartService failed with error(%i): %s.\n"), err, szMessage);
+            _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+            ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+            CloseServiceHandle(hService);
+            CloseServiceHandle(hSCM);
+            return FALSE;
         }
+
+        if (_status.dwCurrentState != SERVICE_RUNNING)
+        {
+            bRet = StartService(hService, 0, NULL);
+            if (bRet)
+            {
+                printf("Service started successfully.\n");
+            }
+            else
+            {
+                err = GetLastError();
+                ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
+                _ftprintf(stderr, _T("Error: StartService failed with error(%i): %s.\n"), err, szMessage);
+            }
+        }
+
         CloseServiceHandle(hService);
     }
     else
@@ -800,21 +889,41 @@ int ServiceStop()
     }
 
     /* get service handle */
-    hService = OpenService(hSCM, UALDS_CONF_SERVICE_NAME, SERVICE_STOP);
+    hService = OpenService(hSCM, UALDS_CONF_SERVICE_NAME, SERVICE_STOP | SERVICE_QUERY_STATUS);
     if (hService != NULL)
     {
-        SERVICE_STATUS stat;
-        bRet = ControlService(hService, SERVICE_CONTROL_STOP, &stat);
-        if (bRet)
-        {
-            printf("Service stopped successfully.\n");
-        }
-        else
+        // verify if LDS is stopped
+        SERVICE_STATUS_PROCESS _status;
+        DWORD bytesNeeded;
+        BOOL queryLDSServiceRetCode = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO,
+            (LPBYTE)&_status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
+        if (queryLDSServiceRetCode == FALSE)
         {
             err = GetLastError();
             ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
-            _ftprintf(stderr, _T("Error: ControlService failed with error(%i): %s.\n"), err, szMessage);
+            _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+            ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+            CloseServiceHandle(hService);
+            CloseServiceHandle(hSCM);
+            return FALSE;
         }
+
+        if (_status.dwCurrentState != SERVICE_STOPPED)
+        {
+            SERVICE_STATUS stat;
+            bRet = ControlService(hService, SERVICE_CONTROL_STOP, &stat);
+            if (bRet)
+            {
+                printf("Service stopped successfully.\n");
+            }
+            else
+            {
+                err = GetLastError();
+                ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
+                _ftprintf(stderr, _T("Error: ControlService failed with error(%i): %s.\n"), err, szMessage);
+            }
+        }
+
         CloseServiceHandle(hService);
     }
     else
