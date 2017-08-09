@@ -51,9 +51,9 @@ BEGIN
             VALUE "FileVersion",      VER_FILE_VERSION_STR "(Release Build)\0"
 #endif
             VALUE "InternalName",     "UALDS\0"
-            VALUE "LegalCopyright",   "Copyright (C) 2016, OPC Foundation"
+            VALUE "LegalCopyright",   "Copyright (C) 2017, OPC Foundation"
             VALUE "LegalTrademarks",  ""
-            VALUE "OriginalFilename", "ualds.exe\0"
+            VALUE "OriginalFilename", "opcualds.exe\0"
             VALUE "PrivateBuild",     "\0"
             VALUE "ProductName",      "UA Local Discovery Server"
             VALUE "ProductVersion",   VER_PRODUCTVERSION_STR "\0"

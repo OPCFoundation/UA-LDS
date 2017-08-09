@@ -71,6 +71,7 @@ if(WIN32)
         win32/platform.c
         win32/service.c
         win32/winmain.c
+		win32/version.rc
     )
 else()
     include(FindPkgConfig)
