@@ -16,16 +16,6 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
-#
-# Force static C-Runtime (MSVC) / also for OpenSSL
-# See: https://cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F
-#
-set(CMAKE_USER_MAKE_RULES_OVERRIDE ${CMAKE_CURRENT_SOURCE_DIR}/c_flag_overrides.cmake)
-set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX ${CMAKE_CURRENT_SOURCE_DIR}/cxx_flag_overrides.cmake)
-
-set(OPENSSL_USE_STATIC_LIBS TRUE)
-set(OPENSSL_MSVC_STATIC_RT TRUE)
-
 project(ua-lds)
 include(CMakeToolsHelpers OPTIONAL)
 
@@ -114,7 +104,7 @@ if(WIN32)
     )
     if(NOT no_lds_me)
         target_compile_definitions(ualds PUBLIC HAVE_HDS)
-        target_link_libraries(ualds PUBLIC dnssd-static)
+        target_link_libraries(ualds PUBLIC dnssd)
     endif()
 else()
     target_include_directories(ualds PUBLIC linux)
