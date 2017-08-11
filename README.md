@@ -22,6 +22,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
  * OPC UA Ansi C Stack 1.03.340. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC.
  * CMake version 3.6.2 or later from https://cmake.org/install/.
+ * Perl
  * Windows:
     - OpenSSL 1.0.2j was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
     - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
@@ -33,7 +34,9 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
 Make sure that openssl is installed or build. See [UA-AnsiC](https://github.com/OPCFoundation/UA-AnsiC/) build instructions.
 <br/>
-Predefined scripts are available based on CMake. See build\_win32.bat, build\_win64.bat and build\_linux.sh
+Predefined scripts are available based on CMake. 
+ * Windows: build\_ualds.bat (Visual Studio Command Shell)
+ * Linux: build\_linux.sh
 
 ## Runtime Dependencies
 

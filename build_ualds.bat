@@ -34,11 +34,11 @@ perl -pi.bak -e "s/XXX/%BUILD_VERSION%/;" .\config.h
 perl -pi.bak -e "s/YYY/%BUILD_NUMBER%/;" .\config.h
 del /Q *.bak
 
-ECHO STEP 4) Building LDS
+ECHO STEP 5) Building LDS
 cd %SRCDIR%
 CALL build_win32.bat
 
-ECHO STEP 5) Sign the Binaries
+ECHO STEP 6) Sign the Binaries
 IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\build\bin\Release\*.dll /dual
 IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\build\bin\Release\*.exe /dual
 
