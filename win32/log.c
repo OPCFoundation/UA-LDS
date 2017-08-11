@@ -34,6 +34,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 /** internal logger state */
 static int       g_max_size = 100*1024*1024; // 100 MB default value, equivalent in bytes
+static int       g_max_rotate_count = 0; // 0=Do not use log-rotate (use standard logfilenames with date/time); >0 Use the max. number of logfiles
 static int       g_logger_state = 0; /* 0=closed, 1=open */
 static LogTarget g_target = UALDS_LOG_STDERR;
 static LogLevel  g_level = UALDS_LOG_EMERG;
@@ -44,6 +45,7 @@ int ualds_openlog(LogTarget target, LogLevel level)
 {
     int ret = 0;
     char szLogfileSize[10];
+    char szLogRotateCount[10];
     int success;
 
     if (g_logger_state != 0) return 1;
@@ -84,7 +86,27 @@ int ualds_openlog(LogTarget target, LogLevel level)
             ualds_settings_writestring("LogFileSize", szLogfileSize);
             ualds_settings_addemptyline();
         }
-        
+
+        success = ualds_settings_readstring("LogRotateCount", szLogRotateCount, sizeof(szLogRotateCount));
+        if (success == 0)
+        {
+            // convert string to int
+            int tmpLogRotateCount = atoi(szLogRotateCount);
+            if (tmpLogRotateCount > 0)
+            {
+                g_max_rotate_count = min(tmpLogRotateCount, 9999);
+            }
+        }
+        else
+        {
+            // add it to global settings, so that it can be flushed to file, at a later point.
+            ualds_settings_addcomment("#Maximum number of logfiles. This is optional for LogSystem=file. Default is '0' (no restriction in logfiles)");
+            ualds_settings_addemptyline();
+            // write 0 as default value
+            ualds_settings_writestring("LogRotateCount", "0");
+            ualds_settings_addemptyline();
+        }
+
         ualds_settings_endgroup();
 
         g_f = fopen(szLogfile, "a");
@@ -117,9 +139,6 @@ void ualds_log(LogLevel level, const char *format, ...)
     va_list ap;
     long currentPos;
     char szLogfile_backup[PATH_MAX];
-    time_t rawtime;
-    struct tm * timeinfo;
-    char time_str[80];
 
     if (g_logger_state == 0 || level > g_level) return;
 
@@ -153,16 +172,8 @@ void ualds_log(LogLevel level, const char *format, ...)
                 // close log file
                 ualds_closelog();
 
-                strcpy(szLogfile_backup, szLogfile);
-
-                // get current time in string format
-                time(&rawtime);
-                timeinfo = localtime(&rawtime);
-                strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
-
-                strcat(szLogfile_backup, "_");
-                strcat(szLogfile_backup, time_str);
-                strcat(szLogfile_backup, ".log");
+                // get old logfile name
+                ualds_getOldLogFilename(szLogfile, szLogfile_backup, sizeof(szLogfile_backup), g_max_rotate_count);
 
                 // rename file
                 ualds_platform_rename(szLogfile, szLogfile_backup);

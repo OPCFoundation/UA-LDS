@@ -16,6 +16,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 /* system includes */
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
 /* local includes */
 #include "../config.h"
@@ -180,4 +182,22 @@ int ualds_platform_mkpath(char *szFilePath)
 
     free(path);
     return ret;
+}
+
+void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, size_t bufSize, int maxRotateCount)
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    char time_str[80];
+
+    // TODO: 'maxRotateCount' is currently not supported; so always use the date/time filename
+    // get current time in string format
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+
+    strcpy(szOldFileName, szLogFileName);
+    strcat(szOldFileName, "_");
+    strcat(szOldFileName, time_str);
+    strcat(szOldFileName, ".log");
 }
