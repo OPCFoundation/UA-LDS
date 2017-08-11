@@ -1,9 +1,23 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
+Version 1.03.370
+	Highlights:
+		- Compatibility for Linux.
+		- Improved documentation style and browser supportability. Not deployed anymore with the installation but available online at:http://opcfoundation-onlineapplications.org/LDS/UALDS.htm
+	Fixed issues:
+		- target field of SRV announce must end with .local: #11
+		- v1.02 INI file shall be reused in v1.03 installation: #13
+		- OPC UA LDS 1.03.367 debug loging activated: #14
+		- FindServersOnNetwork does not appear to handle ServerCapability filters properly : #20
+		- LDS 1.03 with corrupted configuration file: #22
+		- Installing patch of LDS over top of old LDS breaks installation: #21
+		- OPC UA LDS Service is removed when installing a second product containing the UA LDS 1.03 merge module (on same host ): #18
+
 Version 1.03.367
 	Fixed issues:
 		- Path to executable of OPC Bonjour service to enclose between quotes.
+		
 Version 1.03.362
 	Fixed issues:
 		- Updated documentation: #12.
@@ -16,12 +30,12 @@ Version 1.03.362
 		- Compatible for linux: #9.
 
 Version 1.03.355
-        Highlights:
+	Highlights:
 		- Added Multicast Extension feature.
 		- Updated build environment to Visual Studio 2013.
 		- Moved Mantis bugs to Github.
 		
-        Mantis issues resolved:	
+	Mantis issues resolved:	
 		- ID 0002888: LDS is vulnerable to unquoted service path.
 		- ID 0002954: Log file size must be limited.
 		- ID 0003279: LDS crash when ini file contains no endpoints.
