@@ -162,6 +162,8 @@ void ualds_platform_getapplicationpath(char *szFilePath, size_t len);
 void ualds_platform_getcwd(char *szFilePath, size_t len);
 void ualds_platform_sleep(int seconds);
 
+int ualds_platform_strcpy_insensitive(const char *s1, const char *s2);
+
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t len);
 #endif

@@ -380,3 +380,8 @@ int ualds_platform_scandir(const char *dirp, struct ualds_dirent ***namelist,
     *namelist = results;
     return numResults;
 }
+
+int ualds_platform_strcpy_insensitive(const char *s1, const char *s2)
+{
+    return stricmp(s1, s2);
+}

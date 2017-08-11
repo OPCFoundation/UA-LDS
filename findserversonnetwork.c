@@ -242,7 +242,7 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
 
     OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
         OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
-        strlen(hosttarget) - strlen("."));
+        strlen(hosttarget));
 
     char szPort[40] = { 0 };
 #if OPCUA_USE_SAFE_FUNCTIONS

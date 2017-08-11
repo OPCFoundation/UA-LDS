@@ -84,6 +84,8 @@ int ualds_platform_mkpath(char *szFilePath);
 #define ualds_platform_getapplicationpath(p, l)
 #define ualds_platform_sleep sleep
 
+int ualds_platform_strcpy_insensitive(const char *s1, const char *s2);
+
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t len);
 #endif

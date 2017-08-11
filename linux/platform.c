@@ -181,3 +181,8 @@ int ualds_platform_mkpath(char *szFilePath)
     free(path);
     return ret;
 }
+
+int ualds_platform_strcpy_insensitive(const char *s1, const char *s2)
+{
+    return strcasecmp(s1, s2);
+}
