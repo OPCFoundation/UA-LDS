@@ -14,7 +14,9 @@ if(WIN32)
     set(shared_c_files 
         dllmain.c
         dnssd.def
+		dnssd.rc
     )
+
     add_definitions(
         -D_WINDOWS=1
         -D_WINSOCK_DEPRECATED_NO_WARNINGS=1

@@ -10,7 +10,6 @@ set INSTALLDIR=%~dp0
 set GIT=C:\Program Files\Git\bin\git.exe
 set SIGNTOOL=C:\Build\sign_output.bat
 
-IF "%1"=="no-clean" GOTO noClean
 ECHO STEP 1) Deleting Output Directories
 REM IF EXIST %INSTALLDIR%\bin rmdir /s /q %INSTALLDIR%\bin
 
@@ -26,17 +25,19 @@ CALL build_win32.bat
 
 ECHO STEP 4) Update Build Number
 IF NOT DEFINED BUILD_VERSION SET BUILD_VERSION=370
-IF NOT DEFINED BUILD_NUMBER  SET BUILD_NUMBER=1
-ECHO Building Version: %BUILD_VERSION%.%BUILD_NUMBER
-IF %BUILD_NUMBER% GTR 0 ECHO #define BUILD_NUMBER %BUILD_NUMBER% > buildversion.h
+IF NOT DEFINED BUILD_NUMBER SET BUILD_NUMBER=1
+ECHO Building Version: %BUILD_VERSION%.%BUILD_NUMBER%
+
+perl -pi.bak -e "s/XXX/%BUILD_VERSION%/;" .\config.h 
+perl -pi.bak -e "s/YYY/%BUILD_NUMBER%/;" .\config.h
+del /Q *.bak
 
 ECHO STEP 4) Building LDS
 cd %SRCDIR%
-REM msbuild ualds.sln /p:Configuration=Release
-build_win32.bat
+CALL build_win32.bat
 
 ECHO STEP 5) Sign the Binaries
-#IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\bin\Release\*.exe /dual
+IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\build\bin\Release\*.dll /dual
 IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\build\bin\Release\*.exe /dual
 
 ECHO *** ALL DONE ***

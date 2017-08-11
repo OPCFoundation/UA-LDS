@@ -17,13 +17,10 @@ IDI_ICON1   ICON    DISCARDABLE "ualds.ico"
 #include "win_version.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// German (Germany) resources
+// English (United States) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
-#ifdef _WIN32
-LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
-#pragma code_page(1252)
-#endif //_WIN32
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE 9, 1
 
 VS_VERSION_INFO VERSIONINFO
   FILEVERSION    VER_FILE_VERSION
@@ -65,8 +62,7 @@ BEGIN
     END
 END
 
-
-#endif    // German (Germany) resources
+#endif // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
