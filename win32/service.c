@@ -912,16 +912,57 @@ int ServiceStop()
         {
             SERVICE_STATUS stat;
             bRet = ControlService(hService, SERVICE_CONTROL_STOP, &stat);
-            if (bRet)
-            {
-                printf("Service stopped successfully.\n");
-            }
-            else
+            if (bRet == FALSE)
             {
                 err = GetLastError();
                 ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
-                _ftprintf(stderr, _T("Error: ControlService failed with error(%i): %s.\n"), err, szMessage);
+                fprintf(stderr, "Error: Stopping service '%s' failed with error(%i): %s.\n", UALDS_CONF_SERVICE_NAME, err, szMessage);
             }
+
+            // verify if LDS is stopped
+            SERVICE_STATUS_PROCESS _status;
+            DWORD bytesNeeded;
+            BOOL queryLDSServiceRetCode = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO,
+                (LPBYTE)&_status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded);
+            if (queryLDSServiceRetCode == FALSE)
+            {
+                err = GetLastError();
+                ualds_platform_errorstring(err, szMessage, sizeof(szMessage));
+                _ftprintf(stderr, _T("Error: QueryServiceStatusEx '%s' failed with error(%i): %s.\n"), OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+                ualds_log(UALDS_LOG_ERR, "Error: QueryServiceStatusEx '%S' failed with error(%i): %S.", OPCF_BONJOUR_SERVICE_NAME, err, szMessage);
+                CloseServiceHandle(hService);
+                CloseServiceHandle(hSCM);
+                return FALSE;
+            }
+
+            // Wait for LDS to stop.
+            DWORD dwStartTime = GetTickCount();
+            DWORD dwTimeout = 30000; // 30-second time-out
+            while (_status.dwCurrentState != SERVICE_STOPPED)
+            {
+                DWORD sleep_millis = _status.dwWaitHint;
+                if (sleep_millis == 0)
+                {
+                    sleep_millis = 1000;
+                }
+                Sleep(sleep_millis);
+                if (!QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO,
+                    (LPBYTE)&_status, sizeof(SERVICE_STATUS_PROCESS), &bytesNeeded))
+                {
+                    printf("QueryServiceStatusEx failed (%d)\n", GetLastError());
+                    break;
+                }
+
+                if (_status.dwCurrentState == SERVICE_STOPPED)
+                    break;
+
+                if (GetTickCount() - dwStartTime > dwTimeout)
+                {
+                    printf("Wait timed out\n");
+                    break;
+                }
+            }
+            printf("Service stopped successfully\n");
         }
 
         CloseServiceHandle(hService);
