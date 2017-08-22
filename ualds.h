@@ -42,6 +42,7 @@ typedef struct _multicastSocketCallbackStruct
 } MulticastSocketCallbackStruct;
 
 extern OpcUa_Mutex g_mutex;
+extern int g_bEnableZeroconf;
 
 void ualds_endpoint_initialize(ualds_endpoint *pEndpoint);
 void ualds_endpoint_clear(ualds_endpoint *pEndpoint);

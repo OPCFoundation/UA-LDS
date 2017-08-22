@@ -197,7 +197,7 @@ OpcUa_StatusCode ualds_registerserver(
                 ualds_settings_writetime_t("UpdateTime", time(0));
                 ualds_settings_endgroup();
 #ifdef HAVE_HDS
-                if (bExists == 0)
+                if (bExists == 0 && g_bEnableZeroconf)
                 {
                     ualds_zeroconf_addRegistration(pszServerUri);
                 }
@@ -210,7 +210,10 @@ OpcUa_StatusCode ualds_registerserver(
                 ualds_log(UALDS_LOG_INFO, "Unregistering server %s.", pszServerUri);
                 ualds_settings_removegroup(pszServerUri);
 #ifdef HAVE_HDS
-                ualds_zeroconf_removeRegistration(pszServerUri);
+                if (g_bEnableZeroconf)
+                {
+                    ualds_zeroconf_removeRegistration(pszServerUri);
+                }
 #endif
                 ualds_settings_flush();
                 ualds_expirationcheck();

@@ -82,6 +82,7 @@ static int              g_bWin32StoreCheck = 0;
 #endif /* _WIN32 */
 
 OpcUa_Mutex g_mutex = OpcUa_Null;
+int g_bEnableZeroconf = 0;
 
 #if HAVE_OPENSSL
 /* basic extensions */
@@ -1161,7 +1162,7 @@ int ualds_server()
     OpcUa_Handle pcalltab = OpcUa_Null;
 
 #ifdef HAVE_HDS
-    int bEnableZeroconf = 1;
+    g_bEnableZeroconf = 1;
 #endif
 
 #ifdef _WIN32
@@ -1279,13 +1280,13 @@ int ualds_server()
     {
         if (strcmp(szValue, "yes") != 0)
         {
-            bEnableZeroconf = 0;
+            g_bEnableZeroconf = 0;
         }
     }
     ualds_settings_endgroup();
 
-    ualds_log(UALDS_LOG_INFO, "Zeroconf is %s.", bEnableZeroconf == 0 ? "disabled" : "enabled");
-    if (bEnableZeroconf)
+    ualds_log(UALDS_LOG_INFO, "Zeroconf is %s.", g_bEnableZeroconf == 0 ? "disabled" : "enabled");
+    if (g_bEnableZeroconf)
     {
         status = ualds_zeroconf_start_registration();
         if (OpcUa_IsBad(status))
@@ -1318,8 +1319,11 @@ int ualds_server()
     while (!g_shutdown)
     {
 #ifdef HAVE_HDS
-        ualds_zeroconf_socketEventCallback(&g_shutdown);
-        ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
+        if (g_bEnableZeroconf)
+        {
+            ualds_zeroconf_socketEventCallback(&g_shutdown);
+            ualds_findserversonnetwork_socketEventCallback(&g_shutdown);
+        }
 #endif
         ualds_platform_sleep(1);
     }
@@ -1327,7 +1331,7 @@ int ualds_server()
     ualds_delete_endpoints();
 
 #ifdef HAVE_HDS
-    if (bEnableZeroconf)
+    if (g_bEnableZeroconf)
     {
         ualds_zeroconf_stop_registration();
 
