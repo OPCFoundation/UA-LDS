@@ -809,12 +809,6 @@ int ServiceStart()
     DWORD err;
     TCHAR szMessage[256];
 
-    BOOL successBonjourServiceStart = StartBonjourService();
-    if (successBonjourServiceStart == FALSE)
-    {
-        _ftprintf(stderr, _T("Error: Could not start Bonjour Service.\n"));
-    }
-
     hSCM = OpenSCManager(NULL, NULL, SERVICE_START);
     if (hSCM == NULL)
     {

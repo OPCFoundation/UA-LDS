@@ -1165,15 +1165,6 @@ int ualds_server()
     g_bEnableZeroconf = 1;
 #endif
 
-#ifdef _WIN32
-    /*Precondition: Bonjour Service running.*/
-    BOOL successBonjourServiceStart = StartBonjourService();
-    if (successBonjourServiceStart == FALSE)
-    {
-        ualds_log(UALDS_LOG_ERR, "Could not start Bonjour Service");
-    }
-#endif /* _WIN32 */
-
     /* Get fully qualified domain name */
     ualds_platform_getfqhostname(g_szHostname, sizeof(g_szHostname));
     ualds_log(UALDS_LOG_NOTICE, "Server startup complete. Host name is %s.", g_szHostname);
@@ -1262,18 +1253,6 @@ int ualds_server()
         return EXIT_FAILURE;
     }
 
-    /* Open Endpoints */
-    status = ualds_create_endpoints();
-    if (OpcUa_IsBad(status))
-    {
-        ualds_security_uninitialize();
-        ualds_settings_cleanup();
-        OpcUa_Mutex_Delete(&g_mutex);
-        OpcUa_ProxyStub_Clear();
-        OpcUa_P_Clean(&pcalltab);
-        return EXIT_FAILURE;
-    }
-
 #ifdef HAVE_HDS
     ualds_settings_begingroup("Zeroconf");
     if (ualds_settings_readstring("EnableZeroconf", szValue, sizeof(szValue)) == 0)
@@ -1288,6 +1267,16 @@ int ualds_server()
     ualds_log(UALDS_LOG_INFO, "Zeroconf is %s.", g_bEnableZeroconf == 0 ? "disabled" : "enabled");
     if (g_bEnableZeroconf)
     {
+
+#ifdef _WIN32
+        /*Precondition: Bonjour Service running.*/
+        BOOL successBonjourServiceStart = StartBonjourService();
+        if (successBonjourServiceStart == FALSE)
+        {
+            ualds_log(UALDS_LOG_ERR, "Could not start Bonjour Service");
+        }
+#endif /* _WIN32 */
+
         status = ualds_zeroconf_start_registration();
         if (OpcUa_IsBad(status))
         {
@@ -1315,6 +1304,18 @@ int ualds_server()
         }
     }
 #endif
+
+    /* Open Endpoints */
+    status = ualds_create_endpoints();
+    if (OpcUa_IsBad(status))
+    {
+        ualds_security_uninitialize();
+        ualds_settings_cleanup();
+        OpcUa_Mutex_Delete(&g_mutex);
+        OpcUa_ProxyStub_Clear();
+        OpcUa_P_Clean(&pcalltab);
+        return EXIT_FAILURE;
+    }
 
     while (!g_shutdown)
     {
