@@ -574,12 +574,20 @@ static OpcUa_StatusCode ualds_create_selfsigned_certificates(OpcUa_Handle hCerti
         ualds_platform_fwrite(pCert.Data, 1, pCert.Length, f);
         ualds_platform_fclose(f);
     }
+    else
+    {
+        ualds_log(UALDS_LOG_ERR, "ualds_create_selfsigned_certificates: Cloud not create self-signed certificate file. \"%s\"!", g_szCertificateFile);
+    }
 
     f = ualds_platform_fopen(g_szCertificateKeyFile, "wb");
     if (f != NULL)
     {
         ualds_platform_fwrite(prvKey.Key.Data, 1, prvKey.Key.Length, f);
         ualds_platform_fclose(f);
+    }
+    else
+    {
+        ualds_log(UALDS_LOG_ERR, "ualds_create_selfsigned_certificates: Cloud not create self-signed certificate file. \"%s\"!", g_szCertificateKeyFile);
     }
 
 Error:
@@ -647,6 +655,54 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
 }
 #endif /* _WIN32 */
 
+static OpcUa_StatusCode ualds_load_certificate(OpcUa_Handle hCertificateStore)
+{
+    OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_load_certificate");
+
+    /* load DER encoded server certificate */
+    uStatus = g_PkiProvider.LoadCertificate(
+        &g_PkiProvider,
+        g_szCertificateFile,
+        hCertificateStore,
+        &g_server_certificate);
+
+    if (OpcUa_IsBad(uStatus))
+    {
+        ualds_log(UALDS_LOG_ERR, "Failed to load server certificate \"%s\"! (0x%08X)", g_szCertificateFile, uStatus);
+        OpcUa_GotoError;
+    }
+
+    /* load DER encoded server certificate private key */
+    uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
+        g_szCertificateKeyFile,
+        OpcUa_Crypto_Encoding_DER,
+        OpcUa_Null,
+        &g_server_key.Key);
+
+    if (OpcUa_IsBad(uStatus))
+    {
+        /* load PEM encoded server certificate private key */
+        uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
+            g_szCertificateKeyFile,
+            OpcUa_Crypto_Encoding_PEM,
+            OpcUa_Null,
+            &g_server_key.Key);
+    }
+
+    if (OpcUa_IsBad(uStatus))
+    {
+        ualds_log(UALDS_LOG_ERR, "Failed to load server private key \"%s\"! (0x%08X)", g_szCertificateKeyFile, uStatus);
+        OpcUa_GotoError;
+    }
+
+OpcUa_ReturnStatusCode;
+
+OpcUa_BeginErrorHandling;
+    OpcUa_ByteString_Clear(&g_server_certificate);
+    OpcUa_Key_Clear(&g_server_key);
+OpcUa_FinishErrorHandling;
+}
+
 static OpcUa_StatusCode ualds_security_initialize()
 {
     OpcUa_Handle hCertificateStore = OpcUa_Null;
@@ -660,6 +716,7 @@ static OpcUa_StatusCode ualds_security_initialize()
 OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
 
     ualds_settings_begingroup("PKI");
+    int reCreateOwnCertificateOnError = 0;
 
     UALDS_SETTINGS_READSTRING(CertificateStorePath);
 
@@ -725,6 +782,14 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
         }
     }
 #endif /* _WIN32 */
+    /* Check if we should re-create the own certificate if we found an error */
+    ualds_settings_readstring("ReCreateOwnCertificateOnError", szValue, sizeof(szValue));
+    if (strcmp(szValue, "yes") == 0)
+    {
+        ualds_log(UALDS_LOG_INFO, "ReCreateOwnCertificateOnError is enabled.");
+        reCreateOwnCertificateOnError = 1;
+    }
+
     ualds_settings_endgroup();
 
 #if HAVE_OPENSSL
@@ -751,41 +816,64 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     {
         ualds_create_selfsigned_certificates(hCertificateStore);
     }
-
-    /* load DER encoded server certificate */
-    uStatus = g_PkiProvider.LoadCertificate(
-        &g_PkiProvider,
-        g_szCertificateFile,
-        hCertificateStore,
-        &g_server_certificate);
-
-    if (OpcUa_IsBad(uStatus))
+    else
     {
-        ualds_log(UALDS_LOG_ERR, "Failed to load server certificate \"%s\"! (0x%08X)", g_szCertificateFile, uStatus);
-        OpcUa_GotoError;
+        if (reCreateOwnCertificateOnError) 
+        {
+            int reCreateCert = 0;
+            /* try to load certificate and check domain name */
+
+            /* loads the server certificate */
+            uStatus = ualds_load_certificate(hCertificateStore);
+            if (OpcUa_IsBad(uStatus))
+            {
+                ualds_log(UALDS_LOG_ERR, "Failed to load server certificate! (0x%08X)", uStatus);
+                reCreateCert = 1;
+            }
+            else
+            {
+                OpcUa_ByteString pSubjectDNS;
+                uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, &pSubjectDNS, NULL, NULL, NULL);
+                if (OpcUa_IsGood(uStatus))
+                {
+                    if (strcmp(pSubjectDNS.Data, g_szHostname) != 0) 
+                    {
+                        ualds_log(UALDS_LOG_ERR, "Server certificate DNS entry (%s) and current hostname (%s) is NOT the same!", pSubjectDNS.Data, g_szHostname);
+                        reCreateCert = 1;
+                    }
+                }
+                else
+                {
+                    ualds_log(UALDS_LOG_ERR, "Failed to extract server certificate DNS subject! (0x%08X)", uStatus);
+                    reCreateCert = 1;
+                }
+                OpcUa_ByteString_Clear(&pSubjectDNS);
+            }
+
+            if(reCreateCert)
+            {
+                ualds_log(UALDS_LOG_NOTICE, "Re-Creating server certificate!");
+
+                /* clear a previously loaded certificate */
+                OpcUa_ByteString_Clear(&g_server_certificate);
+                OpcUa_Key_Clear(&g_server_key);
+
+                /* create new self-signed certificate  */
+                ualds_create_selfsigned_certificates(hCertificateStore);
+            }
+        }
     }
 
-    /* load DER encoded server certificate private key */
-    uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
-        g_szCertificateKeyFile,
-        OpcUa_Crypto_Encoding_DER,
-        OpcUa_Null,
-        &g_server_key.Key);
-
-    if (OpcUa_IsBad(uStatus))
+    /* check if certificate is already loaded (during the above check) */
+    if (g_server_certificate.Data == OpcUa_Null)
     {
-        /* load PEM encoded server certificate private key */
-        uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
-            g_szCertificateKeyFile,
-            OpcUa_Crypto_Encoding_PEM,
-            OpcUa_Null,
-            &g_server_key.Key);
-    }
-
-    if (OpcUa_IsBad(uStatus))
-    {
-        ualds_log(UALDS_LOG_ERR, "Failed to load server private key \"%s\"! (0x%08X)", g_szCertificateKeyFile, uStatus);
-        OpcUa_GotoError;
+        /* loads the server certificate */
+        uStatus = ualds_load_certificate(hCertificateStore);
+        if (OpcUa_IsBad(uStatus))
+        {
+            ualds_log(UALDS_LOG_ERR, "Failed to load server private key \"%s\"! (0x%08X)", g_szCertificateKeyFile, uStatus);
+            OpcUa_GotoError;
+        }
     }
 
     g_PkiProvider.CloseCertificateStore(&g_PkiProvider, &hCertificateStore);
