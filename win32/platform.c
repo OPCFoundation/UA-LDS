@@ -16,15 +16,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 /* system includes */
 #include <stdio.h>
+#include <direct.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <time.h>
+
 /* local includes */
 #include "../config.h"
 #include "service.h"
 #include "platform.h"
-
+#include "log.h"
 
 #ifdef HAVE_VISUAL_LEAK_DETECTOR
 # include <vld.h>
@@ -236,8 +239,65 @@ int ualds_platform_mkdir(char *szFilePath, int mode)
 
 int ualds_platform_mkpath(char *szFilePath)
 {
-	/* Not supported - do as if making path succeeded */
-    return 0;
+    char *path = strdup(szFilePath);
+    int ret = 0;
+    char *szFind = path;
+    char *szFindNext = szFind;
+
+    /* be sure to not have a normal backspace */
+    char *szRepl;
+    szRepl = path;
+    while (*szRepl)
+    {
+        if (*szRepl == '/') *szRepl = '\\';
+        szRepl++;
+    }
+
+    /* create parent directories */
+    while ((ret == 0 || errno == EEXIST) && ((szFindNext = strchr(szFind, '\\')) != NULL))
+    {
+        if (szFindNext != szFind)
+        {
+            *szFindNext = 0;   /* replace '/' with \0 */
+
+            {
+                char *colon_char = strrchr(path, ':');
+                if (strcmp(colon_char, ":") == 0) // skip driver names
+                {
+                    *szFindNext = '\\'; /* restore '\\' */
+                    szFind = szFindNext + 1;
+                    continue;
+                }
+            }
+ 
+            ret = _mkdir(path);
+            if (ret < 0 && errno != EEXIST)
+            {
+                ualds_log(UALDS_LOG_WARNING, "Failed making %s error %s\n", path, strerror(errno));
+            }
+
+            *szFindNext = '\\'; /* restore '\\' */
+        }
+        szFind = szFindNext + 1;
+    }
+
+    /* create last dir */
+    if (ret == 0 || errno == EEXIST)
+    {
+        ret = _mkdir(path);
+        if (ret < 0 && errno != EEXIST)
+        {
+            ualds_log(UALDS_LOG_WARNING, "Failed making %s error %s\n", path, strerror(errno));
+        }
+    }
+
+    if (ret < 0 && errno == EEXIST)
+    {
+        ret = 0;
+    }
+
+    free(path);
+    return ret;
 }
 
 UALDS_FILE* ualds_platform_fopen(const char *path, const char *mode)
@@ -379,6 +439,73 @@ int ualds_platform_scandir(const char *dirp, struct ualds_dirent ***namelist,
 
     *namelist = results;
     return numResults;
+}
+
+void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, size_t bufSize, int maxRotateCount)
+{
+    time_t rawtime;
+    struct tm * timeinfo;
+    char time_str[80];
+
+    if (maxRotateCount <= 0)
+    {
+        // get current time in string format
+        time(&rawtime);
+        timeinfo = localtime(&rawtime);
+        strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
+
+        strcpy(szOldFileName, szLogFileName);
+        strcat(szOldFileName, "_");
+        strcat(szOldFileName, time_str);
+        strcat(szOldFileName, ".log");
+    }
+    else
+    {
+        // get oldest logfile name or new file (if not yet all old logfiles created)
+
+        // Find the oldest file
+        char szPath[PATH_MAX];
+        FILETIME oldestFileTime;
+        SYSTEMTIME st;
+        GetSystemTime(&st);
+        SystemTimeToFileTime(&st, &oldestFileTime);
+        int oldestFileNumber = 1;
+        char szNumber[30];
+        for (int i = 1; i <= maxRotateCount; i++)
+        {
+            strcpy(szPath, szLogFileName);
+            strcat(szPath, ".");
+            sprintf(szNumber, "%4.4d", i);
+            strcat(szPath, szNumber);
+            strcat(szPath, ".log");
+            HANDLE hFind;
+            WIN32_FIND_DATAA data;
+            hFind = FindFirstFileA(szPath, &data);
+            if (hFind != INVALID_HANDLE_VALUE)
+            {
+                if (CompareFileTime(&data.ftLastWriteTime, &oldestFileTime) < 0) {
+                    oldestFileTime = data.ftLastWriteTime;
+                    oldestFileNumber = i;
+                }
+                FindClose(hFind);
+            }
+            else
+            {
+                // We found a free file, so use it ;)
+                oldestFileNumber = i;
+                break;
+            }
+        }
+        strcpy(szOldFileName, szLogFileName);
+        strcat(szOldFileName, ".");
+        sprintf(szNumber, "%4.4d", oldestFileNumber);
+        strcat(szOldFileName, szNumber);
+        strcat(szOldFileName, ".log");
+
+        // Be sure the file does not exists
+        SetFileAttributesA(szOldFileName, FILE_ATTRIBUTE_NORMAL);
+        DeleteFileA(szOldFileName);
+    }
 }
 
 int ualds_platform_strcpy_insensitive(const char *s1, const char *s2)

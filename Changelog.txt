@@ -4,6 +4,8 @@ OPC Foundation OPC UA Local Discovery Server
 Version 1.03.370
 	Highlights:
 		- Compatibility for Linux.
+		- Log rotate. (optional)
+		- Recreate certificate if computer name has changed. (optional)
 		- Improved documentation style and browser supportability. Not deployed anymore with the installation but available online at:http://opcfoundation-onlineapplications.org/LDS/UALDS.htm
 	Fixed issues:
 		- target field of SRV announce must end with .local: #11
@@ -13,6 +15,7 @@ Version 1.03.370
 		- LDS 1.03 with corrupted configuration file: #22
 		- Installing patch of LDS over top of old LDS breaks installation: #21
 		- OPC UA LDS Service is removed when installing a second product containing the UA LDS 1.03 merge module (on same host ): #18
+		- No rolling file logs: #24
 
 Version 1.03.367
 	Fixed issues:

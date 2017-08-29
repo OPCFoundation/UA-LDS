@@ -145,6 +145,7 @@ int ualds_platform_rename(const char* from, const char* to);
 int ualds_platform_rm(char *szFilePath);
 int ualds_platform_mkdir(char *szFilePath, int mode);
 int ualds_platform_mkpath(char *szFilePath);
+void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, size_t bufSize, int maxRotateCount);
 UALDS_FILE* ualds_platform_fopen(const char *path, const char *mode);
 int ualds_platform_fclose(UALDS_FILE *fp);
 size_t ualds_platform_fread(void *ptr, size_t size, size_t nmemb, UALDS_FILE *fp);
