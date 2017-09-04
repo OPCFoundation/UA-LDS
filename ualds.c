@@ -706,8 +706,8 @@ static OpcUa_StatusCode ualds_load_certificate(OpcUa_Handle hCertificateStore)
 static OpcUa_StatusCode ualds_security_initialize()
 {
     OpcUa_Handle hCertificateStore = OpcUa_Null;
-#ifdef _WIN32
     char         szValue[10];
+#ifdef _WIN32
 #define __ualds_plat_path_sep "\\"
 #else
 #define __ualds_plat_path_sep "/"
