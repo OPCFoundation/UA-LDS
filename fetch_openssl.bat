@@ -8,7 +8,9 @@ SETLOCAL
 set ROOT=%~dp0
 set SRCDIR=openssl-1.0.2l
 set GITTAG=OpenSSL_1_0_2l
+
 set GIT=C:\Program Files\Git\bin\git.exe
+IF NOT EXIST "%GIT%" SET GIT=C:\Program Files (x86)\Git\bin\git.exe
 
 cd %ROOT%\stack
 IF NOT EXIST %SRCDIR% "%GIT%" clone https://github.com/openssl/openssl.git %SRCDIR%

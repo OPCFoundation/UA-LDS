@@ -7,8 +7,10 @@ SETLOCAL
 
 set SRCDIR=%~dp0
 set INSTALLDIR=%~dp0
-set GIT=C:\Program Files\Git\bin\git.exe
 set SIGNTOOL=C:\Build\sign_output.bat
+
+set GIT=C:\Program Files\Git\bin\git.exe
+IF NOT EXIST "%GIT%" SET GIT=C:\Program Files (x86)\Git\bin\git.exe
 
 ECHO STEP 1) Deleting Output Directories
 REM IF EXIST %INSTALLDIR%\bin rmdir /s /q %INSTALLDIR%\bin
