@@ -409,6 +409,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         }
 
         /* get registration information */
+        OpcUa_Mutex_Lock(g_mutex);
         uStatus = ualds_zeroconf_getServerInfo(pRegisterContext->szServerUri,
                                                pRegisterContext->discoveryUrlIndex,
                                                szMDNSServerName,
@@ -419,6 +420,8 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
                                                UALDS_CONF_MAX_URI_LENGTH,
                                                &port,
                                                &txtRecord);
+        OpcUa_Mutex_Unlock(g_mutex);
+
         if (OpcUa_IsBad(uStatus))
         {
             uStatus = OpcUa_Good;
@@ -728,6 +731,7 @@ void ualds_zeroconf_addRegistration(const char *szServerUri)
 
     ualds_settings_begingroup(szServerUri);
     ualds_settings_beginreadarray("DiscoveryUrls", &numURLs);
+    ualds_settings_endarray();
     ualds_settings_endgroup();
 
     for (index = 0; index < numURLs; ++index)

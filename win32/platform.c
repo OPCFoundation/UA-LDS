@@ -90,17 +90,38 @@ void ualds_platform_getconfigfile_path(char *szFilePath, size_t len)
         strlcpy(szFilePath, pszAppData, len);
         strlcat(szFilePath, "\\OPC Foundation\\UA\\Discovery\\ualds.ini", len);
     }
-    
-    if (!pszAppData || !ualds_platform_fileexists(szFilePath))
+}
+
+void getDefaultCertificateFolder(char *szFolderPath, size_t len)
+{
+    char *pszAppData = getenv("ALLUSERSPROFILE");
+
+    if (pszAppData)
+    {
+        strlcpy(szFolderPath, pszAppData, len);
+        strlcat(szFolderPath, "\\OPC Foundation\\UA\\pki", len);
+    }
+    else
     {
         /* fallback to working directory */
-        strlcpy(szFilePath, "ualds.ini", len);
+        ualds_platform_getcwd(szFolderPath, len);
     }
+}
 
-    if (!ualds_platform_fileexists(szFilePath))
+void getDefaultLogFilePath(char *szFilePath, size_t len)
+{
+    char *pszAppData = getenv("ALLUSERSPROFILE");
+
+    if (pszAppData)
     {
-        /* Results in lds exiting */
-        szFilePath[0] = 0;
+        strlcpy(szFilePath, pszAppData, len);
+        strlcat(szFilePath, "\\OPC Foundation\\UA\\Discovery\\opcualds.log", len);
+    }
+    else
+    {
+        /* fallback to working directory */
+        ualds_platform_getcwd(szFilePath, len);
+        strlcat(szFilePath, "\\opcualds.log", len);
     }
 }
 

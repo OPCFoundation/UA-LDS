@@ -48,11 +48,16 @@ void ualds_platform_getconfigfile_path(char *szFilePath, size_t len)
 {
     getcwd(szFilePath, len);
     strlcat(szFilePath, "/ualds.conf", len);
+}
 
-    if (!ualds_platform_fileexists(szFilePath))
-    {
-        szFilePath[0] = 0;
-    }
+void getDefaultCertificateFolder(char *szFolderPath, size_t len)
+{
+    strlcpy(szFolderPath, "/opt/opcfoundation/ualds/pki", len);
+}
+
+void getDefaultLogFilePath(char *szFilePath, size_t len)
+{
+    strlcpy(szFilePath, "/var/log/opcualds.log", len);
 }
 
 int ualds_platform_getfqhostname(char *szHostname, int len)

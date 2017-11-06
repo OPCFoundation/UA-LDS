@@ -1574,8 +1574,9 @@ void ualds_expirationcheck()
     {
         if (RemovedServers[i] == 0)
         {
-            ualds_settings_setarrayindex(pos++);
+            ualds_settings_setarrayindex(pos);
             ualds_settings_writestring("ServerUri", szServerUriArray[i]);
+            pos++;
         }
     }
     ualds_settings_endarray();

@@ -163,11 +163,6 @@ int main(int argc, char* argv[])
         /* if not config file was given as commandline argument use the default path */
         ualds_platform_getconfigfile_path(szConfigFile, sizeof(szConfigFile));
     }
-    if (szConfigFile[0] == 0) {
-        fprintf(stderr, "Error: No config file found.\n");
-        ualds_platform_cleanup();
-        exit(EXIT_FAILURE);
-    }
 
     if (debug == 1) {
         /* in debug mode we trace to stderr */

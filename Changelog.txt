@@ -1,6 +1,10 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
+Version 1.03.371
+	Fixed issues:
+		- ualds.ini Becomes empty o invalid: #33
+
 Version 1.03.370
 	Highlights:
 		- Compatibility for Linux.
