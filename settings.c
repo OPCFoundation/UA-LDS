@@ -32,7 +32,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *  ualds_settings_writestring("User", szUserName, strlen(szUserName));
  *  ualds_settings_writetime_t("LastAccessTime", now);
  *  ualds_settings_endgroup();
- *  ualds_settings_close();
+ *  ualds_settings_close(1);
  *  @endcode
  */
 
@@ -1666,28 +1666,44 @@ int ualds_settings_open(const char *szFilename)
     int ret = checkConfigConsistency();
     if (ret != 0)
     {
-        ualds_settings_close();
+        ualds_settings_close(0);
 
-        g_settings.szPath = strdup(szFilename);
-        g_settings.szPathBackup = malloc(1024 * sizeof(char*));
-        strcpy(g_settings.szPathBackup, g_settings.szPath);
-        strcat(g_settings.szPathBackup, ".bak");
+        ualds_settings_open_from_backup(szFilename);
 
-        g_settings.CurrentGroup = -1;
-        UaServer_FSBE_ParseConfigFile(g_settings.szPathBackup);
         ret = checkConfigConsistency();
         if (ret != 0)
         {
             // create default values
-            ualds_settings_close();
-            g_settings.szPath = strdup(szFilename);
-            g_settings.szPathBackup = malloc(1024 * sizeof(char*));
-            strcpy(g_settings.szPathBackup, g_settings.szPath);
-            strcat(g_settings.szPathBackup, ".bak");
-
-            loadDefualtSettings();
+            ualds_settings_close(0);
+            
+            ualds_settings_open_from_default(szFilename);
         }
     }
+
+    return 0;
+}
+
+int ualds_settings_open_from_backup(const char *szFilename)
+{
+    g_settings.szPath = strdup(szFilename);
+    g_settings.szPathBackup = malloc(1024 * sizeof(char*));
+    strcpy(g_settings.szPathBackup, g_settings.szPath);
+    strcat(g_settings.szPathBackup, ".bak");
+
+    g_settings.CurrentGroup = -1;
+    UaServer_FSBE_ParseConfigFile(g_settings.szPathBackup);
+
+    return 0;
+}
+
+int ualds_settings_open_from_default(const char *szFilename)
+{
+    g_settings.szPath = strdup(szFilename);
+    g_settings.szPathBackup = malloc(1024 * sizeof(char*));
+    strcpy(g_settings.szPathBackup, g_settings.szPath);
+    strcat(g_settings.szPathBackup, ".bak");
+
+    loadDefualtSettings();
 
     return 0;
 }
@@ -1704,14 +1720,17 @@ int ualds_settings_flush()
 
 /** Closes the file that was previously opened by ualds_settings_open.
  * This will atomically flush any changes.
+ // param flush
+ //          != 0 => flush to disk
+ //          == 0 => don't flush to disk
  */
-int ualds_settings_close()
+int ualds_settings_close(int flush)
 {
     FileSettings *pFS = &g_settings;
     int ret = 0;
     int i;
 
-    if (pFS->modified)
+    if (pFS->modified && flush != 0)
     {
         ualds_settings_flush();
     }
@@ -1984,7 +2003,7 @@ int ualds_settings_writetime_t(const char *szKey, time_t time)
  *      ualds_settings_readstring("password", pUser[i].szPassword, 50);
  *  }
  *  ualds_settings_endarray();
- *  ualds_settings_close();
+ *  ualds_settings_close(1);
  *  @endcode
  */
 int ualds_settings_beginreadarray(const char *szArrayKey, int *pNumElements)
@@ -2027,7 +2046,7 @@ int ualds_settings_beginreadarray(const char *szArrayKey, int *pNumElements)
  *      ualds_settings_writestring("password", pUser[i].szPassword);
  *  }
  *  ualds_settings_endarray();
- *  ualds_settings_close();
+ *  ualds_settings_close(1);
  *  @endcode
  */
 int ualds_settings_beginwritearray(const char *szArrayKey, int numElements)

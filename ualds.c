@@ -1244,12 +1244,7 @@ static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(OpcUa_CharA* szMessage)
     ualds_log(UALDS_LOG_DEBUG, "[uastack] %.*s", strlen(szMessage)-1, szMessage);
 }
 
-/** Main loop of UA LDS service.
- * The main.c file calls this function to start the UA LDS server.
- * This function does not return until shutdown.
- * @see ualds_shutdown
- */
-int ualds_server()
+int ualds_server_startup()
 {
     int ret = EXIT_SUCCESS;
     OpcUa_ProxyStubConfiguration stackconfig;
@@ -1276,13 +1271,17 @@ int ualds_server()
     {
         if (strcmp(szValue, "error") == 0) {
             g_StackTraceLevel = OPCUA_TRACE_OUTPUT_LEVEL_ERROR;
-        } else if (strcmp(szValue, "warn") == 0) {
+        }
+        else if (strcmp(szValue, "warn") == 0) {
             g_StackTraceLevel = OPCUA_TRACE_OUTPUT_LEVEL_WARNING;
-        } else if (strcmp(szValue, "info") == 0) {
+        }
+        else if (strcmp(szValue, "info") == 0) {
             g_StackTraceLevel = OPCUA_TRACE_OUTPUT_LEVEL_INFO;
-        } else if (strcmp(szValue, "debug") == 0) {
+        }
+        else if (strcmp(szValue, "debug") == 0) {
             g_StackTraceLevel = OPCUA_TRACE_OUTPUT_LEVEL_DEBUG;
-        } else {
+        }
+        else {
             g_StackTraceLevel = OPCUA_TRACE_OUTPUT_LEVEL_NONE;
         }
     }
@@ -1340,7 +1339,6 @@ int ualds_server()
         ualds_settings_writestring("SemaphoreFilePath", szExeFileName);
     }
     ualds_settings_endgroup();
-    ualds_settings_flush();
 
     /* Initialize OPC UA Security */
     status = ualds_security_initialize();
@@ -1380,7 +1378,7 @@ int ualds_server()
         {
             ualds_delete_endpoints();
             ualds_security_uninitialize();
-            ualds_settings_cleanup();
+            ualds_settings_cleanup(0);
             OpcUa_Mutex_Delete(&g_mutex);
             OpcUa_ProxyStub_Clear();
             OpcUa_P_Clean(&pcalltab);
@@ -1394,7 +1392,7 @@ int ualds_server()
             ualds_zeroconf_stop_registration();
             ualds_delete_endpoints();
             ualds_security_uninitialize();
-            ualds_settings_cleanup();
+            ualds_settings_cleanup(0);
             OpcUa_Mutex_Delete(&g_mutex);
             OpcUa_ProxyStub_Clear();
             OpcUa_P_Clean(&pcalltab);
@@ -1407,13 +1405,29 @@ int ualds_server()
     status = ualds_create_endpoints();
     if (OpcUa_IsBad(status))
     {
+        ualds_delete_endpoints();
+
+#ifdef HAVE_HDS
+        if (g_bEnableZeroconf)
+        {
+            ualds_zeroconf_socketEventCallback(&g_shutdown);
+
+            ualds_zeroconf_stop_registration();
+
+            /* stop browsing for DNSServices in the background */
+            ualds_findserversonnetwork_stop_listening();
+        }
+#endif
+
         ualds_security_uninitialize();
-        ualds_settings_cleanup();
+        ualds_settings_cleanup(0);
         OpcUa_Mutex_Delete(&g_mutex);
         OpcUa_ProxyStub_Clear();
         OpcUa_P_Clean(&pcalltab);
         return EXIT_FAILURE;
     }
+
+    ualds_settings_flush();
 
     while (!g_shutdown)
     {
@@ -1440,10 +1454,46 @@ int ualds_server()
 #endif
 
     ualds_security_uninitialize();
-    ualds_settings_cleanup();
+    ualds_settings_cleanup(1);
     OpcUa_Mutex_Delete(&g_mutex);
     OpcUa_ProxyStub_Clear();
     OpcUa_P_Clean(&pcalltab);
+
+    return ret;
+}
+/** Main loop of UA LDS service.
+ * The main.c file calls this function to start the UA LDS server.
+ * This function does not return until shutdown.
+ * @see ualds_shutdown
+ */
+int ualds_server()
+{
+    int ret = EXIT_SUCCESS;
+
+    ret = ualds_server_startup();
+    if (ret != EXIT_SUCCESS)
+    {
+        // The LDS could not start with the current config file (ualds.ini/ualds.conf).
+        // Althow the config file can be syntactically correct, different manual changes to it can make the LDS not startup.
+        // Try to use the backup config file (ualds.ini.bak/ualds.conf.bak)
+
+        char szConfigFile[PATH_MAX] = { 0 };
+        ualds_platform_getconfigfile_path(szConfigFile, sizeof(szConfigFile));
+        ualds_settings_open_from_backup(szConfigFile);
+
+        ret = ualds_server_startup();
+        if (ret != EXIT_SUCCESS)
+        {
+            // The LDS could not start with the backup config file(ualds.ini.bak/ualds.conf.bak).
+            // Try default configuration values
+
+            char szConfigFile[PATH_MAX] = { 0 };
+            ualds_platform_getconfigfile_path(szConfigFile, sizeof(szConfigFile));
+            ualds_settings_open_from_default(szConfigFile);
+
+            ret = ualds_server_startup();
+        }
+    }
 
     return ret;
 }
@@ -1581,7 +1631,6 @@ void ualds_expirationcheck()
     }
     ualds_settings_endarray();
     ualds_settings_endgroup();
-    ualds_settings_flush();
 
     /* cleanup */
     if (szServerUriArray)
@@ -1604,12 +1653,12 @@ void ualds_expirationcheck()
     }
 }
 
-int ualds_settings_cleanup()
+int ualds_settings_cleanup(int flush)
 {
     int status = 0;
 
     OpcUa_Mutex_Lock(g_mutex);
-    status = ualds_settings_close();
+    status = ualds_settings_close(flush);
     OpcUa_Mutex_Unlock(g_mutex);
 
     return status;

@@ -57,7 +57,10 @@ const char* ualds_serveruri();
 const char* ualds_producturi();
 const char* ualds_applicationname(const char *szLocale);
 
-int ualds_settings_cleanup();
+// param flush 
+//          != 0 => flush to disk
+//          == 0 => don't flush to disk
+int ualds_settings_cleanup(int flush);
 
 /*============================================================================
  * Helper Macro For Building Response Header

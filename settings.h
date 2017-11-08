@@ -27,7 +27,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 int ualds_settings_open(const char *szFilename);
 int ualds_settings_flush();
-int ualds_settings_close();
+int ualds_settings_close(int flush);
 int ualds_settings_begingroup(const char *szGroup);
 int ualds_settings_endgroup();
 int ualds_settings_readstring(const char *szKey, char *szValue, int len);
@@ -51,6 +51,9 @@ int ualds_settings_removegroup(const char *szGroup);
 
 int split_string(char *pszString, char cSep, const char ***pszStringArray);
 int replace_string(char *pszString, int len, const char *pszSearch, const char *pszReplace);
+
+int ualds_settings_open_from_backup(const char *szFilename);
+int ualds_settings_open_from_default(const char *szFilename);
 
 /** Helper macro for lazy programmers.
  * This macro reads a string parameter and stores it in a global string variable.
