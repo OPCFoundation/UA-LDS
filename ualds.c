@@ -707,11 +707,6 @@ static OpcUa_StatusCode ualds_security_initialize()
 {
     OpcUa_Handle hCertificateStore = OpcUa_Null;
     char         szValue[10];
-#ifdef _WIN32
-#define __ualds_plat_path_sep "\\"
-#else
-#define __ualds_plat_path_sep "/"
-#endif /* _WIN32 */
 
 OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
 
@@ -724,13 +719,26 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
         ualds_log(UALDS_LOG_WARNING, "Certificate store path (Section: 'PKI', Key: 'CertificateStorePath') is not set in the settings file!");
     }
 
+    int szCertificateStorePathLen = strlen(g_szCertificateStorePath);
+
+    // 50 characters are enough to complete the paths to subfolders. The subfolder structure is fixed.
+    if (szCertificateStorePathLen > PATH_MAX - 50)
+    {
+        ualds_log(UALDS_LOG_WARNING, "Certificate store path is too long!");
+        uStatus = OpcUa_Bad;
+        OpcUa_GotoError;
+    }
+
     //check if path ends with dir separator
     char* directory_separator = __ualds_plat_path_sep;
-    if (g_szCertificateStorePath[strlen(g_szCertificateStorePath) - 1] != *directory_separator)
+    if (szCertificateStorePathLen > 0)
     {
-        strncat(g_szCertificateStorePath, directory_separator, 1);
+        if (g_szCertificateStorePath[szCertificateStorePathLen - 1] != *directory_separator)
+        {
+            strncat(g_szCertificateStorePath, directory_separator, 1);
+        }
     }
-    
+        
     if (ualds_platform_mkpath(g_szCertificateStorePath) != 0)
     {
         g_szCertificateStorePath[0] = 0;

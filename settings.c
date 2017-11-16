@@ -806,12 +806,12 @@ int checkConfigConsistency()
     }
 
     // PKI/CertificateStorePath
-    retCode = ualds_settings_readstring("CertificateStorePath", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+    retCode = ualds_settings_readstring("CertificateStorePath", tmpString, PATH_MAX);
     if (retCode != 0)
     {
         return -1;
     }
-    if (strlen(tmpString) <= 0)
+    if (strlen(tmpString) <= 0 || strlen(tmpString) > (PATH_MAX - 50)) // 50 characters are enough to complete the paths to subfolders. The subfolder structure is fixed.
     {
         return -1;
     }
@@ -864,7 +864,7 @@ int checkConfigConsistency()
     }
 
     // PKI/TrustListPath[optinal]
-    retCode = ualds_settings_readstring("TrustListPath", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+    retCode = ualds_settings_readstring("TrustListPath", tmpString, PATH_MAX);
     if (retCode == 0)
     {
         if (strlen(tmpString) <= 0)
@@ -874,7 +874,7 @@ int checkConfigConsistency()
     }
 
     // PKI/RejectedPath[optinal]
-    retCode = ualds_settings_readstring("RejectedPath", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+    retCode = ualds_settings_readstring("RejectedPath", tmpString, PATH_MAX);
     if (retCode == 0)
     {
         if (strlen(tmpString) <= 0)
@@ -884,7 +884,7 @@ int checkConfigConsistency()
     }
 
     // PKI/IssuerPath[optinal]
-    retCode = ualds_settings_readstring("IssuerPath", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+    retCode = ualds_settings_readstring("IssuerPath", tmpString, PATH_MAX);
     if (retCode == 0)
     {
         if (strlen(tmpString) <= 0)
@@ -894,7 +894,7 @@ int checkConfigConsistency()
     }
 
     // PKI/CRLPath[optinal]
-    retCode = ualds_settings_readstring("CRLPath", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+    retCode = ualds_settings_readstring("CRLPath", tmpString, PATH_MAX);
     if (retCode == 0)
     {
         if (strlen(tmpString) <= 0)
@@ -904,7 +904,7 @@ int checkConfigConsistency()
     }
 
     // PKI/CertificateFile[optinal]
-    retCode = ualds_settings_readstring("CertificateFile", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+    retCode = ualds_settings_readstring("CertificateFile", tmpString, PATH_MAX);
     if (retCode == 0)
     {
         if (strlen(tmpString) <= 0)
@@ -914,7 +914,7 @@ int checkConfigConsistency()
     }
 
     // PKI/CertificateKeyFile[optinal]
-    retCode = ualds_settings_readstring("CertificateKeyFile", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+    retCode = ualds_settings_readstring("CertificateKeyFile", tmpString, PATH_MAX);
     if (retCode == 0)
     {
         if (strlen(tmpString) <= 0)
@@ -955,12 +955,12 @@ int checkConfigConsistency()
     // Log/LogFile [optinal]
     if (strcmp(tmpString, "file") == 0)
     {
-        retCode = ualds_settings_readstring("LogFile", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+        retCode = ualds_settings_readstring("LogFile", tmpString, PATH_MAX);
         if (retCode != 0)
         {
             return -1;
         }
-        if (strlen(tmpString) <= 0)
+        if (strlen(tmpString) <= 0 || strlen(tmpString) > PATH_MAX - 50) // 50 characters are enough to complete the rotate/backup file names
         {
             return -1;
         }
@@ -1455,41 +1455,66 @@ void loadDefualtSettings()
     // old keys for backward compatibility
     retCode = ualds_settings_addcomment("# ReadOnly information for 3rd party applications");
     retCode = ualds_settings_addemptyline();
+
+    char* directory_separator = __ualds_plat_path_sep;
+
     // PKI/CertificateFile
     char certifFile[1024];
     memset(certifFile, 0, 1024);
     strcpy(certifFile, certifFolder);
-    strcat(certifFile, "\\own\\certs\\ualdscert.der");
+    strncat(certifFile, directory_separator, 1);
+    strcat(certifFile, "own");
+    strncat(certifFile, directory_separator, 1);
+    strcat(certifFile, "certs");
+    strncat(certifFile, directory_separator, 1);
+    strcat(certifFile, "ualdscert.der");
     retCode = ualds_settings_writestring("CertificateFile", certifFile);
     // PKI/CertificateKeyFile
     char certifFileKey[1024];
     memset(certifFileKey, 0, 1024);
     strcpy(certifFileKey, certifFolder);
-    strcat(certifFileKey, "\\own\\private\\ualdskey.nopass.pem");
+    strncat(certifFileKey, directory_separator, 1);
+    strcat(certifFileKey, "own");
+    strncat(certifFileKey, directory_separator, 1);
+    strcat(certifFileKey, "private");
+    strncat(certifFileKey, directory_separator, 1);
+    strcat(certifFileKey, "ualdskey.nopass.pem");
     retCode = ualds_settings_writestring("CertificateKeyFile", certifFileKey);
     // PKI/CRLPath
     char cRLPath[1024];
     memset(cRLPath, 0, 1024);
     strcpy(cRLPath, certifFolder);
-    strcat(cRLPath, "\\trusted\\crl");
+    strncat(cRLPath, directory_separator, 1);
+    strcat(cRLPath, "trusted");
+    strncat(cRLPath, directory_separator, 1);
+    strcat(cRLPath, "crl");
     retCode = ualds_settings_writestring("CRLPath", cRLPath);
     // PKI/TrustListPath
     char trustListPath[1024];
     memset(trustListPath, 0, 1024);
     strcpy(trustListPath, certifFolder);
-    strcat(trustListPath, "\\trusted\\certs");
+    strncat(trustListPath, directory_separator, 1);
+    strcat(trustListPath, "trusted");
+    strncat(trustListPath, directory_separator, 1);
+    strcat(trustListPath, "certs");
     retCode = ualds_settings_writestring("TrustListPath", trustListPath);
     // PKI/IssuerPath
     char issuerPath[1024];
     memset(issuerPath, 0, 1024);
     strcpy(issuerPath, certifFolder);
-    strcat(issuerPath, "\\issuer\\certs");
+    strncat(issuerPath, directory_separator, 1);
+    strcat(issuerPath, "issuer");
+    strncat(issuerPath, directory_separator, 1);
+    strcat(issuerPath, "certs");
     retCode = ualds_settings_writestring("IssuerPath", issuerPath);
     // PKI/RejectedPath
     char rejectedPath[1024];
     memset(rejectedPath, 0, 1024);
     strcpy(rejectedPath, certifFolder);
-    strcat(rejectedPath, "\\rejected\\certs");
+    strncat(rejectedPath, directory_separator, 1);
+    strcat(rejectedPath, "rejected");
+    strncat(rejectedPath, directory_separator, 1);
+    strcat(rejectedPath, "certs");
     retCode = ualds_settings_writestring("RejectedPath", rejectedPath);
 
     retCode = ualds_settings_addemptyline();

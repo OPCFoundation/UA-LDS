@@ -55,6 +55,12 @@ int replace_string(char *pszString, int len, const char *pszSearch, const char *
 int ualds_settings_open_from_backup(const char *szFilename);
 int ualds_settings_open_from_default(const char *szFilename);
 
+#ifdef _WIN32
+#define __ualds_plat_path_sep "\\"
+#else
+#define __ualds_plat_path_sep "/"
+#endif /* _WIN32 */
+
 /** Helper macro for lazy programmers.
  * This macro reads a string parameter and stores it in a global string variable.
  * It assumes that a global variable like "char g_szPARAM[20]" was defined.
