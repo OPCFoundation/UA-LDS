@@ -106,8 +106,9 @@ OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsCli
         /* Fall back to fixed path */
         root = rootFixedPath;
     }
-    strcpy(oldTrustListPath, root);
-    strcat(oldTrustListPath, "\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs");
+    memset(oldTrustListPath, 0, PATH_MAX);
+    strlcpy(oldTrustListPath, root, MAX_PATH);
+    strlcat(oldTrustListPath, "\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs", MAX_PATH);
 
     oldPkiConfig.CertificateTrustListLocation = oldTrustListPath;
     oldPkiConfig.CertificateRevocationListLocation = newCertificateStorePathCrl;
@@ -180,8 +181,9 @@ OpcUa_StatusCode ualds_verify_cert_old_edited_location(OpcUa_ByteString* pbsClie
             /* Fall back to fixed path */
             root = rootFixedPath;
         }
-        strcpy(trustListPathOldEditedLocation, root);
-        strcat(trustListPathOldEditedLocation, "\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs");
+        memset(trustListPathOldEditedLocation, 0, PATH_MAX);
+        strlcpy(trustListPathOldEditedLocation, root, PATH_MAX);
+        strlcat(trustListPathOldEditedLocation, "\\OPC Foundation\\UA\\Discovery\\pki\\trusted\\certs", PATH_MAX);
     }
 
     oldPkiConfig.CertificateTrustListLocation = trustListPathOldEditedLocation;

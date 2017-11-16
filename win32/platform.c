@@ -475,10 +475,10 @@ void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, siz
         timeinfo = localtime(&rawtime);
         strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
 
-        strcpy(szOldFileName, szLogFileName);
-        strcat(szOldFileName, "_");
-        strcat(szOldFileName, time_str);
-        strcat(szOldFileName, ".log");
+        strlcpy(szOldFileName, szLogFileName, PATH_MAX);
+        strlcat(szOldFileName, "_", PATH_MAX);
+        strlcat(szOldFileName, time_str, PATH_MAX);
+        strlcat(szOldFileName, ".log", PATH_MAX);
     }
     else
     {
@@ -494,11 +494,11 @@ void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, siz
         char szNumber[30];
         for (int i = 1; i <= maxRotateCount; i++)
         {
-            strcpy(szPath, szLogFileName);
-            strcat(szPath, ".");
+            strlcpy(szPath, szLogFileName, PATH_MAX);
+            strlcat(szPath, ".", PATH_MAX);
             sprintf(szNumber, "%4.4d", i);
-            strcat(szPath, szNumber);
-            strcat(szPath, ".log");
+            strlcat(szPath, szNumber, PATH_MAX);
+            strlcat(szPath, ".log", PATH_MAX);
             HANDLE hFind;
             WIN32_FIND_DATAA data;
             hFind = FindFirstFileA(szPath, &data);
@@ -517,11 +517,11 @@ void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, siz
                 break;
             }
         }
-        strcpy(szOldFileName, szLogFileName);
-        strcat(szOldFileName, ".");
+        strlcpy(szOldFileName, szLogFileName, PATH_MAX);
+        strlcat(szOldFileName, ".", PATH_MAX);
         sprintf(szNumber, "%4.4d", oldestFileNumber);
-        strcat(szOldFileName, szNumber);
-        strcat(szOldFileName, ".log");
+        strlcat(szOldFileName, szNumber, PATH_MAX);
+        strlcat(szOldFileName, ".log", PATH_MAX);
 
         // Be sure the file does not exists
         SetFileAttributesA(szOldFileName, FILE_ATTRIBUTE_NORMAL);

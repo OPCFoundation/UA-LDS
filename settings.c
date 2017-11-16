@@ -1426,8 +1426,8 @@ void loadDefualtSettings()
     // PKI/CertificateStorePath
     retCode = ualds_settings_addcomment("#Certificate Store Path");
     retCode = ualds_settings_addemptyline();
-    char certifFolder[1024];
-    getDefaultCertificateFolder(certifFolder, 1024);
+    char certifFolder[PATH_MAX];
+    getDefaultCertificateFolder(certifFolder, PATH_MAX);
     retCode = ualds_settings_writestring("CertificateStorePath", certifFolder);
     // PKI/MaxRejectedCertificates
     retCode = ualds_settings_addcomment("# Maximum number of rejected certificates. This prevents malicious programs from filling up available disk space by");
@@ -1459,62 +1459,62 @@ void loadDefualtSettings()
     char* directory_separator = __ualds_plat_path_sep;
 
     // PKI/CertificateFile
-    char certifFile[1024];
-    memset(certifFile, 0, 1024);
-    strcpy(certifFile, certifFolder);
-    strncat(certifFile, directory_separator, 1);
-    strcat(certifFile, "own");
-    strncat(certifFile, directory_separator, 1);
-    strcat(certifFile, "certs");
-    strncat(certifFile, directory_separator, 1);
-    strcat(certifFile, "ualdscert.der");
+    char certifFile[PATH_MAX];
+    memset(certifFile, 0, PATH_MAX);
+    strlcpy(certifFile, certifFolder, PATH_MAX);
+    strlcat(certifFile, directory_separator, PATH_MAX);
+    strlcat(certifFile, "own", PATH_MAX);
+    strlcat(certifFile, directory_separator, PATH_MAX);
+    strlcat(certifFile, "certs", PATH_MAX);
+    strlcat(certifFile, directory_separator, PATH_MAX);
+    strlcat(certifFile, "ualdscert.der", PATH_MAX);
     retCode = ualds_settings_writestring("CertificateFile", certifFile);
     // PKI/CertificateKeyFile
-    char certifFileKey[1024];
-    memset(certifFileKey, 0, 1024);
-    strcpy(certifFileKey, certifFolder);
-    strncat(certifFileKey, directory_separator, 1);
-    strcat(certifFileKey, "own");
-    strncat(certifFileKey, directory_separator, 1);
-    strcat(certifFileKey, "private");
-    strncat(certifFileKey, directory_separator, 1);
-    strcat(certifFileKey, "ualdskey.nopass.pem");
+    char certifFileKey[PATH_MAX];
+    memset(certifFileKey, 0, PATH_MAX);
+    strlcpy(certifFileKey, certifFolder, PATH_MAX);
+    strlcat(certifFileKey, directory_separator, PATH_MAX);
+    strlcat(certifFileKey, "own", PATH_MAX);
+    strlcat(certifFileKey, directory_separator, PATH_MAX);
+    strlcat(certifFileKey, "private", PATH_MAX);
+    strlcat(certifFileKey, directory_separator, PATH_MAX);
+    strlcat(certifFileKey, "ualdskey.nopass.pem", PATH_MAX);
     retCode = ualds_settings_writestring("CertificateKeyFile", certifFileKey);
     // PKI/CRLPath
-    char cRLPath[1024];
-    memset(cRLPath, 0, 1024);
-    strcpy(cRLPath, certifFolder);
-    strncat(cRLPath, directory_separator, 1);
-    strcat(cRLPath, "trusted");
-    strncat(cRLPath, directory_separator, 1);
-    strcat(cRLPath, "crl");
+    char cRLPath[PATH_MAX];
+    memset(cRLPath, 0, PATH_MAX);
+    strlcpy(cRLPath, certifFolder, PATH_MAX);
+    strlcat(cRLPath, directory_separator, PATH_MAX);
+    strlcat(cRLPath, "trusted", PATH_MAX);
+    strlcat(cRLPath, directory_separator, PATH_MAX);
+    strlcat(cRLPath, "crl", PATH_MAX);
     retCode = ualds_settings_writestring("CRLPath", cRLPath);
     // PKI/TrustListPath
-    char trustListPath[1024];
-    memset(trustListPath, 0, 1024);
-    strcpy(trustListPath, certifFolder);
-    strncat(trustListPath, directory_separator, 1);
-    strcat(trustListPath, "trusted");
-    strncat(trustListPath, directory_separator, 1);
-    strcat(trustListPath, "certs");
+    char trustListPath[PATH_MAX];
+    memset(trustListPath, 0, PATH_MAX);
+    strlcpy(trustListPath, certifFolder, PATH_MAX);
+    strlcat(trustListPath, directory_separator, PATH_MAX);
+    strlcat(trustListPath, "trusted", PATH_MAX);
+    strlcat(trustListPath, directory_separator, PATH_MAX);
+    strlcat(trustListPath, "certs", PATH_MAX);
     retCode = ualds_settings_writestring("TrustListPath", trustListPath);
     // PKI/IssuerPath
-    char issuerPath[1024];
-    memset(issuerPath, 0, 1024);
-    strcpy(issuerPath, certifFolder);
-    strncat(issuerPath, directory_separator, 1);
-    strcat(issuerPath, "issuer");
-    strncat(issuerPath, directory_separator, 1);
-    strcat(issuerPath, "certs");
+    char issuerPath[PATH_MAX];
+    memset(issuerPath, 0, PATH_MAX);
+    strlcpy(issuerPath, certifFolder, PATH_MAX);
+    strlcat(issuerPath, directory_separator, PATH_MAX);
+    strlcat(issuerPath, "issuer", PATH_MAX);
+    strlcat(issuerPath, directory_separator, PATH_MAX);
+    strlcat(issuerPath, "certs", PATH_MAX);
     retCode = ualds_settings_writestring("IssuerPath", issuerPath);
     // PKI/RejectedPath
-    char rejectedPath[1024];
-    memset(rejectedPath, 0, 1024);
-    strcpy(rejectedPath, certifFolder);
-    strncat(rejectedPath, directory_separator, 1);
-    strcat(rejectedPath, "rejected");
-    strncat(rejectedPath, directory_separator, 1);
-    strcat(rejectedPath, "certs");
+    char rejectedPath[PATH_MAX];
+    memset(rejectedPath, 0, PATH_MAX);
+    strlcpy(rejectedPath, certifFolder, PATH_MAX);
+    strlcat(rejectedPath, directory_separator, PATH_MAX);
+    strlcat(rejectedPath, "rejected", PATH_MAX);
+    strlcat(rejectedPath, directory_separator, PATH_MAX);
+    strlcat(rejectedPath, "certs", PATH_MAX);
     retCode = ualds_settings_writestring("RejectedPath", rejectedPath);
 
     retCode = ualds_settings_addemptyline();
@@ -1681,8 +1681,8 @@ int ualds_settings_open(const char *szFilename)
 {
     g_settings.szPath = strdup(szFilename);
     g_settings.szPathBackup = malloc(1024 * sizeof(char*));
-    strcpy(g_settings.szPathBackup, g_settings.szPath);
-    strcat(g_settings.szPathBackup, ".bak");
+    strlcpy(g_settings.szPathBackup, g_settings.szPath, PATH_MAX);
+    strlcat(g_settings.szPathBackup, ".bak", PATH_MAX);
 
     g_settings.CurrentGroup = -1;
     UaServer_FSBE_ParseConfigFile(g_settings.szPath);
@@ -1712,8 +1712,8 @@ int ualds_settings_open_from_backup(const char *szFilename)
 {
     g_settings.szPath = strdup(szFilename);
     g_settings.szPathBackup = malloc(1024 * sizeof(char*));
-    strcpy(g_settings.szPathBackup, g_settings.szPath);
-    strcat(g_settings.szPathBackup, ".bak");
+    strlcpy(g_settings.szPathBackup, g_settings.szPath, PATH_MAX);
+    strlcat(g_settings.szPathBackup, ".bak", PATH_MAX);
 
     g_settings.CurrentGroup = -1;
     UaServer_FSBE_ParseConfigFile(g_settings.szPathBackup);
@@ -1725,8 +1725,8 @@ int ualds_settings_open_from_default(const char *szFilename)
 {
     g_settings.szPath = strdup(szFilename);
     g_settings.szPathBackup = malloc(1024 * sizeof(char*));
-    strcpy(g_settings.szPathBackup, g_settings.szPath);
-    strcat(g_settings.szPathBackup, ".bak");
+    strlcpy(g_settings.szPathBackup, g_settings.szPath, PATH_MAX);
+    strlcat(g_settings.szPathBackup, ".bak", PATH_MAX);
 
     loadDefualtSettings();
 

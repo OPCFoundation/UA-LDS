@@ -156,16 +156,16 @@ void ualds_log(LogLevel level, const char *format, ...)
                 // close log file
                 ualds_closelog();
 
-                strcpy(szLogfile_backup, szLogfile);
+                strlcpy(szLogfile_backup, szLogfile, PATH_MAX);
 
                 // get current time in string format
                 time(&rawtime);
                 timeinfo = localtime(&rawtime);
                 strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
 
-                strcat(szLogfile_backup, "_");
-                strcat(szLogfile_backup, time_str);
-                strcat(szLogfile_backup, ".log");
+                strlcat(szLogfile_backup, "_", PATH_MAX);
+                strlcat(szLogfile_backup, time_str, PATH_MAX);
+                strlcat(szLogfile_backup, ".log", PATH_MAX);
 
                 // rename file
                 ualds_platform_rename(szLogfile, szLogfile_backup);

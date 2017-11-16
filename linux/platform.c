@@ -201,10 +201,10 @@ void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, siz
     timeinfo = localtime(&rawtime);
     strftime(time_str, 80, "%Y-%m-%d_%H-%M-%S", timeinfo);
 
-    strcpy(szOldFileName, szLogFileName);
-    strcat(szOldFileName, "_");
-    strcat(szOldFileName, time_str);
-    strcat(szOldFileName, ".log");
+    strlcpy(szOldFileName, szLogFileName, PATH_MAX);
+    strlcat(szOldFileName, "_", PATH_MAX);
+    strlcat(szOldFileName, time_str, PATH_MAX);
+    strlcat(szOldFileName, ".log", PATH_MAX);
 }
 
 

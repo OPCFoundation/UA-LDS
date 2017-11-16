@@ -336,7 +336,7 @@ static OpcUa_StatusCode ualds_create_security_policies()
         char* findNoneSecured = strstr(szSecurityPolicies, "SecurityPolicy_None");
         if (findNoneSecured == NULL)
         {
-            strcat(szSecurityPolicies, ", SecurityPolicy_None");
+            strlcat(szSecurityPolicies, ", SecurityPolicy_None", 256);
         }
         g_pEndpoints[n].nNoOfSecurityPolicies = split_string(szSecurityPolicies, ',', &szPolicyArray);
         if (g_pEndpoints[n].nNoOfSecurityPolicies < 1)
@@ -735,7 +735,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     {
         if (g_szCertificateStorePath[szCertificateStorePathLen - 1] != *directory_separator)
         {
-            strncat(g_szCertificateStorePath, directory_separator, 1);
+            strlcat(g_szCertificateStorePath, directory_separator, PATH_MAX);
         }
     }
         
@@ -743,7 +743,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     {
         g_szCertificateStorePath[0] = 0;
         ualds_platform_getcwd(g_szCertificateStorePath, sizeof(g_szCertificateStorePath));
-        strcat(g_szCertificateStorePath, __ualds_plat_path_sep "pki" __ualds_plat_path_sep);
+        strlcat(g_szCertificateStorePath, __ualds_plat_path_sep "pki" __ualds_plat_path_sep, PATH_MAX);
         ualds_log(UALDS_LOG_ALERT, "Failed to create certificate store path - using %s as path...", g_szCertificateStorePath);
     }
     else
@@ -752,30 +752,30 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     }
 
     // The folder structure of the CertificateStore is specified in OPC-UA Spec 1.03, Part 12, Table 48
-    strcpy(g_szCertificateFile, g_szCertificateStorePath);
-    strcat(g_szCertificateFile, "own" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    strlcpy(g_szCertificateFile, g_szCertificateStorePath, PATH_MAX);
+    strlcat(g_szCertificateFile, "own" __ualds_plat_path_sep "certs" __ualds_plat_path_sep, PATH_MAX);
     ualds_platform_mkpath(g_szCertificateFile);
-    strcat(g_szCertificateFile, "ualdscert.der");
+    strlcat(g_szCertificateFile, "ualdscert.der", PATH_MAX);
     
-    strcpy(g_szCertificateKeyFile, g_szCertificateStorePath);
-    strcat(g_szCertificateKeyFile, "own" __ualds_plat_path_sep "private" __ualds_plat_path_sep);
+    strlcpy(g_szCertificateKeyFile, g_szCertificateStorePath, PATH_MAX);
+    strlcat(g_szCertificateKeyFile, "own" __ualds_plat_path_sep "private" __ualds_plat_path_sep, PATH_MAX);
     ualds_platform_mkpath(g_szCertificateKeyFile);
-    strcat(g_szCertificateKeyFile, "ualdskey.nopass.pem");
+    strlcat(g_szCertificateKeyFile, "ualdskey.nopass.pem", PATH_MAX);
 
-    strcpy(g_szTrustListPath, g_szCertificateStorePath);
-    strcat(g_szTrustListPath, "trusted" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    strlcpy(g_szTrustListPath, g_szCertificateStorePath, PATH_MAX);
+    strlcat(g_szTrustListPath, "trusted" __ualds_plat_path_sep "certs" __ualds_plat_path_sep, PATH_MAX);
     ualds_platform_mkpath(g_szTrustListPath);
 
-    strcpy(g_szCRLPath, g_szCertificateStorePath);
-    strcat(g_szCRLPath, "trusted" __ualds_plat_path_sep "crl" __ualds_plat_path_sep);
+    strlcpy(g_szCRLPath, g_szCertificateStorePath, PATH_MAX);
+    strlcat(g_szCRLPath, "trusted" __ualds_plat_path_sep "crl" __ualds_plat_path_sep, PATH_MAX);
     ualds_platform_mkpath(g_szCRLPath);
 
-    strcpy(g_szRejectedPath, g_szCertificateStorePath);
-    strcat(g_szRejectedPath, "rejected" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    strlcpy(g_szRejectedPath, g_szCertificateStorePath, PATH_MAX);
+    strlcat(g_szRejectedPath, "rejected" __ualds_plat_path_sep "certs" __ualds_plat_path_sep, PATH_MAX);
     ualds_platform_mkpath(g_szRejectedPath);
 
-    strcpy(g_szIssuerPath, g_szCertificateStorePath);
-    strcat(g_szIssuerPath, "issuer" __ualds_plat_path_sep "certs" __ualds_plat_path_sep);
+    strlcpy(g_szIssuerPath, g_szCertificateStorePath, PATH_MAX);
+    strlcat(g_szIssuerPath, "issuer" __ualds_plat_path_sep "certs" __ualds_plat_path_sep, PATH_MAX);
     ualds_platform_mkpath(g_szIssuerPath);
 
     ualds_settings_readstring("TrustListPath", g_szTrustListPathOldEditedLocation, PATH_MAX);
