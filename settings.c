@@ -1003,7 +1003,7 @@ int checkConfigConsistency()
     retCode = ualds_settings_readint("LogRotateCount", &tmpVal);
     if (retCode == 0)
     {
-        if (tmpVal <= 0)
+        if (tmpVal < 0 || tmpVal > 9999)
         {
             return -1;
         }
