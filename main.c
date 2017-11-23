@@ -225,6 +225,7 @@ int main(int argc, char* argv[])
 #ifdef HAVE_SERVICE_REGISTER
 		/* force an unregister first	*/
 		ret = ServiceUnregister();
+        ualds_platform_sleep(1);
 		/* no matter if the server was unregistered, go ahead and attempt a forced register */
         ret = ServiceRegister(szUser, szPass);
 #else
