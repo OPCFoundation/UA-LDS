@@ -69,3 +69,15 @@ The following tree shows the directory layout of this repo:
 - |  |- win32                    Local Discovery Server Windows platform implementation
 - |  |- linux                    Local Discovery Server Linux platform implementation
 ```
+
+# Third party Notices and Licenses
+
+## Open Source Software
+
+Required notices for open source software products or components distributed with OPC Foundation's Local Discovery Server (LDS-ME) are identified in the following table along with the applicable licensing information. Additional notices and/or licenses may be found in the included documentation or readme files of the individual third party open source software.
+
+| Provider | Component | Licensing Information |
+| -------- | --------- | --------------------- |
+| Apple Computer, Inc. | Bonjour Mdns/dnssd (Multicast Domain Name System) client library | Apache License v2 http://www.apache.org/licenses/LICENSE-2.0.html |
+| Open SSL Project | OpenSSL 1.0.2j | The OpenSSL toolkit stays under a double license, i.e. both the conditions of the OpenSSL License and the original SSLeay license apply to the toolkit. See https://www.openssl.org/source/license.html |
+| github.com/lathiat/avahi| Avahi 0.61 | GNU Lesser General Public License v2.1 Avahi was developed by Lennart Poettering and Trent Lloyd. It is the result of a merger of Poettering's original mDNS/DNS-SD implementation called "FlexMDNS", and Lloyd's original code called "Avahi" https://github.com/lathiat/avahi/blob/master/LICENSE |
