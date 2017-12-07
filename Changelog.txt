@@ -4,6 +4,11 @@ OPC Foundation OPC UA Local Discovery Server
 Version 1.03.371
 	Fixed issues:
 		- ualds.ini Becomes empty o invalid: #33
+	Mantis issues resolved (ref CVE number: CVE-2017-17443):
+		- ID 0004050: Global buffer overflow in OPC UA Local Discovery Server 
+		- ID 0004051: heap buffer overflow 
+		- ID 0004052: Underflow in OPC UA Local Discovery Server 
+		- ID 0004053: Stack buffer overflow in OPC UA Local Discovery Server
 
 Version 1.03.370
 	Highlights:
