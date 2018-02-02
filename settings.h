@@ -31,6 +31,7 @@ int ualds_settings_close(int flush);
 int ualds_settings_begingroup(const char *szGroup);
 int ualds_settings_endgroup();
 int ualds_settings_readstring(const char *szKey, char *szValue, int len);
+int ualds_settings_setReadOnly(int readOnly);
 #ifdef HAVE_OPCUA_STACK
 int ualds_settings_readuastring(const char *szKey, OpcUa_String *pString);
 #endif /* HAVE_OPCUA_STACK */

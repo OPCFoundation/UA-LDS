@@ -221,6 +221,14 @@ int main(int argc, char* argv[])
     /* initialize logger with correct settings */
     ualds_openlog(logtarget, loglevel);
 
+    /* check if we should never write the configuration file */
+    ualds_settings_begingroup("General");
+    int icfgReadOnly;
+    if (ualds_settings_readint("ReadOnlyCfg", &icfgReadOnly) == 0) {
+        ualds_settings_setReadOnly(icfgReadOnly);
+    }
+    ualds_settings_endgroup();
+
     if (install == 1) {
 #ifdef HAVE_SERVICE_REGISTER
 		/* force an unregister first	*/

@@ -85,6 +85,7 @@ struct _FileSettings
     int    index;
     int    CurrentGroup;
     int    modified;
+    int    readOnly;  // if this is 1, we never write to the configuration file!
 };
 typedef struct _FileSettings FileSettings;
 
@@ -534,6 +535,9 @@ void UaServer_FSBE_WriteConfigFile_Descriptor(FileSettings *pFS, UALDS_FILE *f)
 static int UaServer_FSBE_WriteConfigFile()
 {
     FileSettings *pFS = &g_settings;
+    if (pFS->readOnly) {
+        return EPERM;
+    }
 
     UALDS_FILE *f_backup = ualds_platform_fopen(pFS->szPathBackup, "w");
     if (f_backup)
@@ -1881,6 +1885,14 @@ int ualds_settings_readstring(const char *szKey, char *szValue, int len)
         szValue[0] = '\0';
     }
 
+    return 0;
+}
+
+/** Sets the read only flag. */
+int ualds_settings_setReadOnly(int readOnly)
+{
+    FileSettings *pFS = &g_settings;
+    pFS->readOnly = readOnly;
     return 0;
 }
 
