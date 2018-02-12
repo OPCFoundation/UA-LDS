@@ -556,6 +556,21 @@ static int UaServer_FSBE_WriteConfigFile()
     return 0;
 }
 
+/* It will write to settings to the disk. 
+   Usecase: when the config file was corrupt, it will update it with the correct values.
+*/
+int ualds_settings_update_config_file()
+{
+    FileSettings *pFS = &g_settings;
+
+    UALDS_FILE *f_master = ualds_platform_fopen(pFS->szPath, "w");
+    if (f_master)
+    {
+        UaServer_FSBE_WriteConfigFile_Descriptor(pFS, f_master);
+        ualds_platform_fclose(f_master);
+    }
+}
+
 /* It will check if teh configuration is corrupt.
    Return: 0 if OK, -1 if error.
 */
@@ -641,6 +656,17 @@ int checkConfigConsistency()
     }
 
     ualds_settings_endarray();
+
+    // GENERAL/ReadOnlyCfg
+    retCode = ualds_settings_readint("ReadOnlyCfg", &tmpVal);
+    if (retCode != 0)
+    {
+        return -1;
+    }
+    if (tmpVal < 0)
+    {
+        return -1;
+    }
 
     // GENERAL
     retCode = ualds_settings_endgroup();
@@ -1334,15 +1360,26 @@ void loadDefualtSettings()
     retCode = ualds_settings_addemptyline();
     retCode = ualds_settings_addcomment("# Number of available endpoints");
     retCode = ualds_settings_addemptyline();
+
     // General/Endpoints
     retCode = ualds_settings_beginwritearray("Endpoints", 1);
     retCode = ualds_settings_setarrayindex(0);
+
     // General/Url
     retCode = ualds_settings_writestring("Url", "opc.tcp://[gethostname]:4840");
+
     // General/SecurityPolicies
     retCode = ualds_settings_writestring("SecurityPolicies", "SecurityPolicy_None, SecurityPolicy_Basic128Rsa15, SecurityPolicy_Basic256");
     retCode = ualds_settings_endarray();
 
+    retCode = ualds_settings_addemptyline();
+
+    // General/ReadOnlyCfg
+    retCode = ualds_settings_addcomment("# Defines if this configuration file is never written by the LDS");
+    retCode = ualds_settings_addemptyline();
+    retCode = ualds_settings_addcomment("# ReadOnly (default) > 0; Write = 0.");
+    retCode = ualds_settings_addemptyline();
+    retCode = ualds_settings_writeint("ReadOnlyCfg", 1);
     retCode = ualds_settings_addemptyline();
 
     // General
@@ -1707,6 +1744,8 @@ int ualds_settings_open(const char *szFilename)
             
             ualds_settings_open_from_default(szFilename);
         }
+
+        ualds_settings_update_config_file();
     }
 
     return 0;

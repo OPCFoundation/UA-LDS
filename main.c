@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
 #if defined(_WIN32) && defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	//_CrtSetBreakAlloc(11656); // Comment or un-comment on need basis
+	//_CrtSetBreakAlloc(307); // Comment or un-comment on need basis
 #endif
     
     /* parse commandline arguments */
@@ -221,12 +221,11 @@ int main(int argc, char* argv[])
     /* initialize logger with correct settings */
     ualds_openlog(logtarget, loglevel);
 
-    /* check if we should never write the configuration file */
+    /* set readonly/write flag for the configuration file */
     ualds_settings_begingroup("General");
-    int icfgReadOnly;
-    if (ualds_settings_readint("ReadOnlyCfg", &icfgReadOnly) == 0) {
-        ualds_settings_setReadOnly(icfgReadOnly);
-    }
+    int icfgReadOnly = 1; // deafult is ReadOnly
+    ualds_settings_readint("ReadOnlyCfg", &icfgReadOnly);
+    ualds_settings_setReadOnly(icfgReadOnly);
     ualds_settings_endgroup();
 
     if (install == 1) {
