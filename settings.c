@@ -1232,7 +1232,7 @@ int checkConfigConsistency()
         }
         for (j = 0; j < tmpVal2; j++)
         {
-            retCode = ualds_settings_setarrayindex(i);
+            retCode = ualds_settings_setarrayindex(j);
             if (retCode != 0)
             {
                 return -1;
