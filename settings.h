@@ -27,7 +27,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 int ualds_settings_open(const char *szFilename);
 int ualds_settings_flush();
-int ualds_settings_update_config_file();
+void ualds_settings_update_config_file();
 int ualds_settings_close(int flush);
 int ualds_settings_begingroup(const char *szGroup);
 int ualds_settings_endgroup();

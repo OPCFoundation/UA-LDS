@@ -559,7 +559,7 @@ static int UaServer_FSBE_WriteConfigFile()
 /* It will write to settings to the disk. 
    Usecase: when the config file was corrupt, it will update it with the correct values.
 */
-int ualds_settings_update_config_file()
+void ualds_settings_update_config_file()
 {
     FileSettings *pFS = &g_settings;
 
@@ -1230,7 +1230,7 @@ int checkConfigConsistency()
             ualds_settings_endarray();
             return -1;
         }
-        for (i = 0; i < tmpVal2; i++)
+        for (j = 0; j < tmpVal2; j++)
         {
             retCode = ualds_settings_setarrayindex(i);
             if (retCode != 0)
