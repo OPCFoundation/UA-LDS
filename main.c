@@ -104,6 +104,8 @@ int main(int argc, char* argv[])
 	//_CrtSetBreakAlloc(307); // Comment or un-comment on need basis
 #endif
     
+    //settings_doTests(); exit(EXIT_SUCCESS);
+
     /* parse commandline arguments */
     while ((opt = getopt(argc, argv, "dDvhc:i:p:u")) != -1) {
         switch (opt) {
