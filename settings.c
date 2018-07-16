@@ -270,9 +270,9 @@ static void UaServer_FSBE_RemoveEntry(FileSettings *pFS, int index)
     }
 
     // Move all following entries to this entry...
-    for (int i = index; i < pFS->numEntries-1; i++)
+    for (int i = index; i < pFS->numEntries - 1; i++)
     {
-        Entry *pEntryFrom = &pFS->pEntries[i+1];
+        Entry *pEntryFrom = &pFS->pEntries[i + 1];
         Entry *pEntryTo = &pFS->pEntries[i];
 
         *pEntryTo = *pEntryFrom;  // assign all values directly
@@ -285,6 +285,7 @@ static void UaServer_FSBE_RemoveEntry(FileSettings *pFS, int index)
     }
 
     pFS->numEntries--; // we have now one entry less...
+    /*assert(*pFS->numEntries >= 0);*/
 
     // be sure the last entry is cleared
     Entry *pEntryToClear = &pFS->pEntries[pFS->numEntries];
