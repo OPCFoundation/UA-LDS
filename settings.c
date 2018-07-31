@@ -270,7 +270,8 @@ static void UaServer_FSBE_RemoveEntry(FileSettings *pFS, int index)
     }
 
     // Move all following entries to this entry...
-    for (int i = index; i < pFS->numEntries - 1; i++)
+    int i;
+    for (i = index; i < pFS->numEntries - 1; i++)
     {
         Entry *pEntryFrom = &pFS->pEntries[i + 1];
         Entry *pEntryTo = &pFS->pEntries[i];
@@ -297,7 +298,8 @@ static void UaServer_FSBE_RemoveEntry(FileSettings *pFS, int index)
     pEntryToClear->line = 0;
 
     // now correct "parent" of all entries...
-    for (int i2 = 0; i2 < pFS->numEntries; i2++)
+    int i2;
+    for (i2 = 0; i2 < pFS->numEntries; i2++)
     {
         Entry *pEntry = &pFS->pEntries[i2];
         if (pEntry->parent != -1)
@@ -701,13 +703,12 @@ int checkConfigConsistency()
 
     // GENERAL/ReadOnlyCfg
     retCode = ualds_settings_readint("ReadOnlyCfg", &tmpVal);
-    if (retCode != 0)
+    if (retCode == 0)
     {
-        return -1;
-    }
-    if (tmpVal < 0)
-    {
-        return -1;
+        if (tmpVal < 0)
+        {
+            return -1;
+        }
     }
 
     // GENERAL
