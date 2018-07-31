@@ -268,9 +268,51 @@ static void UaServer_FSBE_RemoveEntry(FileSettings *pFS, int index)
         free(pEntry->pszValue);
         pEntry->pszValue = 0;
     }
-    pEntry->type = Invalid;
-    pEntry->parent = -1;
-    pEntry->line = 0;
+
+    // Move all following entries to this entry...
+    for (int i = index; i < pFS->numEntries - 1; i++)
+    {
+        Entry *pEntryFrom = &pFS->pEntries[i + 1];
+        Entry *pEntryTo = &pFS->pEntries[i];
+
+        *pEntryTo = *pEntryFrom;  // assign all values directly
+
+        pEntryFrom->pszKey = 0;
+        pEntryFrom->pszValue = 0;
+        pEntryFrom->type = Invalid;
+        pEntryFrom->parent = -1;
+        pEntryFrom->line = 0;
+    }
+
+    pFS->numEntries--; // we have now one entry less...
+    /*assert(*pFS->numEntries >= 0);*/
+
+    // be sure the last entry is cleared
+    Entry *pEntryToClear = &pFS->pEntries[pFS->numEntries];
+
+    pEntryToClear->pszKey = 0;
+    pEntryToClear->pszValue = 0;
+    pEntryToClear->type = Invalid;
+    pEntryToClear->parent = -1;
+    pEntryToClear->line = 0;
+
+    // now correct "parent" of all entries...
+    for (int i2 = 0; i2 < pFS->numEntries; i2++)
+    {
+        Entry *pEntry = &pFS->pEntries[i2];
+        if (pEntry->parent != -1)
+        {
+            if (pEntry->parent == index)
+            {
+                // we just removed this parent...
+                pEntry->parent = -1;
+            }
+            else if (pEntry->parent > index)
+            {
+                pEntry->parent--;  // This entry has moved; now one less...
+            }
+        }
+    }
 }
 
 static Entry* UaServer_FSBE_AddKeyValuePair(FileSettings *pFS, const char *szKey, const char *szValue)
@@ -2189,27 +2231,6 @@ int ualds_settings_addemptyline()
     return -1;
 }
 
-/** Removes the settings named \c szKey from the file. */
-int ualds_settings_removekey(const char *szKey)
-{
-    FileSettings *pFS = &g_settings;
-    int index;
-
-    index = UaServer_FSBE_FindKey(pFS, szKey, pFS->CurrentGroup);
-    if (index == -1)
-    {
-        return -1;
-    }
-    else
-    {
-        UaServer_FSBE_RemoveEntry(pFS, index);
-    }
-
-    pFS->modified = 1;
-
-    return 0;
-}
-
 /** Removes the array named \c szArray and all sub-keys from the file. */
 int ualds_settings_removearray(const char *szArray)
 {
@@ -2223,7 +2244,7 @@ int ualds_settings_removearray(const char *szArray)
     len = strlcat(szKey, "/", UALDS_CONF_MAX_KEY_LENGTH);
 
     /* remove all keys in array */
-    for (i=0; i<g_settings.numEntries; i++)
+    for (i=0; i<pFS->numEntries; i++)
     {
         pEntry = &pFS->pEntries[i];
         if (pFS->CurrentGroup == pEntry->parent &&
@@ -2232,6 +2253,7 @@ int ualds_settings_removearray(const char *szArray)
              strncmp(pEntry->pszKey, szKey, len) == 0))
         {
             UaServer_FSBE_RemoveEntry(pFS, i);
+            i--;  // decrement index, so we start using the next entry, because we really removed the entry!
         }
     }
 
@@ -2260,6 +2282,11 @@ int ualds_settings_removegroup(const char *szGroup)
             if (g_settings.pEntries[i].parent == index)
             {
                 UaServer_FSBE_RemoveEntry(pFS, i);
+                if (index > i)  // this normally does not happen, because the section is first created and then the childs..
+                {
+                    index--;
+                }
+                i--;  // decrement index, so we start using the next entry, because we really removed the entry!
             }
         }
         /* remove the section */
@@ -2270,6 +2297,104 @@ int ualds_settings_removegroup(const char *szGroup)
 
     return 0;
 }
+
+void ualds_settings_dump(char* pText)
+{
+    FileSettings *pFS = &g_settings;
+    int i, j;
+    char szTemp[1024];
+    /* write all global keys */
+    for (i = 0; i<pFS->numEntries; i++)
+    {
+        if (pFS->pEntries[i].parent != -1) continue;
+
+        switch (pFS->pEntries[i].type)
+        {
+        case KeyValuePair:
+            sprintf(szTemp, "%s = %s\n", pFS->pEntries[i].pszKey, pFS->pEntries[i].pszValue);
+            strcat(pText, szTemp);
+            break;
+        case CommentLine:
+            sprintf(szTemp, "%s", pFS->pEntries[i].pszKey);
+            strcat(pText, szTemp);
+            break;
+        case EmptyLine:
+            sprintf(szTemp, "\n");
+            strcat(pText, szTemp);
+            break;
+        default:
+            break;
+        }
+    }
+
+    /* write all sections */
+    for (i = 0; i<pFS->numEntries; i++)
+    {
+        if (pFS->pEntries[i].type == Section)
+        {
+            sprintf(szTemp, "[%s]\n", pFS->pEntries[i].pszKey);
+            strcat(pText, szTemp);
+
+            /* write all entries for this section */
+            for (j = 0; j<pFS->numEntries; j++)
+            {
+                if (pFS->pEntries[j].parent != i) continue;
+
+                switch (pFS->pEntries[j].type)
+                {
+                case KeyValuePair:
+                    sprintf(szTemp, "%s = %s\n", pFS->pEntries[j].pszKey, pFS->pEntries[j].pszValue);
+                    strcat(pText, szTemp);
+                    break;
+                case CommentLine:
+                    sprintf(szTemp, "%s", pFS->pEntries[j].pszKey);
+                    strcat(pText, szTemp);
+                    break;
+                case EmptyLine:
+                    sprintf(szTemp, "\n");
+                    strcat(pText, szTemp);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void ualds_settings_clear()
+{
+    int i;
+    FileSettings *pFS = &g_settings;
+    if (pFS->pEntries)
+    {
+        for (i = 0; i < pFS->numEntries; i++)
+        {
+            switch (pFS->pEntries[i].type)
+            {
+            case Invalid:
+                break;
+            case KeyValuePair:
+                free(pFS->pEntries[i].pszKey);
+                free(pFS->pEntries[i].pszValue);
+                break;
+            case CommentLine:
+            case Section:
+                free(pFS->pEntries[i].pszKey);
+                break;
+            case EmptyLine:
+                break;
+            }
+        }
+
+        free(pFS->pEntries);
+        pFS->pEntries = 0;
+        pFS->numEntries = 0;
+        pFS->EntrySize = 0;
+        pFS->modified = 0;
+    }
+}
+
 
 /**
  * @}
