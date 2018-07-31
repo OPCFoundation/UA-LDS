@@ -64,7 +64,7 @@ static char g_szCertificateStorePath[PATH_MAX];
 static char g_szTrustListPathOldEditedLocation[PATH_MAX];
 
 OpcUa_ByteString g_server_certificate = OPCUA_BYTESTRING_STATICINITIALIZER;
-static OpcUa_Key        g_server_key = { OpcUa_Crypto_KeyType_Rsa_Private, { 0, OpcUa_Null }, OpcUa_Null };
+static OpcUa_Key        g_server_key;
 extern OpcUa_P_TraceHook g_OpcUa_P_TraceHook;
 static OpcUa_UInt32     g_StackTraceLevel = OPCUA_TRACE_OUTPUT_LEVEL_NONE;
 static OpcUa_UInt32     g_numEndpoints;
@@ -672,12 +672,15 @@ static OpcUa_StatusCode ualds_load_certificate(OpcUa_Handle hCertificateStore)
         OpcUa_GotoError;
     }
 
+    OpcUa_Key_Initialize(&g_server_key);
+
     /* load DER encoded server certificate private key */
     uStatus = g_PkiProvider.LoadPrivateKeyFromFile(
         g_szCertificateKeyFile,
         OpcUa_Crypto_Encoding_DER,
         OpcUa_Null,
-        &g_server_key.Key);
+        OpcUa_Crypto_KeyType_Rsa_Private,
+        &g_server_key);
 
     if (OpcUa_IsBad(uStatus))
     {
@@ -686,7 +689,8 @@ static OpcUa_StatusCode ualds_load_certificate(OpcUa_Handle hCertificateStore)
             g_szCertificateKeyFile,
             OpcUa_Crypto_Encoding_PEM,
             OpcUa_Null,
-            &g_server_key.Key);
+            OpcUa_Crypto_KeyType_Rsa_Private,
+            &g_server_key);
     }
 
     if (OpcUa_IsBad(uStatus))
