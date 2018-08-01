@@ -201,6 +201,8 @@ void ualds_closelog()
     case UALDS_LOG_SYSLOG:
         /* this is not supported on windows */
         break;
+    case UALDS_LOG_STDERR:
+        break;
     case UALDS_LOG_FILE:
         fclose(g_f);
         break;

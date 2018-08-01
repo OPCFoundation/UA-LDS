@@ -172,8 +172,16 @@ int ualds_platform_convertHostnameToIP4(const char* host, char* ip)
         {
             struct sockaddr_in* sockaddr_ipv4 = (struct sockaddr_in *) res->ai_addr;
             char* IP4 = inet_ntoa(sockaddr_ipv4->sin_addr);
-            strncpy(ip, IP4, strlen(IP4));
-            ret_error = 0;
+            if (IP4)
+            {
+                strncpy(ip, IP4, strlen(IP4));
+                ret_error = 0;
+            }
+            else
+            {
+                ret_error = -1;
+            }
+
             break;
         }
     }
@@ -260,6 +268,11 @@ int ualds_platform_mkdir(char *szFilePath, int mode)
 
 int ualds_platform_mkpath(char *szFilePath)
 {
+    if (szFilePath == NULL)
+    {
+        return -1;
+    }
+
     char *path = strdup(szFilePath);
     int ret = 0;
     char *szFind = path;
@@ -275,6 +288,10 @@ int ualds_platform_mkpath(char *szFilePath)
     }
 
     /* create parent directories */
+    if (szFind == NULL)
+    {
+        return -1;
+    }
     while ((ret == 0 || errno == EEXIST) && ((szFindNext = strchr(szFind, '\\')) != NULL))
     {
         if (szFindNext != szFind)

@@ -740,7 +740,7 @@ int checkConfigConsistency()
         // check if it is one of the accepted options: None, Basic128Rsa15, Basic256
         if (strcmp(tmpUrl, "http://opcfoundation.org/UA/SecurityPolicy#None") != 0 &&
             strcmp(tmpUrl, "http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15") != 0 &&
-            strcmp(tmpUrl, "http://opcfoundation.org/UA/SecurityPolicy#Basic256")
+            strcmp(tmpUrl, "http://opcfoundation.org/UA/SecurityPolicy#Basic256") != 0
             )
         {
             return -1;
@@ -1148,6 +1148,11 @@ int checkConfigConsistency()
 
     char **szUriArray = 0;
     szUriArray = malloc(tmpVal * sizeof(char*));
+    if (szUriArray == NULL)
+    {
+        return -1;
+    }
+    
     memset(szUriArray, 0, tmpVal * sizeof(char*));
 
     for (i = 0; i < tmpVal; i++)
@@ -1198,6 +1203,14 @@ int checkConfigConsistency()
         retCode = ualds_settings_begingroup(uri);
         if (retCode != 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
 
@@ -1205,6 +1218,14 @@ int checkConfigConsistency()
         retCode = ualds_settings_readstring("ProductUri", tmpString, UALDS_CONF_MAX_URI_LENGTH);
         if (retCode != 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
 
@@ -1213,34 +1234,71 @@ int checkConfigConsistency()
         retCode = ualds_settings_beginreadarray("ServerNames", &tmpVal2);
         if (retCode != 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
         if (tmpVal2 <= 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
 
-        if (tmpVal2 > 0)
+        retCode = ualds_settings_setarrayindex(0);
+        if (retCode != 0)
         {
-            retCode = ualds_settings_setarrayindex(0);
-            if (retCode != 0)
+            if (szUriArray)
             {
-                return -1;
+                for (i = 0; i<tmpVal; i++)
+                 {
+                     if (szUriArray[i]) free(szUriArray[i]);
+                 }
+                 free(szUriArray);
             }
+            return -1;
+        }
 
-            // ServerUri_XYZ/ServerNames/[0]/Locale
-            retCode = ualds_settings_readstring("Locale", tmpString, UALDS_CONF_MAX_URI_LENGTH);
-            if (retCode != 0)
+        // ServerUri_XYZ/ServerNames/[0]/Locale
+        retCode = ualds_settings_readstring("Locale", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+        if (retCode != 0)
+        {
+            if (szUriArray)
             {
-                return -1;
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
             }
+            return -1;
+        }
 
-            // ServerUri_XYZ/ServerNames/[0]/Text
-            retCode = ualds_settings_readstring("Text", tmpString, UALDS_CONF_MAX_URI_LENGTH);
-            if (retCode != 0)
-            {
-                return -1;
-            }
+        // ServerUri_XYZ/ServerNames/[0]/Text
+        retCode = ualds_settings_readstring("Text", tmpString, UALDS_CONF_MAX_URI_LENGTH);
+        if (retCode != 0)
+        {
+             if (szUriArray)
+             {
+                 for (i = 0; i<tmpVal; i++)
+                 {
+                     if (szUriArray[i]) free(szUriArray[i]);
+                 }
+                 free(szUriArray);
+             }
+             return -1;
         }
         ualds_settings_endarray();
 
@@ -1248,10 +1306,26 @@ int checkConfigConsistency()
         retCode = ualds_settings_readint("ServerType", &tmpVal2);
         if (retCode != 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
         if (tmpVal2 < 0 || tmpVal2 > 3)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
 
@@ -1259,6 +1333,14 @@ int checkConfigConsistency()
         retCode = ualds_settings_readstring("GatewayServerUri", tmpString, UALDS_CONF_MAX_URI_LENGTH);
         if (retCode != 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
 
@@ -1266,11 +1348,27 @@ int checkConfigConsistency()
         retCode = ualds_settings_beginreadarray("DiscoveryUrls", &tmpVal2);
         if (retCode != 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
         if (tmpVal2 <= 0)
         {
             ualds_settings_endarray();
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
         for (j = 0; j < tmpVal2; j++)
@@ -1278,6 +1376,14 @@ int checkConfigConsistency()
             retCode = ualds_settings_setarrayindex(j);
             if (retCode != 0)
             {
+                if (szUriArray)
+                {
+                    for (i = 0; i<tmpVal; i++)
+                    {
+                        if (szUriArray[i]) free(szUriArray[i]);
+                    }
+                    free(szUriArray);
+                }
                 return -1;
             }
 
@@ -1285,10 +1391,26 @@ int checkConfigConsistency()
             retCode = ualds_settings_readstring("Url", tmpString, UALDS_CONF_MAX_URI_LENGTH);
             if (retCode != 0)
             {
+                if (szUriArray)
+                {
+                    for (i = 0; i<tmpVal; i++)
+                    {
+                        if (szUriArray[i]) free(szUriArray[i]);
+                    }
+                    free(szUriArray);
+                }
                 return -1;
             }
             if (strlen(tmpString) <= 0)
             {
+                if (szUriArray)
+                {
+                    for (i = 0; i<tmpVal; i++)
+                    {
+                        if (szUriArray[i]) free(szUriArray[i]);
+                    }
+                    free(szUriArray);
+                }
                 return -1;
             }
         }
@@ -1298,6 +1420,14 @@ int checkConfigConsistency()
         retCode = ualds_settings_readstring("SemaphoreFilePath", tmpString, UALDS_CONF_MAX_URI_LENGTH);
         if (retCode != 0)
         {
+            if (szUriArray)
+            {
+                for (i = 0; i<tmpVal; i++)
+                {
+                    if (szUriArray[i]) free(szUriArray[i]);
+                }
+                free(szUriArray);
+            }
             return -1;
         }
 
@@ -1307,6 +1437,14 @@ int checkConfigConsistency()
         {
             if (tmpVal2 <= 0)
             {
+                if (szUriArray)
+                {
+                    for (i = 0; i<tmpVal; i++)
+                    {
+                        if (szUriArray[i]) free(szUriArray[i]);
+                    }
+                    free(szUriArray);
+                }
                 return -1;
             }
         }
@@ -1317,6 +1455,14 @@ int checkConfigConsistency()
         {
             if (strlen(tmpString) <= 0)
             {
+                if (szUriArray)
+                {
+                    for (i = 0; i<tmpVal; i++)
+                    {
+                        if (szUriArray[i]) free(szUriArray[i]);
+                    }
+                    free(szUriArray);
+                }
                 return -1;
             }
         }
@@ -1328,6 +1474,14 @@ int checkConfigConsistency()
             if (tmpVal2 <= 0)
             {
                 ualds_settings_endarray();
+                if (szUriArray)
+                {
+                    for (i = 0; i<tmpVal; i++)
+                    {
+                        if (szUriArray[i]) free(szUriArray[i]);
+                    }
+                    free(szUriArray);
+                }
                 return -1;
             }
 
@@ -1336,6 +1490,14 @@ int checkConfigConsistency()
                 retCode = ualds_settings_setarrayindex(j);
                 if (retCode != 0)
                 {
+                    if (szUriArray)
+                    {
+                        for (i = 0; i<tmpVal; i++)
+                        {
+                            if (szUriArray[i]) free(szUriArray[i]);
+                        }
+                        free(szUriArray);
+                    }
                     return -1;
                 }
 
@@ -1345,12 +1507,21 @@ int checkConfigConsistency()
                 {
                     if (strlen(tmpString) <= 0)
                     {
+                        if (szUriArray)
+                        {
+                            for (i = 0; i<tmpVal; i++)
+                            {
+                                if (szUriArray[i]) free(szUriArray[i]);
+                            }
+                            free(szUriArray);
+                        }
                         return -1;
                     }
                 }
             }
         }
         ualds_settings_endarray();
+        ualds_settings_endgroup();
     }
 
     if (szUriArray)
@@ -1758,6 +1929,8 @@ void loadDefualtSettings()
 
     // Zeroconf
     retCode = ualds_settings_endgroup();
+
+    (void)retCode;
 }
 
 /** Opens the given settings file \c szFilename. */
@@ -1958,7 +2131,7 @@ int ualds_settings_readstring(const char *szKey, char *szValue, int len)
     index = UaServer_FSBE_FindKey(pFS, pszKey, pFS->CurrentGroup);
     if (index == -1) return ENOENT;
 
-    if (strcmp("(null)", pFS->pEntries[index].pszValue))
+    if (strcmp("(null)", pFS->pEntries[index].pszValue) != 0)
     {
         strlcpy(szValue, pFS->pEntries[index].pszValue, len);
     }

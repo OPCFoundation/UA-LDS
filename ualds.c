@@ -413,6 +413,11 @@ static OpcUa_StatusCode ualds_create_security_policies()
 
                 szModeArray = 0;
                 numModes = split_string(szMessageSecurity, ',', &szModeArray);
+                if (szModeArray == NULL)
+                {
+                    return OpcUa_BadConfigurationError;
+                }
+
                 for (j=0; j<numModes; j++)
                 {
                     if (strcmp(szModeArray[j], "None") == 0)
@@ -1645,24 +1650,19 @@ void ualds_expirationcheck()
     ualds_settings_endgroup();
 
     /* cleanup */
-    if (szServerUriArray)
+    for (i=0; i<numServers; i++)
     {
-        for (i=0; i<numServers; i++)
+        if (szServerUriArray[i])
         {
-            if (szServerUriArray[i])
-            {
-                free(szServerUriArray[i]);
-                szServerUriArray[i] = 0;
-            }
+            free(szServerUriArray[i]);
+            szServerUriArray[i] = 0;
         }
-        free(szServerUriArray);
-        szServerUriArray = 0;
     }
-    if (RemovedServers)
-    {
-        free(RemovedServers);
-        RemovedServers = 0;
-    }
+    free(szServerUriArray);
+    szServerUriArray = 0;
+    
+    free(RemovedServers);
+    RemovedServers = 0;
 }
 
 int ualds_settings_cleanup(int flush)

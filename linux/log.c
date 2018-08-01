@@ -55,7 +55,7 @@ int ualds_openlog(LogTarget target, LogLevel level)
     switch (target)
     {
     case UALDS_LOG_SYSLOG:
-        openlog(NULL, LOG_PERROR | LOG_NDELAY, LOG_USER);
+        openlog("LDS", LOG_PERROR | LOG_NDELAY, LOG_USER);
         g_f = NULL;
         break;
     case UALDS_LOG_STDERR:
@@ -188,6 +188,8 @@ void ualds_closelog()
     {
     case UALDS_LOG_SYSLOG:
         closelog();
+        break;
+    case UALDS_LOG_STDERR:
         break;
     case UALDS_LOG_FILE:
         fclose(g_f);
