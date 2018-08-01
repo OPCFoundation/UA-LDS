@@ -1,6 +1,13 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
+Version 1.03.400
+	Highlights:
+		- Updated to latest UaStack version 1.04.342
+	Fixed issues:
+		- LDS enters endless loop in checkConfigConsistency(): #42
+		- Massive memory leak and high CPU usage: #43
+
 Version 1.03.371
 	Fixed issues:
 		- ualds.ini Becomes empty o invalid: #33
