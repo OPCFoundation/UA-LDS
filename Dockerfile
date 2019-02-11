@@ -19,7 +19,7 @@ RUN \
     &&  echo "service rsyslog start" >> /etc/init.d/lds \
     &&  echo "service dbus start" >> /etc/init.d/lds \
     &&  echo "avahi-daemon --no-drop-root --daemonize --syslog" >> /etc/init.d/lds \
-    &&  echo "./lds/build/bin/ualds -c /lds/etc/ualds.conf " >> /etc/init.d/lds \
+    &&  echo "./lds/build/bin/opcualds -c /lds/etc/ualds.conf " >> /etc/init.d/lds \
     &&  chmod +x /etc/init.d/lds
         
 EXPOSE 5353
