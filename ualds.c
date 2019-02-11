@@ -1205,7 +1205,7 @@ static OpcUa_StatusCode ualds_create_endpoints()
         }
         else
         {
-            ualds_log(UALDS_LOG_NOTICE, "Opening endpoint failed with error 0x%08X.", ret);
+            ualds_log(UALDS_LOG_ERR, "Opening endpoint failed with error 0x%08X.", ret);
         }
     }
 
