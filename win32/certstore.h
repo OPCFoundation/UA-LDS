@@ -22,7 +22,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 OpcUa_StatusCode ualds_verify_cert_win32(OpcUa_ByteString* pbsClientCertificate);
 
 // the below checks are for backward compatibility woth older LDS versions
-OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, 
+OpcUa_StatusCode ualds_verify_cert_old_default_location(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, 
     char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode);
 OpcUa_StatusCode ualds_verify_cert_old_edited_location(OpcUa_ByteString* pbsClientCertificate, char* newCertificateStorePathCrl, 
     char* newCertificateStorePathRejected, char* trustListPathOldEditedLocation, OpcUa_Int* pValidationCode);

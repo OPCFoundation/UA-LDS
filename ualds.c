@@ -624,7 +624,7 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
   // Make a check using the old standard paths, for backward compatibility
   if (uStatus == OpcUa_BadCertificateUntrusted)
   {
-      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old_defualt_location(pCertificate, g_szCRLPath, g_szRejectedPath, pValidationCode);
+      OpcUa_StatusCode uStatusVerify = ualds_verify_cert_old_default_location(pCertificate, g_szCRLPath, g_szRejectedPath, pValidationCode);
       if (OpcUa_IsGood(uStatusVerify))
       {
           ualds_log(UALDS_LOG_DEBUG, "Verifying certificate in old default store succeeded.");

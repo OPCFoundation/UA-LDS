@@ -1545,7 +1545,7 @@ int checkConfigConsistency()
     return 0;
 }
 
-void loadDefualtSettings()
+void loadDefaultSettings()
 {
     // General
     int retCode = ualds_settings_begingroup("General");
@@ -1987,7 +1987,7 @@ int ualds_settings_open_from_default(const char *szFilename)
     strlcpy(g_settings.szPathBackup, g_settings.szPath, PATH_MAX);
     strlcat(g_settings.szPathBackup, ".bak", PATH_MAX);
 
-    loadDefualtSettings();
+    loadDefaultSettings();
 
     return 0;
 }

@@ -80,7 +80,7 @@ OpcUa_FinishErrorHandling;
 }
 
 
-OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsClientCertificate, 
+OpcUa_StatusCode ualds_verify_cert_old_default_location(OpcUa_ByteString* pbsClientCertificate, 
     char* newCertificateStorePathCrl, char* newCertificateStorePathRejected, OpcUa_Int* pValidationCode)
 {
     OpcUa_P_OpenSSL_CertificateStore_Config oldPkiConfig;
@@ -89,7 +89,7 @@ OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsCli
     char                                    oldTrustListPath[MAX_PATH];
     char *                                  root;
 
-    OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_old_defualt_location");
+    OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_verify_cert_old_default_location");
 
     OpcUa_ReturnErrorIfArgumentNull(pbsClientCertificate);
 
@@ -123,7 +123,7 @@ OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsCli
     uStatus = oldPkiProvider.OpenCertificateStore(&oldPkiProvider, &hCertificateStore);
     if (OpcUa_IsBad(uStatus))
     {
-        ualds_log(UALDS_LOG_ERR, "Failed to open old defualt certificate store! (0x%08X)", uStatus);
+        ualds_log(UALDS_LOG_ERR, "Failed to open old default certificate store! (0x%08X)", uStatus);
         OpcUa_GotoError;
     }
 
@@ -137,14 +137,14 @@ OpcUa_StatusCode ualds_verify_cert_old_defualt_location(OpcUa_ByteString* pbsCli
 
     oldPkiProvider.CloseCertificateStore(&oldPkiProvider, &hCertificateStore);
 
-    ualds_log(UALDS_LOG_INFO, "Verifying certificate in old defualt certificate store returned 0x%08x.", uStatus);
+    ualds_log(UALDS_LOG_INFO, "Verifying certificate in old default certificate store returned 0x%08x.", uStatus);
 
     uStatus = OpcUa_PKIProvider_Delete(&oldPkiProvider);
 
 OpcUa_ReturnStatusCode;
 OpcUa_BeginErrorHandling;
 
-    ualds_log(UALDS_LOG_ERR, "Could not verify certificate in old defualt certificate store (0x%08x).", uStatus);
+    ualds_log(UALDS_LOG_ERR, "Could not verify certificate in old default certificate store (0x%08x).", uStatus);
 
     if (hCertificateStore != OpcUa_Null)
     {
