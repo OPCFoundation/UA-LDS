@@ -34,6 +34,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "config.h"
 #include "ualds.h"
 #include "settings.h"
+#include "utils.h"
 /* local platform includes */
 #include <platform.h>
 #include <log.h>
@@ -915,3 +916,429 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
     return uStatus;
 }
 
+void ualds_zeroconf_registerOffline(const char *szServerUri)
+{
+    ualds_settings_begingroup(szServerUri);
+
+    /* get Server name */
+    char szMDNSServerName[UALDS_CONF_MAX_URI_LENGTH];
+    szMDNSServerName[0] = 0;
+    ualds_settings_readstring("MdnsServerName", szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH);
+    if (szMDNSServerName[0] == 0)
+    {
+        int numNames = 0, i = 0;
+        ualds_settings_beginreadarray("ServerNames", &numNames);
+        for (i = 0; i < numNames; i++)
+        {
+            ualds_settings_setarrayindex(i);
+            ualds_settings_readstring("Text", szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH);
+            if (szMDNSServerName[0] == 0)
+            {
+                break;
+            }
+        }
+        ualds_settings_endarray();
+    }
+
+    // replace [gethostname] if necessary
+    char szHostname[UALDS_CONF_MAX_URI_LENGTH];
+    ualds_platform_getfqhostname(szHostname, UALDS_CONF_MAX_URI_LENGTH);
+    replace_string(szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", szHostname);
+
+    // get number of Capabilities
+    int numCaps = 0;
+    char** capabilities = OpcUa_Null;
+    ualds_settings_beginreadarray("ServerCapabilities", &numCaps);
+    if (numCaps > 0)
+    {
+        capabilities = OpcUa_Alloc(numCaps * sizeof(char*));
+        OpcUa_MemSet(capabilities, 0, numCaps * sizeof(char*));
+
+        int k = 0;
+        for (k = 0; k < numCaps; k++)
+        {
+            // get capability
+            char szCapability[UALDS_CONF_MAX_URI_LENGTH];
+            ualds_settings_setarrayindex(k);
+            ualds_settings_readstring("Capability", szCapability, UALDS_CONF_MAX_URI_LENGTH);
+            ualds_settings_endarray();
+
+            capabilities[k] = OpcUa_Alloc(UALDS_CONF_MAX_URI_LENGTH);
+            strlcpy(capabilities[k], szCapability, UALDS_CONF_MAX_URI_LENGTH);
+        }
+    }
+
+    // read number of DiscoveryURL
+    int numDiscoveryUrls = 0;
+    int j = 0;
+
+    ualds_settings_beginreadarray("DiscoveryUrls", &numDiscoveryUrls);
+    if (numDiscoveryUrls > 0)
+    {
+        for (j = 0; j < numDiscoveryUrls; j++)
+        {
+            ualds_resolveContext* pResolveContext = (ualds_resolveContext*)OpcUa_Alloc(sizeof(ualds_resolveContext));
+            if (pResolveContext)
+            {
+                OpcUa_StatusCode uStatus = OpcUa_Good;
+                uint16_t port = 0;
+
+                pResolveContext->contextType = ContextType_Resolve;
+                pResolveContext->uaSocket = OpcUa_Null;
+                OpcUa_ServerOnNetwork_Initialize(&pResolveContext->record);
+
+                // get DiscoveryURL
+                char szDiscoveryUrl[UALDS_CONF_MAX_URI_LENGTH];
+                char szDiscoveryUrlFormated[UALDS_CONF_MAX_URI_LENGTH];
+                ualds_settings_setarrayindex(j);
+                ualds_settings_readstring("Url", szDiscoveryUrl, UALDS_CONF_MAX_URI_LENGTH);
+
+                // replace [gethostname] if necessary
+                replace_string(szDiscoveryUrl, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", szHostname);
+
+                {
+                    // split DiscoveryURL to individual components
+                    // it will be reassembled with the expected format for "FindServersOnNetwork" service call
+                    char *szScheme = OpcUa_Null;
+                    char *tmpHostname = OpcUa_Null;
+                    char *szPath = OpcUa_Null;
+                    char hostName[UALDS_CONF_MAX_URI_LENGTH];
+                    if (OpcUa_IsGood(ualds_parse_url(szDiscoveryUrl, &szScheme, &tmpHostname, &port, &szPath)))
+                    {
+                        strlcpy(hostName, tmpHostname, UALDS_CONF_MAX_URI_LENGTH);
+
+                        /* If IP4 => convert it to hostname */
+                        int isIP4 = is_Host_IP4Address(hostName);
+                        if (isIP4 == 0)
+                        {
+                            ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerOffline: Found IP4: '%s'. Converting it to hostname.",
+                                hostName);
+                            int convertSuccess = ualds_platform_convertIP4ToHostname(hostName, UALDS_CONF_MAX_URI_LENGTH);
+                            if (convertSuccess != 0)
+                            {
+                                ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_registerOffline: Convert IP4 to hostname failed for '%s'",
+                                    hostName);
+
+                                // cleanup
+                                OpcUa_ServerOnNetwork_Clear(&pResolveContext->record);
+                                OpcUa_Free(pResolveContext);
+
+                                int i = 0;
+                                if (capabilities)
+                                {
+                                    for (i = 0; i<numCaps; i++)
+                                    {
+                                        if (capabilities[i]) OpcUa_Free(capabilities[i]);
+                                    }
+                                    OpcUa_Free(capabilities);
+                                }
+                                ualds_settings_endgroup();
+                                return;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // cleanup
+                        OpcUa_ServerOnNetwork_Clear(&pResolveContext->record);
+                        OpcUa_Free(pResolveContext);
+
+                        int i = 0;
+                        if (capabilities)
+                        {
+                            for (i = 0; i<numCaps; i++)
+                            {
+                                if (capabilities[i]) OpcUa_Free(capabilities[i]);
+                            }
+                            OpcUa_Free(capabilities);
+                        }
+                        ualds_settings_endgroup();
+                        return;
+                    }
+
+                    /* Make sure we pass hostname.local. or a FQDN as registered host or else register or resolve will fail */
+                    /* Check whether there is a domain label in the name */
+                    char* domain = strrchr(hostName, '.');
+
+                    if (domain)
+                    {
+                        if (strcmp(domain, ".") == 0)
+                        {
+                            // hostname.subdomain.domain.
+                            *domain = '\0';
+                            domain = strrchr(hostName, '.');
+                        }
+
+                        if (domain)
+                        {
+                            int tldCheck = isTLD(domain);
+                            if (tldCheck != 0)
+                            {
+                                /* Not a Top Level Domain */
+
+                                /*
+                                Strip the name down to just the node name and make it link local.
+                                */
+                                domain = strchr(hostName, '.');
+                                *domain = '\0';
+                                domain = NULL; /* This will make below add .local to the node name left in hostName */
+                            }
+                        }
+                    }
+
+                    if (!domain)
+                    {
+                        /* If no domain labels in hostname, make link local by adding .local domain */
+                        strlcat(hostName, ".local.", UALDS_CONF_MAX_URI_LENGTH);
+                    }
+
+                    // reassembled formated DiscoveryURL
+                    memset(szDiscoveryUrlFormated, 0, UALDS_CONF_MAX_URI_LENGTH);
+
+                    strlcpy(szDiscoveryUrlFormated, szScheme, UALDS_CONF_MAX_URI_LENGTH);
+                    strlcat(szDiscoveryUrlFormated, "://", UALDS_CONF_MAX_URI_LENGTH);
+
+                    strlcat(szDiscoveryUrlFormated, hostName, UALDS_CONF_MAX_URI_LENGTH);
+                   
+                    char szPort[40] = { 0 };
+#if OPCUA_USE_SAFE_FUNCTIONS
+                    OpcUa_SnPrintfA(szPort, 40, 40, ":%hu", port);
+#else
+                    OpcUa_SnPrintfA(szPort, 40, ":%hu", port);
+#endif
+                    strlcat(szDiscoveryUrlFormated, szPort, UALDS_CONF_MAX_URI_LENGTH);
+
+                    if (szPath != OpcUa_Null)
+                    {
+                        strlcat(szDiscoveryUrlFormated, szPath, UALDS_CONF_MAX_URI_LENGTH);
+                    }
+                }
+
+                // set DiscoveryURL
+                OpcUa_String_Initialize(&pResolveContext->record.DiscoveryUrl);
+                OpcUa_String_AttachCopy(&pResolveContext->record.DiscoveryUrl, szDiscoveryUrlFormated);
+
+                //set Server name
+                OpcUa_String_AttachCopy(&pResolveContext->record.ServerName, szMDNSServerName);
+
+                // set RecordId
+                pResolveContext->record.RecordId = g_currentRecordId++;
+                if (g_currentRecordId == 0)
+                {
+                    ualds_resolveContext *pExistingResolveContext = OpcUa_Null;
+
+                    g_lastCounterResetTime = OpcUa_DateTime_UtcNow();
+
+                    /* reassign RecordIds to entries after overflow */
+                    OpcUa_List_Enter(&g_lstServers);
+                    OpcUa_List_ResetCurrent(&g_lstServers);
+                    pExistingResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
+                    while (pExistingResolveContext)
+                    {
+                        pExistingResolveContext->record.RecordId = g_currentRecordId++;
+                        pExistingResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
+                    }
+                    pResolveContext->record.RecordId = g_currentRecordId++;
+                    OpcUa_List_Leave(&g_lstServers);
+                }
+
+                // set capabilities
+                if (numCaps > 0)
+                {
+                    pResolveContext->record.NoOfServerCapabilities = numCaps;
+                    pResolveContext->record.ServerCapabilities = (OpcUa_String*)OpcUa_Alloc(numCaps * sizeof(OpcUa_String));
+                    int k = 0;
+                    for (k = 0; k < numCaps; k++)
+                    {
+                        OpcUa_String_Initialize(&pResolveContext->record.ServerCapabilities[k]);
+                        OpcUa_String_AttachCopy(&pResolveContext->record.ServerCapabilities[k], capabilities[k]);
+                    }
+                }
+                else
+                {
+                    if (port == 4840)
+                    {
+                        pResolveContext->record.NoOfServerCapabilities = 1;
+                        pResolveContext->record.ServerCapabilities = (OpcUa_String*)OpcUa_Alloc(sizeof(OpcUa_String));
+                        char szCapability[UALDS_CONF_MAX_URI_LENGTH] = "LDS";
+                        OpcUa_String_Initialize(&pResolveContext->record.ServerCapabilities[0]);
+                        OpcUa_String_AttachCopy(&pResolveContext->record.ServerCapabilities[0], szCapability);
+                    }
+                    else
+                    {
+                        pResolveContext->record.NoOfServerCapabilities = 1;
+                        pResolveContext->record.ServerCapabilities = (OpcUa_String*)OpcUa_Alloc(sizeof(OpcUa_String));
+                        char szCapability[UALDS_CONF_MAX_URI_LENGTH] = "NA";
+                        OpcUa_String_Initialize(&pResolveContext->record.ServerCapabilities[0]);
+                        OpcUa_String_AttachCopy(&pResolveContext->record.ServerCapabilities[0], szCapability);
+                    }
+                }
+            }
+
+            /* append pResolveContext to list of services */
+            OpcUa_StatusCode uStatus = OpcUa_Good;
+            OpcUa_List_Enter(&g_lstServers);
+            uStatus = OpcUa_List_AddElementToEnd(&g_lstServers, pResolveContext);
+            OpcUa_List_Leave(&g_lstServers);
+            if (OpcUa_IsNotGood(uStatus))
+            {
+                ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_registerOffliney: could not add pResolveContext to list");
+                
+                // cleanup
+                OpcUa_ServerOnNetwork_Clear(&pResolveContext->record);
+                OpcUa_Free(pResolveContext);
+
+                int i = 0;
+                if (capabilities)
+                {
+                    for (i = 0; i < numCaps; i++)
+                    {
+                        if (capabilities[i]) OpcUa_Free(capabilities[i]);
+                    }
+                    OpcUa_Free(capabilities);
+                }
+                ualds_settings_endgroup();
+                return;
+            }
+        }
+        ualds_settings_endarray();
+    }
+
+    /* cleanup */
+    int i = 0;
+    if (capabilities)
+    {
+        for (i = 0; i<numCaps; i++)
+        {
+            if (capabilities[i]) OpcUa_Free(capabilities[i]);
+        }
+        OpcUa_Free(capabilities);
+    }
+
+    ualds_settings_endgroup();
+}
+
+void ualds_zeroconf_unregisterOffline(const char *szServerUri)
+{
+    ualds_settings_begingroup(szServerUri);
+
+    /* get Server name */
+    char szMDNSServerName[UALDS_CONF_MAX_URI_LENGTH];
+    szMDNSServerName[0] = 0;
+    ualds_settings_readstring("MdnsServerName", szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH);
+    if (szMDNSServerName[0] == 0)
+    {
+        int numNames = 0, i = 0;
+        ualds_settings_beginreadarray("ServerNames", &numNames);
+        for (i = 0; i < numNames; i++)
+        {
+            ualds_settings_setarrayindex(i);
+            ualds_settings_readstring("Text", szMDNSServerName, UALDS_CONF_MAX_URI_LENGTH);
+            if (szMDNSServerName[0] == 0)
+            {
+                break;
+            }
+        }
+        ualds_settings_endarray();
+    }
+    ualds_settings_endgroup();
+
+    OpcUa_List_Enter(&g_lstServers);
+    
+    for (;;)
+    {
+        OpcUa_Boolean bFoundEntry = OpcUa_False;
+
+        OpcUa_List_ResetCurrent(&g_lstServers);
+
+        ualds_resolveContext* pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
+        while (pResolveContext)
+        {
+            if (OpcUa_StrCmpA(szMDNSServerName, OpcUa_String_GetRawString(&pResolveContext->record.ServerName)) == 0)
+            {
+                OpcUa_ServerOnNetwork_Clear(&pResolveContext->record);
+                OpcUa_Free(pResolveContext);
+                OpcUa_List_DeleteCurrentElement(&g_lstServers);
+                bFoundEntry = OpcUa_True;
+                break;
+            }
+
+            pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
+        }
+
+        if (bFoundEntry == OpcUa_False)
+        {
+            break;
+        }
+    }
+    
+    OpcUa_List_Leave(&g_lstServers);
+}
+
+void ualds_zeroconf_loadOffline()
+{
+    char** szUriArray = 0;
+    int numServers = 0;
+    int i = 0;
+
+    ualds_expirationcheck();
+
+    ualds_settings_begingroup("RegisteredServers");
+    ualds_settings_beginreadarray("Servers", &numServers);
+    if (numServers > 0)
+    {
+        szUriArray = OpcUa_Alloc(numServers * sizeof(char*));
+        if (szUriArray)
+        {
+            OpcUa_MemSet(szUriArray, 0, numServers * sizeof(char*));
+            for (i = 0; i<numServers; i++)
+            {
+                char szTmpUrl[UALDS_CONF_MAX_URI_LENGTH];
+                ualds_settings_setarrayindex(i);
+                ualds_settings_readstring("ServerUri", szTmpUrl, UALDS_CONF_MAX_URI_LENGTH);
+
+                szUriArray[i] = OpcUa_Alloc(UALDS_CONF_MAX_URI_LENGTH);
+                if (szUriArray[i])
+                {
+                    strlcpy(szUriArray[i], szTmpUrl, UALDS_CONF_MAX_URI_LENGTH);
+                }
+            }
+        }
+    }
+
+    ualds_settings_endarray();
+    ualds_settings_endgroup();
+
+    for (i = 0; i < numServers; i++)
+    {
+        ualds_zeroconf_registerOffline(szUriArray[i]);
+    }
+
+    /* cleanup */
+    if (szUriArray)
+    {
+        for (i = 0; i < numServers; i++)
+        {
+            if (szUriArray[i])
+            {
+                OpcUa_Free(szUriArray[i]);
+            }
+        }
+        OpcUa_Free(szUriArray);
+    }
+}
+
+void ualds_zeroconf_cleanupOffline()
+{
+    OpcUa_List_Enter(&g_lstServers);
+    OpcUa_List_ResetCurrent(&g_lstServers);
+    ualds_resolveContext* pResolveContext = (ualds_resolveContext*)OpcUa_List_GetCurrentElement(&g_lstServers);
+    while (pResolveContext)
+    {
+        OpcUa_ServerOnNetwork_Clear(&pResolveContext->record);
+        OpcUa_Free(pResolveContext);
+        pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
+    }
+    OpcUa_List_Leave(&g_lstServers);
+    OpcUa_List_Clear(&g_lstServers);
+}

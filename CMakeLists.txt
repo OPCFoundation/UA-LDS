@@ -51,6 +51,7 @@ endif()
         strlcat.c
         strlcpy.c
         ualds.c
+		utils.c
     )
 if(WIN32)
     set(_ualds_src ${_ualds_src}

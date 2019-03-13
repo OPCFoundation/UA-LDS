@@ -24,4 +24,9 @@ void ualds_findserversonnetwork_stop_listening();
 
 void ualds_findserversonnetwork_socketEventCallback(int *shutdown);
 
+void ualds_zeroconf_registerOffline(const char *szServerUri);
+void ualds_zeroconf_unregisterOffline(const char *szServerUri);
+void ualds_zeroconf_loadOffline();
+void ualds_zeroconf_cleanupOffline();
+
 #endif /* __FINDSERVERSONNETWORK_H__ */

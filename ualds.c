@@ -32,6 +32,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 /* local includes */
 #include "config.h"
 #include "ualds.h"
+#include "utils.h"
 #ifdef _WIN32
 #include "service.h"
 #endif /* _WIN32 */
@@ -1378,6 +1379,9 @@ int ualds_server_startup()
     ualds_settings_endgroup();
 
     ualds_log(UALDS_LOG_INFO, "Zeroconf is %s.", g_bEnableZeroconf == 0 ? "disabled" : "enabled");
+
+    loadKnownTLD();
+
     if (g_bEnableZeroconf)
     {
 
@@ -1416,6 +1420,10 @@ int ualds_server_startup()
             return EXIT_FAILURE;
         }
     }
+    else
+    {
+        ualds_zeroconf_loadOffline();
+    }
 #endif
 
     /* Open Endpoints */
@@ -1433,6 +1441,10 @@ int ualds_server_startup()
 
             /* stop browsing for DNSServices in the background */
             ualds_findserversonnetwork_stop_listening();
+        }
+        else
+        {
+            ualds_zeroconf_cleanupOffline();
         }
 #endif
 
@@ -1468,6 +1480,11 @@ int ualds_server_startup()
         /* stop browsing for DNSServices in the background */
         ualds_findserversonnetwork_stop_listening();
     }
+    else
+    {
+        ualds_zeroconf_cleanupOffline();
+    }
+
 #endif
 
     ualds_security_uninitialize();

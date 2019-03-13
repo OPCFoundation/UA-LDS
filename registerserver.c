@@ -28,7 +28,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "settings.h"
 #include "ualds.h"
 #ifdef HAVE_HDS
-# include "zeroconf.h"
+#include "zeroconf.h"
+#include "findserversonnetwork.h"
 #endif
 /* local platform includes */
 #include <platform.h>
@@ -197,9 +198,16 @@ OpcUa_StatusCode ualds_registerserver(
                 ualds_settings_writetime_t("UpdateTime", time(0));
                 ualds_settings_endgroup();
 #ifdef HAVE_HDS
-                if (bExists == 0 && g_bEnableZeroconf)
+                if (bExists == 0)
                 {
-                    ualds_zeroconf_addRegistration(pszServerUri);
+                    if (g_bEnableZeroconf)
+                    {
+                        ualds_zeroconf_addRegistration(pszServerUri);
+                    }
+                    else
+                    {
+                        ualds_zeroconf_registerOffline(pszServerUri);
+                    }
                 }
 #endif
                 ualds_settings_flush();
@@ -208,13 +216,18 @@ OpcUa_StatusCode ualds_registerserver(
             {
                 /* unregister */
                 ualds_log(UALDS_LOG_INFO, "Unregistering server %s.", pszServerUri);
-                ualds_settings_removegroup(pszServerUri);
 #ifdef HAVE_HDS
                 if (g_bEnableZeroconf)
                 {
                     ualds_zeroconf_removeRegistration(pszServerUri);
                 }
+                else
+                {
+                    ualds_zeroconf_unregisterOffline(pszServerUri);
+                }
 #endif
+                ualds_settings_removegroup(pszServerUri);
+
                 ualds_settings_flush();
                 ualds_expirationcheck();
             }
