@@ -146,56 +146,62 @@ OpcUa_StatusCode ualds_findservers(
         ualds_settings_endgroup();
 
         pResponse->NoOfServers = numServers;
-        pResponse->Servers = OpcUa_Alloc(sizeof(OpcUa_ApplicationDescription) * pResponse->NoOfServers);
-        if (pResponse->Servers)
+        if (pResponse->NoOfServers > 0)
         {
-            for (i=0; i<pResponse->NoOfServers; i++)
+            pResponse->Servers = OpcUa_Alloc(sizeof(OpcUa_ApplicationDescription)* pResponse->NoOfServers);
+            if (pResponse->Servers)
             {
-                OpcUa_ApplicationDescription_Initialize(&pResponse->Servers[i]);
-                if (szUriArray[i] == 0) continue;
-                ualds_settings_begingroup(szUriArray[i]);
-                ualds_settings_readuastring("ProductUri", &pResponse->Servers[i].ProductUri);
-                ualds_settings_beginreadarray("ServerNames", &numServerNames);
-                if (numServerNames > 0)
+                for (i = 0; i<pResponse->NoOfServers; i++)
                 {
-                    ualds_settings_setarrayindex(0);
-                    ualds_settings_readuastring("Locale", &pResponse->Servers[i].ApplicationName.Locale);
-                    ualds_settings_readuastring("Text", &pResponse->Servers[i].ApplicationName.Text);
-                }
-                ualds_settings_endarray();
-                ualds_settings_readint("ServerType", &tmpInt);
-                pResponse->Servers[i].ApplicationType = (OpcUa_ApplicationType)tmpInt;
-                ualds_settings_readuastring("GatewayServerUri", &pResponse->Servers[i].GatewayServerUri);
-                ualds_settings_beginreadarray("DiscoveryUrls", &numDiscoveryUrls);
-                if (numDiscoveryUrls > 0)
-                {
-                    pResponse->Servers[i].NoOfDiscoveryUrls = numDiscoveryUrls;
-                    pResponse->Servers[i].DiscoveryUrls = OpcUa_Alloc(sizeof(OpcUa_String) * numDiscoveryUrls);
-                    if (pResponse->Servers[i].DiscoveryUrls)
+                    OpcUa_ApplicationDescription_Initialize(&pResponse->Servers[i]);
+                    if (szUriArray[i] == 0) continue;
+                    ualds_settings_begingroup(szUriArray[i]);
+                    ualds_settings_readuastring("ProductUri", &pResponse->Servers[i].ProductUri);
+                    ualds_settings_beginreadarray("ServerNames", &numServerNames);
+                    if (numServerNames > 0)
                     {
-                        for (j=0; j<numDiscoveryUrls; j++)
+                        ualds_settings_setarrayindex(0);
+                        ualds_settings_readuastring("Locale", &pResponse->Servers[i].ApplicationName.Locale);
+                        ualds_settings_readuastring("Text", &pResponse->Servers[i].ApplicationName.Text);
+                    }
+                    ualds_settings_endarray();
+                    ualds_settings_readint("ServerType", &tmpInt);
+                    pResponse->Servers[i].ApplicationType = (OpcUa_ApplicationType)tmpInt;
+                    ualds_settings_readuastring("GatewayServerUri", &pResponse->Servers[i].GatewayServerUri);
+                    ualds_settings_beginreadarray("DiscoveryUrls", &numDiscoveryUrls);
+                    if (numDiscoveryUrls > 0)
+                    {
+                        pResponse->Servers[i].NoOfDiscoveryUrls = numDiscoveryUrls;
+                        pResponse->Servers[i].DiscoveryUrls = OpcUa_Alloc(sizeof(OpcUa_String)* numDiscoveryUrls);
+                        if (pResponse->Servers[i].DiscoveryUrls)
                         {
-                            ualds_settings_setarrayindex(j);
-                            ualds_settings_readstring("Url", szTmpUrl, UALDS_CONF_MAX_URI_LENGTH);
-                            replace_string(szTmpUrl, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", szHostname);
-                            OpcUa_String_Initialize(&pResponse->Servers[i].DiscoveryUrls[j]);
-                            OpcUa_String_AttachCopy(&pResponse->Servers[i].DiscoveryUrls[j], szTmpUrl);
+                            for (j = 0; j<numDiscoveryUrls; j++)
+                            {
+                                ualds_settings_setarrayindex(j);
+                                ualds_settings_readstring("Url", szTmpUrl, UALDS_CONF_MAX_URI_LENGTH);
+                                replace_string(szTmpUrl, UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", szHostname);
+                                OpcUa_String_Initialize(&pResponse->Servers[i].DiscoveryUrls[j]);
+                                OpcUa_String_AttachCopy(&pResponse->Servers[i].DiscoveryUrls[j], szTmpUrl);
+                            }
                         }
                     }
-                }
-                ualds_settings_endarray();
-                ualds_settings_endgroup();
+                    ualds_settings_endarray();
+                    ualds_settings_endgroup();
 
-                /* finally replace [gethostname] in ServerUri and copy to ApplicationUri */
-                replace_string(szUriArray[i], UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", szHostname);
-                OpcUa_String_AttachCopy(&pResponse->Servers[i].ApplicationUri, szUriArray[i]);
+                    /* finally replace [gethostname] in ServerUri and copy to ApplicationUri */
+                    replace_string(szUriArray[i], UALDS_CONF_MAX_URI_LENGTH, "[gethostname]", szHostname);
+                    OpcUa_String_AttachCopy(&pResponse->Servers[i].ApplicationUri, szUriArray[i]);
+                }
+            }
+            else
+            {
+                uStatus = OpcUa_BadOutOfMemory;
             }
         }
         else
         {
-            uStatus = OpcUa_BadOutOfMemory;
+            uStatus = OpcUa_Good;
         }
-
 
 		OpcUa_Mutex_Unlock(g_mutex);
 
