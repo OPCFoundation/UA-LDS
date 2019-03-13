@@ -1,0 +1,14 @@
+version: "3.4"
+
+services:
+  lds:
+    container_name: lds
+    image: lds:latest
+    build:
+      context: UA-LDS
+      dockerfile: Dockerfile
+    hostname: lds
+    expose:
+      - "5353"
+      - "4840"
+	tty: true
