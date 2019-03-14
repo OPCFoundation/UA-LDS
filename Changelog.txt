@@ -1,6 +1,16 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
+Version 1.03.401
+	Highlights:
+		- Updated UaStack to latest version. Replaced submodule with copy of the UaStack. 
+	Fixed issues:
+		- If the option EnableZeroconf = no, the ualds_findserversonnetwork will never return registered servers: #49
+		- Fix docker build: #50
+		- Docker Linux LDS fails to run: #51
+		- Typo Default: #53
+		- Possible malloc(0): #54
+		
 Version 1.03.400
 	Highlights:
 		- Updated to latest UaStack version 1.04.342
