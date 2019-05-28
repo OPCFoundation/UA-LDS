@@ -156,13 +156,16 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
     ualds_genericContext* context;
     MulticastSocketCallbackStruct* socketCallbackStruct;
 
+    if (*shutdown)
+    {
+        return;
+    }
 
     /*
     TODO:
     This should be combined with zerconf socket callback into one "poll" loop that builds 
     pollfd or select bitmask from the socket cb list. This would then be driven from main.
     */
-    
 
     /* Lock access to shared sdref/fd from server processing thread */
     OpcUa_Mutex_Lock(g_mutex);

@@ -104,6 +104,11 @@ void ualds_zeroconf_socketEventCallback(int* shutdown)
     ualds_registerContext* context;
     MulticastSocketCallbackStruct* socketCallbackStruct;
 
+    if (*shutdown)
+    {
+        return;
+    }
+
     /* Need to synchronize access to shared fd/sdref between this main thread
       and registration thread - the g_lstServers list is convinient for that. */
     OpcUa_List_Enter(&g_lstServers);
