@@ -200,13 +200,9 @@ OpcUa_StatusCode ualds_registerserver(
 #ifdef HAVE_HDS
                 if (bExists == 0)
                 {
-                    if (g_bEnableZeroconf)
+                    if (g_bEnableZeroconf == 0)
                     {
-                        ualds_zeroconf_addRegistration(pszServerUri);
-                    }
-                    else
-                    {
-                        ualds_zeroconf_registerOffline(pszServerUri);
+                        ualds_zeroconf_register_offline(pszServerUri);
                     }
                 }
 #endif
@@ -217,13 +213,9 @@ OpcUa_StatusCode ualds_registerserver(
                 /* unregister */
                 ualds_log(UALDS_LOG_INFO, "Unregistering server %s.", pszServerUri);
 #ifdef HAVE_HDS
-                if (g_bEnableZeroconf)
+                if (g_bEnableZeroconf == 0)
                 {
-                    ualds_zeroconf_removeRegistration(pszServerUri);
-                }
-                else
-                {
-                    ualds_zeroconf_unregisterOffline(pszServerUri);
+                    ualds_zeroconf_unregister_offline(pszServerUri);
                 }
 #endif
                 ualds_settings_removegroup(pszServerUri);
@@ -234,6 +226,32 @@ OpcUa_StatusCode ualds_registerserver(
         }
 
         OpcUa_Mutex_Unlock(g_mutex);
+
+        // update on network 
+        if (OpcUa_IsGood(uStatus))
+        {
+            if (bIsOnline != OpcUa_False)
+            {
+#ifdef HAVE_HDS
+                if (bExists == 0)
+                {
+                    if (g_bEnableZeroconf)
+                    {
+                        ualds_zeroconf_addRegistration(pszServerUri);
+                    }
+                }
+#endif
+            }
+            else
+            {
+#ifdef HAVE_HDS
+                if (g_bEnableZeroconf)
+                {
+                    ualds_zeroconf_removeRegistration(pszServerUri);
+                }
+#endif
+            }
+        }
 
         UALDS_BUILDRESPONSEHEADER;
 

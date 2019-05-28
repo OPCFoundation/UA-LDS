@@ -370,6 +370,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                 bFound = OpcUa_True;
                 break;
             }
+
             pResolveContext = (ualds_resolveContext*)OpcUa_List_GetNextElement(&g_lstServers);
         }
         OpcUa_List_Leave(&g_lstServers);
@@ -916,7 +917,7 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
     return uStatus;
 }
 
-void ualds_zeroconf_registerOffline(const char *szServerUri)
+void ualds_zeroconf_register_offline(const char *szServerUri)
 {
     ualds_settings_begingroup(szServerUri);
 
@@ -985,6 +986,7 @@ void ualds_zeroconf_registerOffline(const char *szServerUri)
 
                 pResolveContext->contextType = ContextType_Resolve;
                 pResolveContext->uaSocket = OpcUa_Null;
+                pResolveContext->sdRef = OpcUa_Null;
                 OpcUa_ServerOnNetwork_Initialize(&pResolveContext->record);
 
                 // get DiscoveryURL
@@ -1218,7 +1220,7 @@ void ualds_zeroconf_registerOffline(const char *szServerUri)
     ualds_settings_endgroup();
 }
 
-void ualds_zeroconf_unregisterOffline(const char *szServerUri)
+void ualds_zeroconf_unregister_offline(const char *szServerUri)
 {
     ualds_settings_begingroup(szServerUri);
 
@@ -1275,7 +1277,7 @@ void ualds_zeroconf_unregisterOffline(const char *szServerUri)
     OpcUa_List_Leave(&g_lstServers);
 }
 
-void ualds_zeroconf_loadOffline()
+void ualds_zeroconf_load_offline()
 {
     char** szUriArray = 0;
     int numServers = 0;
@@ -1311,7 +1313,7 @@ void ualds_zeroconf_loadOffline()
 
     for (i = 0; i < numServers; i++)
     {
-        ualds_zeroconf_registerOffline(szUriArray[i]);
+        ualds_zeroconf_register_offline(szUriArray[i]);
     }
 
     /* cleanup */
@@ -1328,7 +1330,7 @@ void ualds_zeroconf_loadOffline()
     }
 }
 
-void ualds_zeroconf_cleanupOffline()
+void ualds_zeroconf_cleanup_offline()
 {
     OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_ResetCurrent(&g_lstServers);

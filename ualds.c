@@ -1515,7 +1515,7 @@ int ualds_server_startup()
     }
     else
     {
-        ualds_zeroconf_loadOffline();
+        ualds_zeroconf_load_offline();
     }
 #endif
 
@@ -1537,7 +1537,7 @@ int ualds_server_startup()
         }
         else
         {
-            ualds_zeroconf_cleanupOffline();
+            ualds_zeroconf_cleanup_offline();
         }
 #endif
 
@@ -1575,7 +1575,7 @@ int ualds_server_startup()
     }
     else
     {
-        ualds_zeroconf_cleanupOffline();
+        ualds_zeroconf_cleanup_offline();
     }
 
 #endif
