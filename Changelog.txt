@@ -5,6 +5,8 @@ Version 1.03.401
 	Highlights:
 		- Updated UaStack to latest version. Replaced submodule with copy of the UaStack. 
 	Fixed issues:
+		- Improve logging for Certificate Validation.: #55
+		- LDS service becomes unresponsive for high number of running UA servers: #56
 		- If the option EnableZeroconf = no, the ualds_findserversonnetwork will never return registered servers: #49
 		- Fix docker build: #50
 		- Docker Linux LDS fails to run: #51
