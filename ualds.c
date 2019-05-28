@@ -114,6 +114,46 @@ static const char *g_szEndpointEventNames[] = {
 
 #define SECONDS_PER_YEAR 86400*365
 
+typedef struct Status_Code_String_
+{
+    OpcUa_StatusCode    status_code;
+    char*               status_code_str;
+} Status_Code_String;
+#define Status_Code_String_Count 16
+static Status_Code_String status_code_to_string[Status_Code_String_Count] =
+{
+    { OpcUa_BadCertificateChainIncomplete, "CertificateChainIncomplete" },
+    { OpcUa_BadCertificateHostNameInvalid, "CertificateHostNameInvalid" },
+    { OpcUa_BadCertificateInvalid, "CertificateInvalid" },
+    { OpcUa_BadCertificateIssuerRevocationUnknown, "CertificateIssuerRevocationUnknown" },
+    { OpcUa_BadCertificateIssuerRevoked, "CertificateIssuerRevoked" },
+    { OpcUa_BadCertificateIssuerTimeInvalid, "CertificateIssuerTimeInvalid" },
+    { OpcUa_BadCertificateIssuerUseNotAllowed, "CertificateIssuerUseNotAllowed" },
+    { OpcUa_BadCertificatePolicyCheckFailed, "CertificatePolicyCheckFailed" },
+    { OpcUa_BadCertificateRevocationUnknown, "CertificateRevocationUnknown" },
+    { OpcUa_BadCertificateRevoked, "CertificateRevoked" },
+    { OpcUa_BadCertificateTimeInvalid, "CertificateTimeInvalid" },
+    { OpcUa_BadCertificateUntrusted , "CertificateUntrusted" },
+    { OpcUa_BadCertificateUriInvalid, "CertificateUriInvalid" },
+    { OpcUa_BadCertificateUseNotAllowed, "CertificateUseNotAllowed" },
+    { OpcUa_BadNoValidCertificates, "NoValidCertificates" },
+    { OpcUa_BadSecurityChecksFailed, "SecurityChecksFailed" }
+};
+
+char* get_statuscode_pretty_print(OpcUa_StatusCode status_code)
+{
+    int i = 0;
+    for (i = 0; i < Status_Code_String_Count; i++)
+    {
+        if (status_code_to_string[i].status_code == status_code)
+        {
+            return status_code_to_string[i].status_code_str;
+        }
+    }
+
+    return NULL;
+}
+
 /** Returns a list of configured UA LDS endpoints. */
 const ualds_endpoint* ualds_endpoints(OpcUa_UInt32 *pNumEndpoints)
 {
@@ -613,8 +653,42 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
     OpcUa_Void*                 pCertificateStore,
     OpcUa_Int*                  pValidationCode)
 {
-  OpcUa_StatusCode uStatus = g_PkiProvider.ValidateCertificate(pPKI, pCertificate, pCertificateStore, pValidationCode);
+    char* certificateThumbPrint = 0;
 
+    {
+        // Extract ThumbPrint
+        OpcUa_ByteString thumbPrint = OPCUA_BYTESTRING_STATICINITIALIZER;
+
+        OpcUa_StatusCode extractThumbprintStatus = g_PkiProvider.ExtractCertificateData(pCertificate,
+            NULL, NULL, NULL, NULL, NULL, &thumbPrint, NULL, NULL);
+
+        if (extractThumbprintStatus == OpcUa_Good)
+        {
+            // thumb print in format "D0 AB 01 " ...
+            certificateThumbPrint = malloc(sizeof(char) * thumbPrint.Length * 3);
+            OpcUa_MemSet(certificateThumbPrint, 0, sizeof(char) * thumbPrint.Length * 3);
+
+
+            int certificateThumbPrintBytes = 0;
+            for (OpcUa_Int32 i = 0; i < thumbPrint.Length; i++)
+            {
+                char byteStr[3];
+                if (i != 0)
+                {
+                    strncpy(certificateThumbPrint + certificateThumbPrintBytes, " ", sizeof(char));
+                    certificateThumbPrintBytes += sizeof(char);
+                }
+                sprintf(&byteStr[0], "%02x", thumbPrint.Data[i]);
+                strncpy(certificateThumbPrint + certificateThumbPrintBytes, byteStr, sizeof(char)* 2);
+                certificateThumbPrintBytes += sizeof(char)* 2;
+            }
+        }
+
+        OpcUa_ByteString_Clear(&thumbPrint);
+    }
+
+  OpcUa_StatusCode uStatus = g_PkiProvider.ValidateCertificate(pPKI, pCertificate, pCertificateStore, pValidationCode);
+  
   if (uStatus == OpcUa_BadCertificateUntrusted && g_bAllowLocalRegistration)
   {
       ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Ignoring BadCertificateUntrusted error, because AllowLocalRegistration is set to yes.");
@@ -656,6 +730,25 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
     }
   }
 #endif /* OPCUA_SUPPORT_PKI_WIN32 */
+
+  if (certificateThumbPrint != 0)
+  {
+      if (OpcUa_IsBad(uStatus))
+      {
+          char* statuscode_str = get_statuscode_pretty_print(uStatus);
+          if (statuscode_str != NULL)
+          {
+              ualds_log(UALDS_LOG_ERR, "Certificate validation for thumbprint %s failed with status %s", certificateThumbPrint, statuscode_str);
+          }
+          else
+          {
+              ualds_log(UALDS_LOG_ERR, "Certificate validation for thumbprint %s failed with status 0x%08x", certificateThumbPrint, uStatus);
+          }
+      }
+    
+      free(certificateThumbPrint);
+      certificateThumbPrint = 0;
+  }
 
   return uStatus;
 }
