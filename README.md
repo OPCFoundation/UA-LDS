@@ -20,7 +20,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
 ## Build Dependencies
 
- * OPC UA Ansi C Stack 1.04.342. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC.
+ * OPC UA Ansi C Stack 1.04.342. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC-Legacy.
  * CMake version 3.6.2 or later from https://cmake.org/install/.
  * Perl
  * Windows:
@@ -32,7 +32,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
  
 ## Building the LDS
 
-Make sure that openssl is installed or build. See [UA-AnsiC](https://github.com/OPCFoundation/UA-AnsiC/) build instructions.
+Make sure that openssl is installed or build. See [UA-AnsiC](https://github.com/OPCFoundation/UA-AnsiC-Legacy) build instructions.
 <br/>
 Predefined scripts are available based on CMake. 
  * Windows: build\_ualds.bat (Visual Studio Command Shell)
@@ -51,7 +51,7 @@ The following tree shows the directory layout of this repo:
 
 ```
 - /-- ualds                      LDS platform independent code
-- |  |- stack                    OPC UA Ansi C Stack (https://github.com/OPCFoundation/UA-AnsiC)
+- |  |- stack                    OPC UA Ansi C Stack (https://github.com/OPCFoundation/UA-AnsiC-Legacy)
 - |    ||- stack
 - |      |||- core                  Configuration and utilities
 - |      |||- platforms
