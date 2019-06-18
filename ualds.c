@@ -1772,7 +1772,8 @@ void print_failed_certificate_vaidation(OpcUa_StatusCode uaStatusCode, OpcUa_Byt
                 OpcUa_MemSet(certificateThumbPrint, 0, sizeof(char)* thumbPrint.Length * 3);
 
                 int certificateThumbPrintBytes = 0;
-                for (OpcUa_Int32 i = 0; i < thumbPrint.Length; i++)
+                OpcUa_Int32 i = 0;
+                for (i = 0; i < thumbPrint.Length; i++)
                 {
                     char byteStr[3];
                     sprintf(&byteStr[0], "%02x", thumbPrint.Data[i]);
