@@ -461,6 +461,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
             /* process results */
             if (retDnssd == kDNSServiceErr_NoError)
             {
+                OpcUa_List_Enter(&g_lstServers);
                 if (pResolveContext->sdRef)
                 {
                     MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
@@ -472,6 +473,7 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                     uStatus = OpcUa_List_AddElementToEnd(&g_findServersSocketList, socketCallbackStruct);
                     /* OpcUa_List_Leave(&g_findServersSocketList); */
                 }
+                OpcUa_List_Leave(&g_lstServers);
             }
             else
             {
