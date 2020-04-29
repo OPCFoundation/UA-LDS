@@ -33,7 +33,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
     add_subdirectory(stack)
 set_target_properties(uastack PROPERTIES FOLDER "stack")
-set_target_properties(AnsiCServer PROPERTIES FOLDER "samples")
 if(WIN32)
 if(NOT no_lds_me)
     add_subdirectory(mdns)

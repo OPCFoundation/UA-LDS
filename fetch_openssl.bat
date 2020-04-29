@@ -6,8 +6,8 @@ REM ****************************************************************************
 SETLOCAL
 
 set ROOT=%~dp0
-set SRCDIR=openssl-1.0.2l
-set GITTAG=OpenSSL_1_0_2l
+set SRCDIR=openssl-1.1.1g
+set GITTAG=OpenSSL_1_1_1g
 
 set GIT=C:\Program Files\Git\bin\git.exe
 IF NOT EXIST "%GIT%" SET GIT=C:\Program Files (x86)\Git\bin\git.exe
@@ -18,4 +18,4 @@ cd %SRCDIR%
 "%GIT%" checkout tags/%GITTAG%
 
 cd %ROOT%\stack
-perl -pi.back -e "s/openssl-1.0.\?\?/%SRCDIR%/" build_win32.bat
+perl -pi.back -e "s/openssl-1.1.\?\?/%SRCDIR%/" build_win32.bat

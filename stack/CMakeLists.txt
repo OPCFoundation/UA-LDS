@@ -40,4 +40,3 @@ if(NOT "${compile_options_CXX}" STREQUAL "OFF")
 endif()
 
 add_subdirectory(Stack)
-add_subdirectory(AnsiCSample)
