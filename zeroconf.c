@@ -308,7 +308,6 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
 
     OpcUa_Mutex_Lock(g_mutex);
     ualds_expirationcheck();
-    OpcUa_Mutex_Unlock(g_mutex);
 
     OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_ResetCurrent(&g_lstServers);
@@ -332,7 +331,6 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         }
 
         /* get registration information */
-        OpcUa_Mutex_Lock(g_mutex);
         uStatus = ualds_zeroconf_getServerInfo(pRegisterContext->szServerUri,
                                                pRegisterContext->discoveryUrlIndex,
                                                szMDNSServerName,
@@ -343,7 +341,6 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
                                                UALDS_CONF_MAX_URI_LENGTH,
                                                &port,
                                                &txtRecord);
-        OpcUa_Mutex_Unlock(g_mutex);
 
         if (OpcUa_IsBad(uStatus))
         {
@@ -459,6 +456,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
     }
 
     OpcUa_List_Leave(&g_lstServers);
+    OpcUa_Mutex_Unlock(g_mutex);
 
     return uStatus;
 }
