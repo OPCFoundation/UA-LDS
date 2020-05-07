@@ -229,13 +229,17 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
         {
             strlcpy(szServiceName, "_opcua-tcp._tcp", uServiceNameLength);
         }
-        else if (OpcUa_StrCmpA(szScheme, "https") == 0)
+        else if (OpcUa_StrCmpA(szScheme, "opc.https") == 0 || OpcUa_StrCmpA(szScheme, "https") == 0)
         {
-            strlcpy(szServiceName, "_opcua-tls._tcp", uServiceNameLength);
+            strlcpy(szServiceName, "_opcua-https._tcp", uServiceNameLength);
         }
-        else if (OpcUa_StrCmpA(szScheme, "http") == 0)
+        else if (OpcUa_StrCmpA(szScheme, "opc.wss") == 0)
         {
-            strlcpy(szServiceName, "_opcua-http._tcp", uServiceNameLength);
+            strlcpy(szServiceName, "_opcua-wss._tcp", uServiceNameLength);
+        }
+        else
+        {
+            return OpcUa_BadInternalError;
         }
 
         /* create TXT record */

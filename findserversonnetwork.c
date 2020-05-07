@@ -82,11 +82,11 @@ static OpcUa_Timer              g_hBrowseTimer = OpcUa_Null;
 #define                         g_noOfServiceTypes 3
 static ualds_browseContext      g_browseContexts[g_noOfServiceTypes];
 static const char              *g_pszServiceTypes[g_noOfServiceTypes] = {"_opcua-tcp._tcp",
-                                                                         "_opcua-tls._tcp",
-                                                                         "_opcua-http._tcp"};
+                                                                         "_opcua-wss._tcp",
+                                                                         "_opcua-https._tcp"};
 static const char              *g_pszServiceSchemes[g_noOfServiceTypes] = {"opc.tcp://",
-                                                                           "https://",
-                                                                           "http://"};
+                                                                           "opc.wss://",
+                                                                           "opc.https://"};
 /* list of ualds_resolveContext used as internal DNSService cache */
 static OpcUa_List               g_lstServers;
 static OpcUa_DateTime           g_lastCounterResetTime = {0, 0};
@@ -346,14 +346,23 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
         char                    szDiscoveryUrl[UALDS_CONF_MAX_URI_LENGTH] = {0};
         OpcUa_UInt32            i = 0;
 
+        OpcUa_Boolean           bFoundSchema = OpcUa_False;
         for (i = 0; i < g_noOfServiceTypes; i++)
         {
             if (strncmp(regtype, g_pszServiceTypes[i], strlen(g_pszServiceTypes[i])) == 0)
             {
                 strlcat(szDiscoveryUrl, g_pszServiceSchemes[i], UALDS_CONF_MAX_URI_LENGTH);
+                bFoundSchema = OpcUa_True;
                 break;
             }
         }
+
+        if (bFoundSchema == OpcUa_False)
+        {
+            ualds_log(UALDS_LOG_DEBUG, "ignoring invalid regtype %s", regtype);
+            goto Error;
+        }
+
         if (szDiscoveryUrl[0] == '\0')
         {
             ualds_log(UALDS_LOG_DEBUG, "ualds_DNSServiceBrowseReply: ignoring invalid regtype %s", regtype);
@@ -461,6 +470,8 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
             /* process results */
             if (retDnssd == kDNSServiceErr_NoError)
             {
+                OpcUa_List_Enter(&g_lstServers);
+
                 if (pResolveContext->sdRef)
                 {
                     MulticastSocketCallbackStruct* socketCallbackStruct = OpcUa_Alloc(sizeof(MulticastSocketCallbackStruct));
@@ -472,6 +483,8 @@ void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                     uStatus = OpcUa_List_AddElementToEnd(&g_findServersSocketList, socketCallbackStruct);
                     /* OpcUa_List_Leave(&g_findServersSocketList); */
                 }
+
+                OpcUa_List_Leave(&g_lstServers);
             }
             else
             {
