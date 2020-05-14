@@ -1,6 +1,16 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
+Version 1.04.402
+	Highlights:
+		- Updated DiscoveryUrl to DNS SRV record mapping accordig to OPC-UA Spec. v1.04 Part 12.
+		- Updated OpenSSL to version 1.1.1g
+	Fixed issues:
+		- Fixed deadlock reported in PullRequest #62.
+		- OPC.HTTPS DiscoveryUrls come out as OPC.TCP DiscoveryUrls from FindServersOnNetwork #63
+		- Documentation link is not valid #61
+		- The LDS contains two PKI stores and two config files which can confuse the end user #58
+		
 Version 1.03.401
 	Highlights:
 		- Updated UaStack to latest version. Replaced submodule with copy of the UaStack. 

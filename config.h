@@ -1,4 +1,4 @@
-/* Copyright (c) 1996-2019, OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2020, OPC Foundation. All rights reserved.
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -34,7 +34,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 /* define version information */
 #define UALDS_CONF_VERSION_MAJOR 1
-#define UALDS_CONF_VERSION_MINOR 03
+#define UALDS_CONF_VERSION_MINOR 04
 #define UALDS_CONF_VERSION_PATCH XXX
 #define UALDS_CONF_VERSION_BUILD YYY
 #define UALDS_VERSION_SUFFIX " Release"
