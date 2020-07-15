@@ -814,7 +814,7 @@ OpcUa_StatusCode ualds_findserversonnetwork(OpcUa_Endpoint         hEndpoint,
                 if (bIncludeRecord != OpcUa_False)
                 {
                     if (pRequest->StartingRecordId != 0 &&
-                        pResolveContext->record.RecordId < pRequest->StartingRecordId)
+                        pResolveContext->record.RecordId <= pRequest->StartingRecordId)
                     {
                         ualds_log(UALDS_LOG_DEBUG, "ualds_findserversonnetwork: skip record as StartingRecordId is set (%u)", pRequest->StartingRecordId);
                         bIncludeRecord = OpcUa_False;
