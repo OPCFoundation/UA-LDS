@@ -422,7 +422,14 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "EndpointCallback");
     {
     case eOpcUa_Endpoint_Event_SecureChannelOpened:
         {
-            MY_TRACE("UaTestServer_EndpointCallback: SecureChannel %i opened with %s in mode %u status 0x%08X!\n", a_uSecureChannelId, OpcUa_String_GetRawString(a_pSecurityPolicy), a_uSecurityMode, a_uStatus);
+            if (a_pSecurityPolicy != OpcUa_Null)
+            {
+                MY_TRACE("UaTestServer_EndpointCallback: SecureChannel %i opened with %s in mode %u status 0x%08X!\n", a_uSecureChannelId, OpcUa_String_GetRawString(a_pSecurityPolicy), a_uSecurityMode, a_uStatus);
+            }
+            else
+            {
+                MY_TRACE("UaTestServer_EndpointCallback: SecureChannel %i opened without security policy in mode %u status 0x%08X!\n", a_uSecureChannelId, a_uSecurityMode, a_uStatus);
+            }
             break;
         }
     case eOpcUa_Endpoint_Event_SecureChannelClosed:
@@ -495,8 +502,14 @@ OpcUa_StatusCode my_FindServers(
 
 	for(i=0;i<a_nNoOfServerUris;i++)
 	{
-		if(((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrnCmp(OpcUa_String_GetRawString(a_pServerUris+i),"Nano_Server",((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrLen("Nano_Server"))==0)
-			break;
+        OpcUa_CharA* pServerUri = OpcUa_String_GetRawString(a_pServerUris + i);
+        if (pServerUri != OpcUa_Null &&
+            ((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrnCmp(
+            pServerUri, "Nano_Server", ((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrLen("Nano_Server")) == 0)
+        {
+            break;
+        }
+
 		*a_pNoOfServers=0;
 		*a_pServers=OpcUa_Null;
 		OpcUa_GotoError
@@ -579,8 +592,15 @@ OpcUa_StatusCode myserverGetEndpointsService(
 	/* need to pass CTT-test---------------------------------*/
 	for(i=0;i< a_nNoOfProfileUris;i++)
 	{
-		if(((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrnCmp(OpcUa_String_GetRawString(a_pProfileUris+i),OpcUa_TransportProfile_UaTcp,((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrLen(OpcUa_TransportProfile_UaTcp))==0)
-			break;
+        OpcUa_CharA* pProfileUri = OpcUa_String_GetRawString(a_pProfileUris + i);
+
+        if (pProfileUri != OpcUa_Null &&
+            ((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrnCmp(
+            pProfileUri, OpcUa_TransportProfile_UaTcp, ((OpcUa_Port_CallTable*)UaTestServer_g_PlatformLayerHandle)->StrLen(OpcUa_TransportProfile_UaTcp)) == 0)
+        {
+            break;
+        }
+
 		*a_pNoOfEndpoints=0;
 		*a_ppEndpoints=OpcUa_Null;
 		OpcUa_GotoError
