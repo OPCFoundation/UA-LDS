@@ -4,7 +4,7 @@ OPC Foundation OPC UA Local Discovery Server
 Version 1.04.402
 	Highlights:
 		- Updated DiscoveryUrl to DNS SRV record mapping according to OPC-UA Spec. v1.04 Part 12.
-		- Updated OpenSSL to version 1.1.1g
+		- Updated OpenSSL to version 1.1.1h
 	Fixed issues:
 		- Fixed deadlock reported in PullRequest #62.
 		- OPC.HTTPS DiscoveryUrls come out as OPC.TCP DiscoveryUrls from FindServersOnNetwork #63
