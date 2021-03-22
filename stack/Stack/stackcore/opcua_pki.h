@@ -204,8 +204,9 @@ typedef OpcUa_StatusCode (OpcUa_PKIProvider_PfnLoadPrivateKeyFromFile)(
   @param pSubjectDNS           [out, optional] The subject's DNS name of the certificate.
   @param pCertThumbprint       [out, optional] The thumbprint of the certificate.
   @param pSubjectHash          [out, optional] The hash code of the certificate.
-  @param pCertRawLength        [out, optional] The length of the DER encoded data.
-                               can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
+  @param pCertRawLength        [out, optional] The length of the DER encoded data. Can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
+  @param pNotBefore            [out, optional] The the date on which a certificate becomes valid.
+  @param pNotAfter             [out, optional] The date in after which the certificate is no longer valid.
 */
 typedef OpcUa_StatusCode (OpcUa_PKIProvider_PfnExtractCertificateData)(
     OpcUa_ByteString*           pCertificate,
@@ -216,7 +217,9 @@ typedef OpcUa_StatusCode (OpcUa_PKIProvider_PfnExtractCertificateData)(
     OpcUa_ByteString*           pSubjectDNS,
     OpcUa_ByteString*           pCertThumbprint,
     OpcUa_UInt32*               pSubjectHash,
-    OpcUa_UInt32*               pCertRawLength);
+    OpcUa_UInt32*               pCertRawLength,
+    OpcUa_Int64*                pNotBefore,
+    OpcUa_Int64*                pNotAfter);
 
 /**
   @brief The PKI provider object.

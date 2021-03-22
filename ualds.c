@@ -772,6 +772,8 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
 
     ualds_settings_begingroup("PKI");
     int reCreateOwnCertificateOnError = 0;
+    int reCreateOwnCertificateOnTimeInvalid = 0;
+    int certificateNotAfterOffset = 0;
 
     UALDS_SETTINGS_READSTRING(CertificateStorePath);
     if (g_szCertificateStorePath[0] == 0)
@@ -865,6 +867,26 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
         }
     }
 
+    /* Check if we should re-create the own certificate if its time is not valid */
+    if (ualds_settings_readstring("ReCreateOwnCertificateOnTimeInvalid", szValue, sizeof(szValue)) == 0)
+    {
+        if (strcmp(szValue, "yes") == 0)
+        {
+            ualds_log(UALDS_LOG_INFO, "ReCreateOwnCertificateOnTimeInvalid is enabled.");
+            reCreateOwnCertificateOnTimeInvalid = 1;
+        }
+
+        int certificateNotAfterOffsetTemp;
+
+        if (ualds_settings_readint("CertificateNotAfterOffset", &certificateNotAfterOffsetTemp) == 0)
+        {
+            if (certificateNotAfterOffsetTemp >= 0)
+            {
+                certificateNotAfterOffset = certificateNotAfterOffsetTemp;
+            }
+        }
+    }
+
     ualds_settings_endgroup();
 
 #if HAVE_OPENSSL
@@ -893,7 +915,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     }
     else
     {
-        if (reCreateOwnCertificateOnError)
+        if (reCreateOwnCertificateOnError || reCreateOwnCertificateOnTimeInvalid)
         {
             int reCreateCert = 0;
             /* try to load certificate and check domain name */
@@ -908,21 +930,65 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
             else
             {
                 OpcUa_ByteString pSubjectDNS;
-                uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, &pSubjectDNS, NULL, NULL, NULL);
-                if (OpcUa_IsGood(uStatus))
+
+                if (reCreateOwnCertificateOnError)
                 {
-                    if (strcmp(pSubjectDNS.Data, g_szHostname) != 0)
+                    uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, &pSubjectDNS, NULL, NULL, NULL, NULL, NULL);
+
+                    if (OpcUa_IsGood(uStatus))
                     {
-                        ualds_log(UALDS_LOG_ERR, "Server certificate DNS entry (%s) and current hostname (%s) is NOT the same!", pSubjectDNS.Data, g_szHostname);
+                        if (strcmp(pSubjectDNS.Data, g_szHostname) != 0)
+                        {
+                            ualds_log(UALDS_LOG_ERR, "Server certificate DNS entry (%s) and current hostname (%s) is NOT the same!", pSubjectDNS.Data, g_szHostname);
+                            reCreateCert = 1;
+                        }
+                    }
+                    else
+                    {
+                        ualds_log(UALDS_LOG_ERR, "Failed to extract server certificate DNS subject! (0x%08X)", uStatus);
                         reCreateCert = 1;
                     }
                 }
-                else
-                {
-                    ualds_log(UALDS_LOG_ERR, "Failed to extract server certificate DNS subject! (0x%08X)", uStatus);
-                    reCreateCert = 1;
-                }
+
                 OpcUa_ByteString_Clear(&pSubjectDNS);
+
+                OpcUa_Int64 notBefore;
+                OpcUa_Int64 notAfter;
+
+                if (reCreateOwnCertificateOnTimeInvalid)
+                {
+                    uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &notBefore, &notAfter);
+
+                    if (OpcUa_IsGood(uStatus))
+                    {
+                        time_t timeBefore = notBefore;
+                        time_t timeAfter = notAfter;
+
+                        time_t timeCurrent;
+                        time(&timeCurrent);
+                        time_t timeOffset = 60 * 60 * 24 * certificateNotAfterOffset;
+
+                        if (timeBefore <= 0 || timeBefore > timeCurrent)
+                        {
+                            ualds_log(UALDS_LOG_ERR, "LDS cert is not yet valid. Recreating.");
+                            reCreateCert = 1;
+                        }
+
+                        if (timeBefore <= 0 || (timeAfter - timeOffset) <= timeCurrent)
+                        {
+                            ualds_log(UALDS_LOG_ERR, "LDS cert is no longer valid. Recreating.");
+                            reCreateCert = 1;
+                        }
+                    }
+                    else
+                    {
+                        ualds_log(UALDS_LOG_ERR, "Failed to extract server certificate NotBefore or NotAfter dates! (0x%08X)", uStatus);
+                        reCreateCert = 1;
+                    }
+                }
+
+                OpcUa_UInt64_Clear(&notBefore);
+                OpcUa_UInt64_Clear(&notAfter);
             }
 
             if (reCreateCert)
@@ -1761,7 +1827,7 @@ void print_failed_certificate_vaidation(OpcUa_StatusCode uaStatusCode, OpcUa_Byt
         OpcUa_ByteString subjectName = OPCUA_BYTESTRING_STATICINITIALIZER;
 
         OpcUa_StatusCode extractCertificateDataStatus = g_PkiProvider.ExtractCertificateData(pCertificate,
-            &issuerName, &subjectName, NULL, NULL, NULL, &thumbPrint, NULL, NULL);
+            &issuerName, &subjectName, NULL, NULL, NULL, &thumbPrint, NULL, NULL, NULL, NULL);
 
         if (extractCertificateDataStatus == OpcUa_Good)
         {

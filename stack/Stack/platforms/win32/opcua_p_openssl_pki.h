@@ -135,8 +135,9 @@ OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_LoadPrivateKeyFromFile(
   @param pSubjectDNS           [out, optional] The subject's DNS name of the certificate.
   @param pCertThumbprint       [out, optional] The thumbprint of the certificate.
   @param pSubjectHash          [out, optional] The hash code of the certificate.
-  @param pCertRawLength        [out, optional] The length of the DER encoded data.
-                               can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
+  @param pCertRawLength        [out, optional] The length of the DER encoded data. Can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
+  @param pNotBefore            [out, optional] The the date on which a certificate becomes valid.
+  @param pNotAfter             [out, optional] The date in after which the certificate is no longer valid.
 */
 OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_ExtractCertificateData(
     OpcUa_ByteString*           pCertificate,
@@ -147,7 +148,9 @@ OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_ExtractCertificateData(
     OpcUa_ByteString*           pSubjectDNS,
     OpcUa_ByteString*           pCertThumbprint,
     OpcUa_UInt32*               pSubjectHash,
-    OpcUa_UInt32*               pCertRawLength);
+    OpcUa_UInt32*               pCertRawLength,
+    OpcUa_Int64*                a_pNotBefore,
+    OpcUa_Int64*                a_pNotAfter);
 
 /* NoSecurity functions */
 
@@ -254,8 +257,9 @@ OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_NoSecurity_LoadPrivateKeyFromFile(
   @param pSubjectDNS           [out, optional] The subject's DNS name of the certificate.
   @param pCertThumbprint       [out, optional] The thumbprint of the certificate.
   @param pSubjectHash          [out, optional] The hash code of the certificate.
-  @param pCertRawLength        [out, optional] The length of the DER encoded data.
-                               can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
+  @param pCertRawLength        [out, optional] The length of the DER encoded data. Can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
+  @param pNotBefore            [out, optional] The the date on which a certificate becomes valid.
+  @param pNotAfter             [out, optional] The date in after which the certificate is no longer valid.
 */
 OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_NoSecurity_ExtractCertificateData(
     OpcUa_ByteString*           pCertificate,
@@ -266,7 +270,9 @@ OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_NoSecurity_ExtractCertificateData(
     OpcUa_ByteString*           pSubjectDNS,
     OpcUa_ByteString*           pCertThumbprint,
     OpcUa_UInt32*               pSubjectHash,
-    OpcUa_UInt32*               pCertRawLength);
+    OpcUa_UInt32*               pCertRawLength,
+    OpcUa_Int64*                pNotBefore,
+    OpcUa_Int64*                pNotAfter);
 
 OPCUA_END_EXTERN_C
 
