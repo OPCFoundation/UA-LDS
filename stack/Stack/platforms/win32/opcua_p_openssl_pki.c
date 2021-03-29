@@ -1293,10 +1293,26 @@ OpcUa_InitializeStatus(OpcUa_Module_P_OpenSSL, "PKI_ExtractCertificateData");
     {
         ASN1_TIME* asnTime;
         asnTime = X509_get_notBefore(pX509Cert);
-        struct tm timeBefore;
-        int i = ASN1_TIME_to_tm(asnTime, &timeBefore);
+        if (asnTime == 0)
+        {
+            uStatus = OpcUa_Bad;
+            OpcUa_GotoErrorIfBad(uStatus);
+        }
 
-        time_t t = mktime(&timeBefore);
+        struct tm tmTime;
+        int ret = ASN1_TIME_to_tm(asnTime, &tmTime);
+        if (ret == 0)
+        {
+            uStatus = OpcUa_Bad;
+            OpcUa_GotoErrorIfBad(uStatus);
+        }
+
+        time_t t = mktime(&tmTime);
+        if (t == -1)
+        {
+            uStatus = OpcUa_Bad;
+            OpcUa_GotoErrorIfBad(uStatus);
+        }
 
         *a_pNotBefore = (OpcUa_Int64)(t);
     }
@@ -1305,10 +1321,26 @@ OpcUa_InitializeStatus(OpcUa_Module_P_OpenSSL, "PKI_ExtractCertificateData");
     {
         ASN1_TIME* asnTime;
         asnTime = X509_get_notAfter(pX509Cert);
-        struct tm timeAfter;
-        int i = ASN1_TIME_to_tm(asnTime, &timeAfter);
+        if (asnTime == 0)
+        {
+            uStatus = OpcUa_Bad;
+            OpcUa_GotoErrorIfBad(uStatus);
+        }
 
-        time_t t = mktime(&timeAfter);
+        struct tm tmTime;
+        int ret = ASN1_TIME_to_tm(asnTime, &tmTime);
+        if (ret == 0)
+        {
+            uStatus = OpcUa_Bad;
+            OpcUa_GotoErrorIfBad(uStatus);
+        }
+
+        time_t t = mktime(&tmTime);
+        if (t == -1)
+        {
+            uStatus = OpcUa_Bad;
+            OpcUa_GotoErrorIfBad(uStatus);
+        }
 
         *a_pNotAfter = (OpcUa_Int64)(t);
     }
