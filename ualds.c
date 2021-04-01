@@ -974,7 +974,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
                             reCreateCert = 1;
                         }
 
-                        if (timeBefore <= 0 || (timeAfter - timeOffset) <= timeCurrent)
+                        if (timeAfter <= 0 || (timeAfter - timeOffset) <= timeCurrent)
                         {
                             ualds_log(UALDS_LOG_ERR, "LDS cert is no longer valid. Recreating.");
                             reCreateCert = 1;
