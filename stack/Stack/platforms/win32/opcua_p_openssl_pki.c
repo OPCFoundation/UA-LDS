@@ -1101,9 +1101,8 @@ OpcUa_FinishErrorHandling;
   @param pSubjectDNS           [out, optional] The subject's DNS name of the certificate.
   @param pCertThumbprint       [out, optional] The thumbprint of the certificate.
   @param pSubjectHash          [out, optional] The hash code of the certificate.
-  @param pCertRawLength        [out, optional] The length of the DER encoded data. Can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
-  @param pNotBefore            [out, optional] The the date on which a certificate becomes valid.
-  @param pNotAfter             [out, optional] The date in after which the certificate is no longer valid.
+  @param pCertRawLength        [out, optional] The length of the DER encoded data.
+                               can be smaller than the total length of pCertificate in case of chain certificate or garbage follow.
 */
 OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_ExtractCertificateData(
     OpcUa_ByteString*           a_pCertificate,
@@ -1114,9 +1113,7 @@ OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_ExtractCertificateData(
     OpcUa_ByteString*           a_pSubjectDNS,
     OpcUa_ByteString*           a_pCertThumbprint,
     OpcUa_UInt32*               a_pSubjectHash,
-    OpcUa_UInt32*               a_pCertRawLength,
-    OpcUa_Int64*                a_pNotBefore,
-    OpcUa_Int64*                a_pNotAfter)
+    OpcUa_UInt32*               a_pCertRawLength)
 {
     X509*                       pX509Cert = OpcUa_Null;
     char*                       pName = OpcUa_Null;
@@ -1171,16 +1168,6 @@ OpcUa_InitializeStatus(OpcUa_Module_P_OpenSSL, "PKI_ExtractCertificateData");
     if(a_pCertRawLength != OpcUa_Null)
     {
         *a_pCertRawLength = 0;
-    }
-
-    if (a_pNotBefore != OpcUa_Null)
-    {
-       *a_pNotBefore = 0;
-    }
-
-    if (a_pNotAfter != OpcUa_Null)
-    {
-       *a_pNotAfter = 0;
     }
 
     /* convert openssl X509 certificate to DER encoded bytestring certificate */
@@ -1287,62 +1274,6 @@ OpcUa_InitializeStatus(OpcUa_Module_P_OpenSSL, "PKI_ExtractCertificateData");
     if(a_pCertRawLength != OpcUa_Null)
     {
         *a_pCertRawLength = (OpcUa_UInt32)(p - a_pCertificate->Data);
-    }
-
-    if (a_pNotBefore != OpcUa_Null)
-    {
-        ASN1_TIME* asnTime;
-        asnTime = X509_get_notBefore(pX509Cert);
-        if (asnTime == 0)
-        {
-            uStatus = OpcUa_Bad;
-            OpcUa_GotoErrorIfBad(uStatus);
-        }
-
-        struct tm tmTime;
-        int ret = ASN1_TIME_to_tm(asnTime, &tmTime);
-        if (ret == 0)
-        {
-            uStatus = OpcUa_Bad;
-            OpcUa_GotoErrorIfBad(uStatus);
-        }
-
-        time_t t = mktime(&tmTime);
-        if (t == -1)
-        {
-            uStatus = OpcUa_Bad;
-            OpcUa_GotoErrorIfBad(uStatus);
-        }
-
-        *a_pNotBefore = (OpcUa_Int64)(t);
-    }
-
-    if (a_pNotAfter != OpcUa_Null)
-    {
-        ASN1_TIME* asnTime;
-        asnTime = X509_get_notAfter(pX509Cert);
-        if (asnTime == 0)
-        {
-            uStatus = OpcUa_Bad;
-            OpcUa_GotoErrorIfBad(uStatus);
-        }
-
-        struct tm tmTime;
-        int ret = ASN1_TIME_to_tm(asnTime, &tmTime);
-        if (ret == 0)
-        {
-            uStatus = OpcUa_Bad;
-            OpcUa_GotoErrorIfBad(uStatus);
-        }
-
-        time_t t = mktime(&tmTime);
-        if (t == -1)
-        {
-            uStatus = OpcUa_Bad;
-            OpcUa_GotoErrorIfBad(uStatus);
-        }
-
-        *a_pNotAfter = (OpcUa_Int64)(t);
     }
 
     X509_free(pX509Cert);

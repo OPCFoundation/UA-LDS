@@ -933,7 +933,7 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
 
                 if (reCreateOwnCertificateOnError)
                 {
-                    uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, &pSubjectDNS, NULL, NULL, NULL, NULL, NULL);
+                    uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, &pSubjectDNS, NULL, NULL, NULL);
 
                     if (OpcUa_IsGood(uStatus))
                     {
@@ -952,30 +952,28 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
 
                 OpcUa_ByteString_Clear(&pSubjectDNS);
 
-                OpcUa_Int64 notBefore;
-                OpcUa_Int64 notAfter;
-
                 if (reCreateOwnCertificateOnTimeInvalid)
                 {
-                    uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &notBefore, &notAfter);
-
-                    if (OpcUa_IsGood(uStatus))
+                    X509* pX509Cert = OpcUa_Null;
+                    OpcUa_ByteString* pCertificate = &g_server_certificate;
+                    const unsigned char* p = pCertificate->Data;
+                    if ((pX509Cert = d2i_X509((X509**)OpcUa_Null, &p, pCertificate->Length)))
                     {
-                        time_t timeBefore = notBefore;
-                        time_t timeAfter = notAfter;
+                        const ASN1_TIME *before = X509_get_notBefore(pX509Cert); // internal pointer which must not be freed up
+                        const ASN1_TIME *after = X509_get_notAfter(pX509Cert); // internal pointer which must not be freed up
 
                         time_t timeCurrent;
                         time(&timeCurrent);
-                        time_t timeOffset = 60 * 60 * 24 * certificateNotAfterOffset;
 
-                        if (timeBefore <= 0 || timeBefore > timeCurrent)
-                        {
+                        time_t timeOffset = 60 * 60 * 24 * certificateNotAfterOffset;
+                        time_t timeCurrentWithOffset = timeCurrent + timeOffset;
+
+                        if (X509_cmp_time(before, &timeCurrent) >= 0) {
                             ualds_log(UALDS_LOG_ERR, "LDS cert is not yet valid. Recreating.");
                             reCreateCert = 1;
                         }
 
-                        if (timeAfter <= 0 || (timeAfter - timeOffset) <= timeCurrent)
-                        {
+                        if (X509_cmp_time(after, &timeCurrentWithOffset) <= 0) {
                             ualds_log(UALDS_LOG_ERR, "LDS cert is no longer valid. Recreating.");
                             reCreateCert = 1;
                         }
@@ -986,9 +984,6 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
                         reCreateCert = 1;
                     }
                 }
-
-                OpcUa_UInt64_Clear(&notBefore);
-                OpcUa_UInt64_Clear(&notAfter);
             }
 
             if (reCreateCert)
@@ -1827,7 +1822,7 @@ void print_failed_certificate_vaidation(OpcUa_StatusCode uaStatusCode, OpcUa_Byt
         OpcUa_ByteString subjectName = OPCUA_BYTESTRING_STATICINITIALIZER;
 
         OpcUa_StatusCode extractCertificateDataStatus = g_PkiProvider.ExtractCertificateData(pCertificate,
-            &issuerName, &subjectName, NULL, NULL, NULL, &thumbPrint, NULL, NULL, NULL, NULL);
+            &issuerName, &subjectName, NULL, NULL, NULL, &thumbPrint, NULL, NULL);
 
         if (extractCertificateDataStatus == OpcUa_Good)
         {

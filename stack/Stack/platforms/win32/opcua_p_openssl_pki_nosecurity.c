@@ -142,9 +142,7 @@ OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_NoSecurity_ExtractCertificateData(
     OpcUa_ByteString*           a_pSubjectDNS,
     OpcUa_ByteString*           a_pCertThumbprint,
     OpcUa_UInt32*               a_pSubjectHash,
-    OpcUa_UInt32*               a_pCertRawLength,
-    OpcUa_Int64*                a_pNotBefore,
-    OpcUa_Int64*                a_pNotAfter)
+    OpcUa_UInt32*               a_pCertRawLength)
 {
     OpcUa_ReferenceParameter(a_pCertificate);
     OpcUa_ReferenceParameter(a_pIssuer);
@@ -155,8 +153,6 @@ OpcUa_StatusCode OpcUa_P_OpenSSL_PKI_NoSecurity_ExtractCertificateData(
     OpcUa_ReferenceParameter(a_pCertThumbprint);
     OpcUa_ReferenceParameter(a_pSubjectHash);
     OpcUa_ReferenceParameter(a_pCertRawLength);
-    OpcUa_ReferenceParameter(a_pNotBefore);
-    OpcUa_ReferenceParameter(a_pNotAfter);
 
     return OpcUa_BadNotSupported;
 }
