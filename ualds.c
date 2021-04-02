@@ -929,10 +929,10 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
             }
             else
             {
-                OpcUa_ByteString pSubjectDNS;
-
                 if (reCreateOwnCertificateOnError)
                 {
+					OpcUa_ByteString pSubjectDNS;
+
                     uStatus = g_PkiProvider.ExtractCertificateData(&g_server_certificate, NULL, NULL, NULL, NULL, &pSubjectDNS, NULL, NULL, NULL);
 
                     if (OpcUa_IsGood(uStatus))
@@ -948,9 +948,9 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
                         ualds_log(UALDS_LOG_ERR, "Failed to extract server certificate DNS subject! (0x%08X)", uStatus);
                         reCreateCert = 1;
                     }
-                }
 
-                OpcUa_ByteString_Clear(&pSubjectDNS);
+					OpcUa_ByteString_Clear(&pSubjectDNS);
+                }
 
                 if (reCreateOwnCertificateOnTimeInvalid)
                 {
