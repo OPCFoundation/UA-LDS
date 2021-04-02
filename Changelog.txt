@@ -1,6 +1,11 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
 
+Version 1.04.403
+	Highlights:
+		- Added option to recreate certificate if it is invalid: #68
+		- Updated OpenSSL to version 1.1.1k
+
 Version 1.04.402
 	Highlights:
 		- Updated DiscoveryUrl to DNS SRV record mapping according to OPC-UA Spec. v1.04 Part 12.
