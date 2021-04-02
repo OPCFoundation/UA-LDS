@@ -6,8 +6,8 @@ REM ****************************************************************************
 SETLOCAL
 
 set ROOT=%~dp0
-set SRCDIR=openssl-1.1.1j
-set GITTAG=OpenSSL_1_1_1j
+set SRCDIR=openssl-1.1.1k
+set GITTAG=OpenSSL_1_1_1k
 
 set GIT=C:\Program Files\Git\bin\git.exe
 IF NOT EXIST "%GIT%" SET GIT=C:\Program Files (x86)\Git\bin\git.exe
