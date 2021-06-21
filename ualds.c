@@ -977,6 +977,8 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
                             ualds_log(UALDS_LOG_ERR, "LDS cert is no longer valid. Recreating.");
                             reCreateCert = 1;
                         }
+
+						X509_free(pX509Cert);
                     }
                     else
                     {
@@ -1883,19 +1885,19 @@ void print_failed_certificate_vaidation(OpcUa_StatusCode uaStatusCode, OpcUa_Byt
                 }
 
                 {
-                /*X509_get0_notAfter*/
-                const ASN1_TIME *after = X509_get_notAfter(pX509Cert); // internal pointer which must not be freed up 
-                BIO *bio = BIO_new(BIO_s_mem());
-                if (ASN1_TIME_print(bio, after))
-                {
-                    int write = BIO_read(bio, validTo, maxDateTimeLength - 1);
-                    validTo[write] = '\0';
-                }
-                BIO_free(bio);
-            }
-            }
+					/*X509_get0_notAfter*/
+					const ASN1_TIME *after = X509_get_notAfter(pX509Cert); // internal pointer which must not be freed up 
+					BIO *bio = BIO_new(BIO_s_mem());
+					if (ASN1_TIME_print(bio, after))
+					{
+						int write = BIO_read(bio, validTo, maxDateTimeLength - 1);
+					 validTo[write] = '\0';
+					}
+					BIO_free(bio);
+				}
 
-            X509_free(pX509Cert);
+				X509_free(pX509Cert);
+            }
         }
     }
 
