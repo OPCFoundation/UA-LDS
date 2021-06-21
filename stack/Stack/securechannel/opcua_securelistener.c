@@ -2449,7 +2449,7 @@ OpcUa_InitializeStatus(OpcUa_Module_SecureListener, "ProcessCloseSecureChannelRe
     uStatus = OpcUa_SecureStream_DecodeSymmetricSecurityHeader( *a_ppTransportIstrm,
                                                                 &uSecureChannelId,
                                                                 &uTokenId);
-    OpcUa_GotoErrorIfBad(uStatus);
+	OpcUa_ReturnErrorIfBad(uStatus);
 
     OpcUa_Trace(    OPCUA_TRACE_LEVEL_DEBUG,
                     "ProcessCloseSecureChannelRequest: SID %u, TID %u\n",
@@ -2460,11 +2460,16 @@ OpcUa_InitializeStatus(OpcUa_Module_SecureListener, "ProcessCloseSecureChannelRe
     uStatus = OpcUa_SecureListener_ChannelManager_GetChannelBySecureChannelID(  pSecureListener->ChannelManager,
                                                                                 uSecureChannelId,
                                                                                 &pSecureChannel);
-    OpcUa_GotoErrorIfBad(uStatus);
+	OpcUa_ReturnErrorIfBad(uStatus);
 
     if(pSecureChannel->TransportConnection != a_hTransportConnection)
     {
-        OpcUa_GotoErrorWithStatus(OpcUa_BadSecureChannelIdInvalid);
+		OpcUa_SecureListener_ChannelManager_ReleaseChannel(
+			pSecureListener->ChannelManager,
+			&pSecureChannel);
+
+		uStatus = OpcUa_BadSecureChannelIdInvalid;
+		OpcUa_ReturnErrorIfBad(uStatus);
     }
 
     /* look if there is a pending stream */
@@ -2622,6 +2627,10 @@ OpcUa_InitializeStatus(OpcUa_Module_SecureListener, "ProcessCloseSecureChannelRe
 
 OpcUa_ReturnStatusCode;
 OpcUa_BeginErrorHandling;
+
+	/* clear pending input stream  */
+	OpcUa_SecureChannel_SetPendingInputStream(pSecureChannel,
+	OpcUa_Null);
 
     OpcUa_SecureListener_ChannelManager_ReleaseChannel(
             pSecureListener->ChannelManager,
@@ -2781,7 +2790,7 @@ OpcUa_InitializeStatus(OpcUa_Module_SecureListener, "ProcessSessionCallRequest")
     uStatus = OpcUa_SecureStream_DecodeSymmetricSecurityHeader( *a_ppTransportIstrm,
                                                                 &uSecureChannelId,
                                                                 &uTokenId);
-    OpcUa_GotoErrorIfBad(uStatus);
+	OpcUa_ReturnErrorIfBad(uStatus);
 
     OpcUa_Trace(    OPCUA_TRACE_LEVEL_DEBUG,
                     "ProcessSessionCallRequest: SID %u, TID %u\n",
@@ -2792,11 +2801,16 @@ OpcUa_InitializeStatus(OpcUa_Module_SecureListener, "ProcessSessionCallRequest")
     uStatus = OpcUa_SecureListener_ChannelManager_GetChannelBySecureChannelID(  pSecureListener->ChannelManager,
                                                                                 uSecureChannelId,
                                                                                 &pSecureChannel);
-    OpcUa_GotoErrorIfBad(uStatus);
+	OpcUa_ReturnErrorIfBad(uStatus);
 
     if(pSecureChannel->TransportConnection != a_hConnection)
     {
-        OpcUa_GotoErrorWithStatus(OpcUa_BadSecureChannelIdInvalid);
+		OpcUa_SecureListener_ChannelManager_ReleaseChannel(
+			pSecureListener->ChannelManager,
+			&pSecureChannel);
+
+		uStatus = OpcUa_BadSecureChannelIdInvalid;
+		OpcUa_ReturnErrorIfBad(uStatus);
     }
 
     /* look if there is a pending stream */
