@@ -3398,7 +3398,7 @@ OpcUa_InitializeStatus(OpcUa_Module_SecureConnection, "ProcessSessionCallRespons
     uStatus = OpcUa_SecureStream_DecodeSymmetricSecurityHeader( a_pTransportIstrm,
                                                                 &uSecureChannelId,
                                                                 &uTokenId);
-    OpcUa_GotoErrorIfBad(uStatus);
+	OpcUa_ReturnErrorIfBad(uStatus);
 
     OpcUa_Trace(    OPCUA_TRACE_LEVEL_DEBUG,
                     "ProcessSessionCallResponse: Received chunk with SID %u, TID %u\n",
@@ -3408,7 +3408,8 @@ OpcUa_InitializeStatus(OpcUa_Module_SecureConnection, "ProcessSessionCallRespons
     /* check that the securechannel id has not changed */
     if(pSecureChannel->SecureChannelId != uSecureChannelId)
     {
-        OpcUa_GotoErrorWithStatus(OpcUa_BadSecureChannelIdInvalid);
+		uStatus = OpcUa_BadSecureChannelIdInvalid;
+		OpcUa_ReturnErrorIfBad(uStatus);
     }
 
     /* look if there is a pending stream */
