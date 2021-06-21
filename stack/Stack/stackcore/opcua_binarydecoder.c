@@ -734,7 +734,7 @@ OpcUa_StatusCode OpcUa_String_BinaryDecode(
     pRawString[nLength] = '\0';
 
     /* attach string */
-    uStatus = OpcUa_String_AttachWithOwnership(a_pValue, pRawString);
+	uStatus = OpcUa_String_AttachToString(pRawString, nLength, 0, OpcUa_False, OpcUa_True, a_pValue);
     OpcUa_GotoErrorIfBad(uStatus);
 
     OpcUa_ReturnStatusCode;
@@ -1034,7 +1034,7 @@ static OpcUa_StatusCode OpcUa_BinaryDecoder_ReadNodeIdBody(
     OpcUa_ReturnErrorIfArgumentNull(a_pDecoder);
     OpcUa_ReturnErrorIfArgumentNull(a_pValue);
 
-    OpcUa_NodeId_Initialize(a_pValue);
+	/* a_pValue should be initialized by caller */
 
     switch (a_eEncodingType & OpcUa_NodeEncoding_TypeMask)
     {
@@ -1126,7 +1126,7 @@ static OpcUa_StatusCode OpcUa_BinaryDecoder_ReadNodeIdBody(
     OpcUa_ReturnStatusCode;
     OpcUa_BeginErrorHandling;
 
-    OpcUa_NodeId_Clear(a_pValue);
+	/* a_pValue should be cleared by caller */
 
     OpcUa_FinishErrorHandling;
 }
@@ -1151,6 +1151,8 @@ OpcUa_StatusCode OpcUa_BinaryDecoder_ReadNodeId(
     OpcUa_ReferenceParameter(a_sFieldName);
     OpcUa_BinaryDecoder_VerifyState(NodeId);
 
+	OpcUa_NodeId_Initialize(a_pValue);
+
     /* read the encoding byte */
     uStatus = OpcUa_BinaryDecoder_ReadByte(a_pDecoder, OpcUa_Null, &byEncodingType);
     OpcUa_GotoErrorIfBad(uStatus);
@@ -1164,7 +1166,7 @@ OpcUa_StatusCode OpcUa_BinaryDecoder_ReadNodeId(
     OpcUa_ReturnStatusCode;
     OpcUa_BeginErrorHandling;
 
-    /* nothing to do */
+	OpcUa_NodeId_Clear(a_pValue);
 
     OpcUa_FinishErrorHandling;
 }
