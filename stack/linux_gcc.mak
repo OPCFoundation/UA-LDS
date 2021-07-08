@@ -1,4 +1,4 @@
-# Copyright (c) 1996-2018, OPC Foundation. All rights reserved.
+# Copyright (c) 1996-2021, OPC Foundation. All rights reserved.
 #
 #   The source code in this file is covered under a dual-license scenario:
 #     - RCL: for OPC Foundation members in good-standing
@@ -22,12 +22,9 @@
 
 all:
 	$(MAKE) -C Stack -f linux_gcc.mak all
-	$(MAKE) -C AnsiCSample -f linux_gcc.mak all
 	
 clean:
 	$(MAKE) -C Stack -f linux_gcc.mak clean
-	$(MAKE) -C AnsiCSample -f linux_gcc.mak clean
 
 strip:
 	$(MAKE) -C Stack -f linux_gcc.mak strip
-	$(MAKE) -C AnsiCSample -f linux_gcc.mak strip

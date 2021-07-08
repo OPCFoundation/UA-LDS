@@ -1,6 +1,8 @@
-OPC UA-AnsiC-Stack - V1.03
+OPC UA-AnsiC-Stack - V1.04
 ==========================
 
-Please refer to the official landing page https://opcfoundation.github.io/UA-AnsiC/
+This OPC UA Stack contains limited functionality, exclusively for the Local Discovery Server. It cannot be used to create OPC UA Servers or OPC UA Clients.
+
+Please refer to the official landing page https://opcfoundation.github.io/
 
 Please see the Changelog.txt for the changes in the current version.

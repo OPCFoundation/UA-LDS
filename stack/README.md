@@ -1,6 +1,7 @@
 # OPC Foundation UA ANSI C Stack Legacy
 
 **This repository is provided by OPC Foundation as legacy support for an AnsiC version for OPC UA. It will not receive further features and updates.**
+**This OPC UA Stack contains limited functionality, exclusively for the Local Discovery Server. It cannot be used to create OPC UA Servers or OPC UA Clients.**
 
 The OPC Foundation will continue maintenance of the .NET Stack which is based on .NET Standard. It can be found [here](https://github.com/OPCFoundation/UA-.NETStandard).
 
