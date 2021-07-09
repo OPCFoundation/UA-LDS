@@ -1,17 +1,6 @@
-# OPC Foundation UA ANSI C Stack Legacy
+# OPC Foundation UA LDS Stack
 
-**This repository is provided by OPC Foundation as legacy support for an AnsiC version for OPC UA. It will not receive further features and updates.**
 **This OPC UA Stack contains limited functionality, exclusively for the Local Discovery Server. It cannot be used to create OPC UA Servers or OPC UA Clients.**
-
-The OPC Foundation will continue maintenance of the .NET Stack which is based on .NET Standard. It can be found [here](https://github.com/OPCFoundation/UA-.NETStandard).
-
----
-The OPC Foundation has formally released the OPC Unified Architecture ANSI C Stack and Sample Code to the community.
-
-Please review official site page (http://opcfoundation.github.io/UA-AnsiC-Legacy/) for:
- * Overview
- * Licensing
- * Sample Applications overview
 
 ## Runtime Dependencies
 
@@ -32,7 +21,7 @@ Then cd to the root folder and execute build_win32.bat or build_win64.bat depend
 This will automatically build openssl, the OPC UA Stack and the sample server.
 Dependencies are not supported, it will always be a full build.
 
-Visual studio 2013 projects for the stack and example server are available as well. 
+Visual studio 2013 projects for the stack are available as well. 
 Note: the OpenSSL libraries must be compiled using the above mentioned steps before building the project using Visual Studio.
 
 ### Linux
