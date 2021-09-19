@@ -165,32 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_AddNodes
-/*============================================================================
- * Synchronously calls the AddNodes service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_AddNodes(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Int32                nNoOfNodesToAdd,
-    const OpcUa_AddNodesItem*  pNodesToAdd,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_Int32*               pNoOfResults,
-    OpcUa_AddNodesResult**     pResults,
-    OpcUa_Int32*               pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**     pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a AddNodes service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginAddNodes(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_AddReferences
 /*============================================================================
  * Synchronously calls the AddReferences service.
