@@ -165,32 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_Call
-/*============================================================================
- * Synchronously calls the Call service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_Call(
-    OpcUa_Endpoint                 hEndpoint,
-    OpcUa_Handle                   hContext,
-    const OpcUa_RequestHeader*     pRequestHeader,
-    OpcUa_Int32                    nNoOfMethodsToCall,
-    const OpcUa_CallMethodRequest* pMethodsToCall,
-    OpcUa_ResponseHeader*          pResponseHeader,
-    OpcUa_Int32*                   pNoOfResults,
-    OpcUa_CallMethodResult**       pResults,
-    OpcUa_Int32*                   pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**         pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a Call service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginCall(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_CreateMonitoredItems
 /*============================================================================
  * Synchronously calls the CreateMonitoredItems service.
