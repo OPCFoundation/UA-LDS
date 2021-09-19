@@ -165,32 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_DeleteNodes
-/*============================================================================
- * Synchronously calls the DeleteNodes service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_DeleteNodes(
-    OpcUa_Endpoint               hEndpoint,
-    OpcUa_Handle                 hContext,
-    const OpcUa_RequestHeader*   pRequestHeader,
-    OpcUa_Int32                  nNoOfNodesToDelete,
-    const OpcUa_DeleteNodesItem* pNodesToDelete,
-    OpcUa_ResponseHeader*        pResponseHeader,
-    OpcUa_Int32*                 pNoOfResults,
-    OpcUa_StatusCode**           pResults,
-    OpcUa_Int32*                 pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**       pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a DeleteNodes service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginDeleteNodes(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_DeleteReferences
 /*============================================================================
  * Synchronously calls the DeleteReferences service.
