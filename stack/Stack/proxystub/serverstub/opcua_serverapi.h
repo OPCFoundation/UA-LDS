@@ -165,62 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_CreateMonitoredItems
-/*============================================================================
- * Synchronously calls the CreateMonitoredItems service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_CreateMonitoredItems(
-    OpcUa_Endpoint                          hEndpoint,
-    OpcUa_Handle                            hContext,
-    const OpcUa_RequestHeader*              pRequestHeader,
-    OpcUa_UInt32                            nSubscriptionId,
-    OpcUa_TimestampsToReturn                eTimestampsToReturn,
-    OpcUa_Int32                             nNoOfItemsToCreate,
-    const OpcUa_MonitoredItemCreateRequest* pItemsToCreate,
-    OpcUa_ResponseHeader*                   pResponseHeader,
-    OpcUa_Int32*                            pNoOfResults,
-    OpcUa_MonitoredItemCreateResult**       pResults,
-    OpcUa_Int32*                            pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**                  pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a CreateMonitoredItems service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginCreateMonitoredItems(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
-#ifndef OPCUA_EXCLUDE_ModifyMonitoredItems
-/*============================================================================
- * Synchronously calls the ModifyMonitoredItems service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_ModifyMonitoredItems(
-    OpcUa_Endpoint                          hEndpoint,
-    OpcUa_Handle                            hContext,
-    const OpcUa_RequestHeader*              pRequestHeader,
-    OpcUa_UInt32                            nSubscriptionId,
-    OpcUa_TimestampsToReturn                eTimestampsToReturn,
-    OpcUa_Int32                             nNoOfItemsToModify,
-    const OpcUa_MonitoredItemModifyRequest* pItemsToModify,
-    OpcUa_ResponseHeader*                   pResponseHeader,
-    OpcUa_Int32*                            pNoOfResults,
-    OpcUa_MonitoredItemModifyResult**       pResults,
-    OpcUa_Int32*                            pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**                  pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a ModifyMonitoredItems service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginModifyMonitoredItems(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_SetMonitoringMode
 /*============================================================================
  * Synchronously calls the SetMonitoringMode service.
