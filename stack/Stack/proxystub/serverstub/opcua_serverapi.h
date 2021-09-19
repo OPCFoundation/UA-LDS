@@ -165,34 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_Read
-/*============================================================================
- * Synchronously calls the Read service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_Read(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Double               nMaxAge,
-    OpcUa_TimestampsToReturn   eTimestampsToReturn,
-    OpcUa_Int32                nNoOfNodesToRead,
-    const OpcUa_ReadValueId*   pNodesToRead,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_Int32*               pNoOfResults,
-    OpcUa_DataValue**          pResults,
-    OpcUa_Int32*               pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**     pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a Read service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRead(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_HistoryRead
 /*============================================================================
  * Synchronously calls the HistoryRead service.
