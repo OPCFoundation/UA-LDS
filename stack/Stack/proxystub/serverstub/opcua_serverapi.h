@@ -165,61 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_Browse
-/*============================================================================
- * Synchronously calls the Browse service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_Browse(
-    OpcUa_Endpoint                 hEndpoint,
-    OpcUa_Handle                   hContext,
-    const OpcUa_RequestHeader*     pRequestHeader,
-    const OpcUa_ViewDescription*   pView,
-    OpcUa_UInt32                   nRequestedMaxReferencesPerNode,
-    OpcUa_Int32                    nNoOfNodesToBrowse,
-    const OpcUa_BrowseDescription* pNodesToBrowse,
-    OpcUa_ResponseHeader*          pResponseHeader,
-    OpcUa_Int32*                   pNoOfResults,
-    OpcUa_BrowseResult**           pResults,
-    OpcUa_Int32*                   pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**         pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a Browse service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginBrowse(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
-#ifndef OPCUA_EXCLUDE_BrowseNext
-/*============================================================================
- * Synchronously calls the BrowseNext service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_BrowseNext(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Boolean              bReleaseContinuationPoints,
-    OpcUa_Int32                nNoOfContinuationPoints,
-    const OpcUa_ByteString*    pContinuationPoints,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_Int32*               pNoOfResults,
-    OpcUa_BrowseResult**       pResults,
-    OpcUa_Int32*               pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**     pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a BrowseNext service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginBrowseNext(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_TranslateBrowsePathsToNodeIds
 /*============================================================================
  * Synchronously calls the TranslateBrowsePathsToNodeIds service.
