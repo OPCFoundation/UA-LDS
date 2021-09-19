@@ -3139,57 +3139,6 @@ OPCUA_EXPORT OpcUa_StatusCode OpcUa_ReadValueId_Decode(OpcUa_ReadValueId* pValue
 OPCUA_IMEXPORT extern struct _OpcUa_EncodeableType OpcUa_ReadValueId_EncodeableType;
 #endif
 
-#ifndef OPCUA_EXCLUDE_HistoryReadValueId
-/*============================================================================
- * The HistoryReadValueId structure.
- *===========================================================================*/
-typedef struct _OpcUa_HistoryReadValueId
-{
-    OpcUa_NodeId        NodeId;
-    OpcUa_String        IndexRange;
-    OpcUa_QualifiedName DataEncoding;
-    OpcUa_ByteString    ContinuationPoint;
-}
-OpcUa_HistoryReadValueId;
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadValueId_Initialize(OpcUa_HistoryReadValueId* pValue);
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadValueId_Clear(OpcUa_HistoryReadValueId* pValue);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadValueId_GetSize(OpcUa_HistoryReadValueId* pValue, struct _OpcUa_Encoder* pEncoder, OpcUa_Int32* pSize);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadValueId_Encode(OpcUa_HistoryReadValueId* pValue, struct _OpcUa_Encoder* pEncoder);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadValueId_Decode(OpcUa_HistoryReadValueId* pValue, struct _OpcUa_Decoder* pDecoder);
-
-OPCUA_IMEXPORT extern struct _OpcUa_EncodeableType OpcUa_HistoryReadValueId_EncodeableType;
-#endif
-
-#ifndef OPCUA_EXCLUDE_HistoryReadResult
-/*============================================================================
- * The HistoryReadResult structure.
- *===========================================================================*/
-typedef struct _OpcUa_HistoryReadResult
-{
-    OpcUa_StatusCode      StatusCode;
-    OpcUa_ByteString      ContinuationPoint;
-    OpcUa_ExtensionObject HistoryData;
-}
-OpcUa_HistoryReadResult;
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadResult_Initialize(OpcUa_HistoryReadResult* pValue);
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadResult_Clear(OpcUa_HistoryReadResult* pValue);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadResult_GetSize(OpcUa_HistoryReadResult* pValue, struct _OpcUa_Encoder* pEncoder, OpcUa_Int32* pSize);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadResult_Encode(OpcUa_HistoryReadResult* pValue, struct _OpcUa_Encoder* pEncoder);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadResult_Decode(OpcUa_HistoryReadResult* pValue, struct _OpcUa_Decoder* pDecoder);
-
-OPCUA_IMEXPORT extern struct _OpcUa_EncodeableType OpcUa_HistoryReadResult_EncodeableType;
-#endif
-
 #ifndef OPCUA_EXCLUDE_EventFilter
 /*============================================================================
  * The EventFilter structure.
@@ -3493,63 +3442,6 @@ OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryEvent_Encode(OpcUa_HistoryEvent* pVal
 OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryEvent_Decode(OpcUa_HistoryEvent* pValue, struct _OpcUa_Decoder* pDecoder);
 
 OPCUA_IMEXPORT extern struct _OpcUa_EncodeableType OpcUa_HistoryEvent_EncodeableType;
-#endif
-
-#ifndef OPCUA_EXCLUDE_HistoryRead
-#ifndef OPCUA_EXCLUDE_HistoryReadRequest
-/*============================================================================
- * The HistoryReadRequest structure.
- *===========================================================================*/
-typedef struct _OpcUa_HistoryReadRequest
-{
-    OpcUa_RequestHeader       RequestHeader;
-    OpcUa_ExtensionObject     HistoryReadDetails;
-    OpcUa_TimestampsToReturn  TimestampsToReturn;
-    OpcUa_Boolean             ReleaseContinuationPoints;
-    OpcUa_Int32               NoOfNodesToRead;
-    OpcUa_HistoryReadValueId* NodesToRead;
-}
-OpcUa_HistoryReadRequest;
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadRequest_Initialize(OpcUa_HistoryReadRequest* pValue);
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadRequest_Clear(OpcUa_HistoryReadRequest* pValue);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadRequest_GetSize(OpcUa_HistoryReadRequest* pValue, struct _OpcUa_Encoder* pEncoder, OpcUa_Int32* pSize);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadRequest_Encode(OpcUa_HistoryReadRequest* pValue, struct _OpcUa_Encoder* pEncoder);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadRequest_Decode(OpcUa_HistoryReadRequest* pValue, struct _OpcUa_Decoder* pDecoder);
-
-OPCUA_IMEXPORT extern struct _OpcUa_EncodeableType OpcUa_HistoryReadRequest_EncodeableType;
-#endif
-
-#ifndef OPCUA_EXCLUDE_HistoryReadResponse
-/*============================================================================
- * The HistoryReadResponse structure.
- *===========================================================================*/
-typedef struct _OpcUa_HistoryReadResponse
-{
-    OpcUa_ResponseHeader     ResponseHeader;
-    OpcUa_Int32              NoOfResults;
-    OpcUa_HistoryReadResult* Results;
-    OpcUa_Int32              NoOfDiagnosticInfos;
-    OpcUa_DiagnosticInfo*    DiagnosticInfos;
-}
-OpcUa_HistoryReadResponse;
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadResponse_Initialize(OpcUa_HistoryReadResponse* pValue);
-
-OPCUA_EXPORT OpcUa_Void OpcUa_HistoryReadResponse_Clear(OpcUa_HistoryReadResponse* pValue);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadResponse_GetSize(OpcUa_HistoryReadResponse* pValue, struct _OpcUa_Encoder* pEncoder, OpcUa_Int32* pSize);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadResponse_Encode(OpcUa_HistoryReadResponse* pValue, struct _OpcUa_Encoder* pEncoder);
-
-OPCUA_EXPORT OpcUa_StatusCode OpcUa_HistoryReadResponse_Decode(OpcUa_HistoryReadResponse* pValue, struct _OpcUa_Decoder* pDecoder);
-
-OPCUA_IMEXPORT extern struct _OpcUa_EncodeableType OpcUa_HistoryReadResponse_EncodeableType;
-#endif
 #endif
 
 #ifndef OPCUA_EXCLUDE_WriteValue
