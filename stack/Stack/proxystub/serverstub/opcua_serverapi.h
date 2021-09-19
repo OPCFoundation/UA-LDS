@@ -165,27 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_CloseSession
-/*============================================================================
- * Synchronously calls the CloseSession service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_CloseSession(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Boolean              bDeleteSubscriptions,
-    OpcUa_ResponseHeader*      pResponseHeader);
-
-/*============================================================================
- * Begins processing of a CloseSession service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginCloseSession(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_Cancel
 /*============================================================================
  * Synchronously calls the Cancel service.
