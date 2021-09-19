@@ -1,5 +1,5 @@
 /* ========================================================================
- * Copyright (c) 2005-2018 The OPC Foundation, Inc. All rights reserved.
+ * Copyright (c) 2005-2021 The OPC Foundation, Inc. All rights reserved.
  *
  * OPC Foundation MIT License 1.00
  *
@@ -159,45 +159,6 @@ OpcUa_StatusCode OpcUa_ServerApi_RegisterServer2(
  * Begins processing of a RegisterServer2 service request.
  *===========================================================================*/
 OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
-#ifndef OPCUA_EXCLUDE_CreateSession
-/*============================================================================
- * Synchronously calls the CreateSession service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_CreateSession(
-    OpcUa_Endpoint                      hEndpoint,
-    OpcUa_Handle                        hContext,
-    const OpcUa_RequestHeader*          pRequestHeader,
-    const OpcUa_ApplicationDescription* pClientDescription,
-    const OpcUa_String*                 pServerUri,
-    const OpcUa_String*                 pEndpointUrl,
-    const OpcUa_String*                 pSessionName,
-    const OpcUa_ByteString*             pClientNonce,
-    const OpcUa_ByteString*             pClientCertificate,
-    OpcUa_Double                        nRequestedSessionTimeout,
-    OpcUa_UInt32                        nMaxResponseMessageSize,
-    OpcUa_ResponseHeader*               pResponseHeader,
-    OpcUa_NodeId*                       pSessionId,
-    OpcUa_NodeId*                       pAuthenticationToken,
-    OpcUa_Double*                       pRevisedSessionTimeout,
-    OpcUa_ByteString*                   pServerNonce,
-    OpcUa_ByteString*                   pServerCertificate,
-    OpcUa_Int32*                        pNoOfServerEndpoints,
-    OpcUa_EndpointDescription**         pServerEndpoints,
-    OpcUa_Int32*                        pNoOfServerSoftwareCertificates,
-    OpcUa_SignedSoftwareCertificate**   pServerSoftwareCertificates,
-    OpcUa_SignatureData*                pServerSignature,
-    OpcUa_UInt32*                       pMaxRequestMessageSize);
-
-/*============================================================================
- * Begins processing of a CreateSession service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginCreateSession(
     OpcUa_Endpoint        a_hEndpoint,
     OpcUa_Handle          a_hContext,
     OpcUa_Void**          a_ppRequest,
