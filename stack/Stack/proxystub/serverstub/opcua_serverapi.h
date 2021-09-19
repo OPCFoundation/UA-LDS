@@ -165,65 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_CreateSubscription
-/*============================================================================
- * Synchronously calls the CreateSubscription service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_CreateSubscription(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Double               nRequestedPublishingInterval,
-    OpcUa_UInt32               nRequestedLifetimeCount,
-    OpcUa_UInt32               nRequestedMaxKeepAliveCount,
-    OpcUa_UInt32               nMaxNotificationsPerPublish,
-    OpcUa_Boolean              bPublishingEnabled,
-    OpcUa_Byte                 nPriority,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_UInt32*              pSubscriptionId,
-    OpcUa_Double*              pRevisedPublishingInterval,
-    OpcUa_UInt32*              pRevisedLifetimeCount,
-    OpcUa_UInt32*              pRevisedMaxKeepAliveCount);
-
-/*============================================================================
- * Begins processing of a CreateSubscription service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginCreateSubscription(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
-#ifndef OPCUA_EXCLUDE_ModifySubscription
-/*============================================================================
- * Synchronously calls the ModifySubscription service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_ModifySubscription(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_UInt32               nSubscriptionId,
-    OpcUa_Double               nRequestedPublishingInterval,
-    OpcUa_UInt32               nRequestedLifetimeCount,
-    OpcUa_UInt32               nRequestedMaxKeepAliveCount,
-    OpcUa_UInt32               nMaxNotificationsPerPublish,
-    OpcUa_Byte                 nPriority,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_Double*              pRevisedPublishingInterval,
-    OpcUa_UInt32*              pRevisedLifetimeCount,
-    OpcUa_UInt32*              pRevisedMaxKeepAliveCount);
-
-/*============================================================================
- * Begins processing of a ModifySubscription service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginModifySubscription(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_SetPublishingMode
 /*============================================================================
  * Synchronously calls the SetPublishingMode service.
