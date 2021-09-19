@@ -165,32 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_Write
-/*============================================================================
- * Synchronously calls the Write service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_Write(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Int32                nNoOfNodesToWrite,
-    const OpcUa_WriteValue*    pNodesToWrite,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_Int32*               pNoOfResults,
-    OpcUa_StatusCode**         pResults,
-    OpcUa_Int32*               pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**     pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a Write service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginWrite(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_HistoryUpdate
 /*============================================================================
  * Synchronously calls the HistoryUpdate service.
