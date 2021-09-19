@@ -1,4 +1,4 @@
-# Copyright (c) 1996-2020, OPC Foundation. All rights reserved.
+# Copyright (c) 1996-2021, OPC Foundation. All rights reserved.
 #
 #   The source code in this file is covered under a dual-license scenario:
 #     - RCL: for OPC Foundation members in good-standing
@@ -92,9 +92,6 @@ endif()
         transport/tcp/opcua_tcplistener.c
         transport/tcp/opcua_tcplistener_connectionmanager.c
         transport/tcp/opcua_tcpstream.c
-        pubsub/opcua_pubsub_connection.c
-        pubsub/opcua_uadp_binarydecoder.c
-        pubsub/opcua_uadp_binaryencoder.c
     )
 
 if(WIN32)
@@ -181,7 +178,6 @@ endif()
         PUBLIC stackcore
         PUBLIC transport/https
         PUBLIC transport/tcp
-        PUBLIC pubsub
         PUBLIC ${OPENSSL_INCLUDE_DIR}
     )
     option(trace_enable "set to OFF to disable stack tracing." ON)
