@@ -165,38 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_ActivateSession
-/*============================================================================
- * Synchronously calls the ActivateSession service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_ActivateSession(
-    OpcUa_Endpoint                         hEndpoint,
-    OpcUa_Handle                           hContext,
-    const OpcUa_RequestHeader*             pRequestHeader,
-    const OpcUa_SignatureData*             pClientSignature,
-    OpcUa_Int32                            nNoOfClientSoftwareCertificates,
-    const OpcUa_SignedSoftwareCertificate* pClientSoftwareCertificates,
-    OpcUa_Int32                            nNoOfLocaleIds,
-    const OpcUa_String*                    pLocaleIds,
-    const OpcUa_ExtensionObject*           pUserIdentityToken,
-    const OpcUa_SignatureData*             pUserTokenSignature,
-    OpcUa_ResponseHeader*                  pResponseHeader,
-    OpcUa_ByteString*                      pServerNonce,
-    OpcUa_Int32*                           pNoOfResults,
-    OpcUa_StatusCode**                     pResults,
-    OpcUa_Int32*                           pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**                 pDiagnosticInfos);
-
-/*============================================================================
- * Begins processing of a ActivateSession service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginActivateSession(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_CloseSession
 /*============================================================================
  * Synchronously calls the CloseSession service.
