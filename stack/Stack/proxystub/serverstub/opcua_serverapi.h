@@ -165,52 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_RegisterNodes
-/*============================================================================
- * Synchronously calls the RegisterNodes service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_RegisterNodes(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Int32                nNoOfNodesToRegister,
-    const OpcUa_NodeId*        pNodesToRegister,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_Int32*               pNoOfRegisteredNodeIds,
-    OpcUa_NodeId**             pRegisteredNodeIds);
-
-/*============================================================================
- * Begins processing of a RegisterNodes service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterNodes(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
-#ifndef OPCUA_EXCLUDE_UnregisterNodes
-/*============================================================================
- * Synchronously calls the UnregisterNodes service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_UnregisterNodes(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Int32                nNoOfNodesToUnregister,
-    const OpcUa_NodeId*        pNodesToUnregister,
-    OpcUa_ResponseHeader*      pResponseHeader);
-
-/*============================================================================
- * Begins processing of a UnregisterNodes service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginUnregisterNodes(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_QueryFirst
 /*============================================================================
  * Synchronously calls the QueryFirst service.
