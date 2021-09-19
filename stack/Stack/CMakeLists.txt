@@ -53,9 +53,6 @@ endif()
         core/opcua_timer.c
         core/opcua_trace.c
         core/opcua_utilities.c
-        proxystub/clientproxy/opcua_asynccallstate.c
-        proxystub/clientproxy/opcua_channel.c
-        proxystub/clientproxy/opcua_clientapi.c
         proxystub/serverstub/opcua_endpoint.c
         proxystub/serverstub/opcua_serverapi.c
         proxystub/serverstub/opcua_servicetable.c
@@ -172,7 +169,6 @@ endif()
     add_library(uastack STATIC ${_uastack_src})
     target_include_directories(uastack
         PUBLIC core
-        PUBLIC proxystub/clientproxy
         PUBLIC proxystub/serverstub
         PUBLIC securechannel
         PUBLIC stackcore

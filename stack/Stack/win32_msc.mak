@@ -24,7 +24,7 @@ OPENSSLINC = $(OPENSSLDIR)\include
 
 CFLAGS = /MT /Ox /W3 /Gs0 /GF /Gy /nologo /Zl /Zi /Fd$(TARGET).pdb \
          /Icore /Istackcore /Isecurechannel /Itransport\tcp /Itransport\https \
-         /Iproxystub\clientproxy /Iproxystub\serverstub /Iplatforms\win32 /I$(OPENSSLINC)
+         /Iproxystub\serverstub /Iplatforms\win32 /I$(OPENSSLINC)
 
 OBJECTS = \
 	$(ODIR)\opcua_buffer.obj \
@@ -137,9 +137,6 @@ $(TARGET): $(TARGET_DIR) $(ODIR) $(OBJECTS)
 	$(CC) $(CFLAGS) /Fo$@ /c $<
 
 {securechannel}.c{$(ODIR)}.obj:
-	$(CC) $(CFLAGS) /Fo$@ /c $<
-
-{proxystub\clientproxy}.c{$(ODIR)}.obj:
 	$(CC) $(CFLAGS) /Fo$@ /c $<
 
 {proxystub\serverstub}.c{$(ODIR)}.obj:
