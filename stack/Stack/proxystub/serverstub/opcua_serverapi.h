@@ -165,65 +165,6 @@ OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginRegisterServer2(
     OpcUa_EncodeableType* a_pRequestType);
 #endif
 
-#ifndef OPCUA_EXCLUDE_QueryFirst
-/*============================================================================
- * Synchronously calls the QueryFirst service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_QueryFirst(
-    OpcUa_Endpoint                   hEndpoint,
-    OpcUa_Handle                     hContext,
-    const OpcUa_RequestHeader*       pRequestHeader,
-    const OpcUa_ViewDescription*     pView,
-    OpcUa_Int32                      nNoOfNodeTypes,
-    const OpcUa_NodeTypeDescription* pNodeTypes,
-    const OpcUa_ContentFilter*       pFilter,
-    OpcUa_UInt32                     nMaxDataSetsToReturn,
-    OpcUa_UInt32                     nMaxReferencesToReturn,
-    OpcUa_ResponseHeader*            pResponseHeader,
-    OpcUa_Int32*                     pNoOfQueryDataSets,
-    OpcUa_QueryDataSet**             pQueryDataSets,
-    OpcUa_ByteString*                pContinuationPoint,
-    OpcUa_Int32*                     pNoOfParsingResults,
-    OpcUa_ParsingResult**            pParsingResults,
-    OpcUa_Int32*                     pNoOfDiagnosticInfos,
-    OpcUa_DiagnosticInfo**           pDiagnosticInfos,
-    OpcUa_ContentFilterResult*       pFilterResult);
-
-/*============================================================================
- * Begins processing of a QueryFirst service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginQueryFirst(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
-#ifndef OPCUA_EXCLUDE_QueryNext
-/*============================================================================
- * Synchronously calls the QueryNext service.
- *===========================================================================*/
-OpcUa_StatusCode OpcUa_ServerApi_QueryNext(
-    OpcUa_Endpoint             hEndpoint,
-    OpcUa_Handle               hContext,
-    const OpcUa_RequestHeader* pRequestHeader,
-    OpcUa_Boolean              bReleaseContinuationPoint,
-    const OpcUa_ByteString*    pContinuationPoint,
-    OpcUa_ResponseHeader*      pResponseHeader,
-    OpcUa_Int32*               pNoOfQueryDataSets,
-    OpcUa_QueryDataSet**       pQueryDataSets,
-    OpcUa_ByteString*          pRevisedContinuationPoint);
-
-/*============================================================================
- * Begins processing of a QueryNext service request.
- *===========================================================================*/
-OPCUA_EXPORT_SYNC_SERVER_API OpcUa_StatusCode OpcUa_Server_BeginQueryNext(
-    OpcUa_Endpoint        a_hEndpoint,
-    OpcUa_Handle          a_hContext,
-    OpcUa_Void**          a_ppRequest,
-    OpcUa_EncodeableType* a_pRequestType);
-#endif
-
 #ifndef OPCUA_EXCLUDE_Read
 /*============================================================================
  * Synchronously calls the Read service.
