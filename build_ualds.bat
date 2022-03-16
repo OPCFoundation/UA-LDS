@@ -8,6 +8,7 @@ SETLOCAL
 set SRCDIR=%~dp0
 set INSTALLDIR=%~dp0
 set SIGNTOOL=C:\Build\sign_output.bat
+set ZIP="C:\Program Files\7-zip\7z.exe"
 set VS_CONFIG=RelWithDebInfo
 set LDSFN=OPC UA Local Discovery Server
 
