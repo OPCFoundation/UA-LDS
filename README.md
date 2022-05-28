@@ -4,7 +4,7 @@ The OPC Foundation has formally released the OPC Unified Architecture Local Disc
 
 Please review official site page (https://OPCFoundation.github.io/UA-LDS/) for:
  * Overview
- * Licensing
+ * Licensing ddddd
 
 Official installations for Windows are built by the OPC Foundation and provided at the OPC Foundation website (https://opcfoundation.org/).
  
