@@ -1,4 +1,4 @@
-/* Copyright (c) 1996-2021, OPC Foundation. All rights reserved.
+/* Copyright (c) 1996-2022, OPC Foundation. All rights reserved.
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -37,7 +37,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 void version()
 {
     fprintf(stdout, "OPC UA Local Discovery Server %s\n", UALDS_CONF_VERSION_STRING);
-    fprintf(stdout, "Copyright (c) 1996-2021, OPC Foundation. All rights reserved.n");
+    fprintf(stdout, "Copyright (c) 1996-2022, OPC Foundation. All rights reserved.n");
     fprintf(stdout, "Build date: %s\n", __DATE__);
 }
 

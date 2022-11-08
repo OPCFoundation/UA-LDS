@@ -54,7 +54,7 @@ goto done
 set CONFIGURE_INSIST=1
 set PERL=perl
 
-perl Configure VC-WIN32 no-shared no-asm no-ec --prefix=%OPENSSL_INSTALDIR% --openssldir=%OPENSSL_INSTALDIR%\ssl
+perl Configure VC-WIN32 no-shared no-asm no-ec no-autoload-config --prefix=%OPENSSL_INSTALDIR% --openssldir=%OPENSSL_INSTALDIR%\ssl
 if errorlevel 1 goto error
 
 nmake

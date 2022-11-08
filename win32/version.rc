@@ -48,7 +48,7 @@ BEGIN
             VALUE "FileVersion",      VER_FILE_VERSION_STR "(Release Build)\0"
 #endif
             VALUE "InternalName",     "UALDS\0"
-            VALUE "LegalCopyright",   "Copyright (C) 2020, OPC Foundation"
+            VALUE "LegalCopyright",   "Copyright (C) 2022, OPC Foundation"
             VALUE "LegalTrademarks",  ""
             VALUE "OriginalFilename", "opcualds.exe\0"
             VALUE "PrivateBuild",     "\0"

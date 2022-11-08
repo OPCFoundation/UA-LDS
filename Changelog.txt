@@ -1,10 +1,13 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
-
+Version 1.04.405
+	Highlights:
+		- Fixed security issue: Privilege Escalation Vulnerability
+		- Updated OpenSSL to version 1.1.1r
 Version 1.04.403
 	Highlights:
 		- Added option to recreate certificate if it is invalid: #68
-		- Updated OpenSSL to version 1.1.1l
+		- Updated OpenSSL to version 1.1.1n
 		- Fixed memory leak & crash in AnsiCStack
 
 Version 1.04.402
