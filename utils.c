@@ -45,6 +45,7 @@
 #include <opcua_p_socket.h>
 
 #include "tlds-alpha-by-domain.h"
+#include <stdlib.h>
 
 typedef struct _TLDStruct
 {
