@@ -1,4 +1,4 @@
-# Copyright (c) 1996-2018, OPC Foundation. All rights reserved.
+# Copyright (c) 1996-2021, OPC Foundation. All rights reserved.
 #
 #   The source code in this file is covered under a dual-license scenario:
 #     - RCL: for OPC Foundation members in good-standing
@@ -24,7 +24,7 @@ OPENSSLINC = $(OPENSSLDIR)\include
 
 CFLAGS = /MT /Ox /W3 /Gs0 /GF /Gy /nologo /Zl /Zi /Fd$(TARGET).pdb \
          /Icore /Istackcore /Isecurechannel /Itransport\tcp /Itransport\https \
-         /Iproxystub\clientproxy /Iproxystub\serverstub /Ipubsub /Iplatforms\win32 /I$(OPENSSLINC)
+         /Iproxystub\serverstub /Iplatforms\win32 /I$(OPENSSLINC)
 
 OBJECTS = \
 	$(ODIR)\opcua_buffer.obj \
@@ -79,7 +79,6 @@ OBJECTS = \
 	$(ODIR)\opcua_httpslistener.obj \
 	$(ODIR)\opcua_httpslistener_connectionmanager.obj \
 	$(ODIR)\opcua_httpsstream.obj \
-	$(ODIR)\opcua_pubsub_connection.obj \
 	$(ODIR)\opcua_uadp_binarydecoder.obj \
 	$(ODIR)\opcua_uadp_binaryencoder.obj \
 	$(ODIR)\opcua_p_binary.obj \
@@ -140,9 +139,6 @@ $(TARGET): $(TARGET_DIR) $(ODIR) $(OBJECTS)
 {securechannel}.c{$(ODIR)}.obj:
 	$(CC) $(CFLAGS) /Fo$@ /c $<
 
-{proxystub\clientproxy}.c{$(ODIR)}.obj:
-	$(CC) $(CFLAGS) /Fo$@ /c $<
-
 {proxystub\serverstub}.c{$(ODIR)}.obj:
 	$(CC) $(CFLAGS) /Fo$@ /c $<
 
@@ -150,9 +146,6 @@ $(TARGET): $(TARGET_DIR) $(ODIR) $(OBJECTS)
 	$(CC) $(CFLAGS) /Fo$@ /c $<
 
 {transport\https}.c{$(ODIR)}.obj:
-	$(CC) $(CFLAGS) /Fo$@ /c $<
-
-{pubsub}.c{$(ODIR)}.obj:
 	$(CC) $(CFLAGS) /Fo$@ /c $<
 
 {platforms\win32}.c{$(ODIR)}.obj:

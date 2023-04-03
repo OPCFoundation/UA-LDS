@@ -1,4 +1,4 @@
-# Copyright (c) 1996-2018, OPC Foundation. All rights reserved.
+# Copyright (c) 1996-2021, OPC Foundation. All rights reserved.
 #
 #   The source code in this file is covered under a dual-license scenario:
 #     - RCL: for OPC Foundation members in good-standing
@@ -20,7 +20,7 @@ include $(ROOT)/linux_gcc_rules.mak
 TARGET = $(ROOT)/lib/$(BIN_PATH)/$(CC)/$(BUILD_TARGET)/libuastack.a
 
 DIRS = core stackcore securechannel transport/tcp transport/https \
-       proxystub/clientproxy proxystub/serverstub pubsub platforms/linux
+       proxystub/serverstub platforms/linux
 
 CFLAGS = -Wall -Wextra -Wshadow -Wundef -Wmissing-prototypes -Wstrict-prototypes -pthread \
          $(patsubst %,-I%,$(DIRS)) $(EXTRA_CFLAGS)

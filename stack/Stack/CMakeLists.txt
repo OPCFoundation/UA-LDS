@@ -1,4 +1,4 @@
-# Copyright (c) 1996-2020, OPC Foundation. All rights reserved.
+# Copyright (c) 1996-2021, OPC Foundation. All rights reserved.
 #
 #   The source code in this file is covered under a dual-license scenario:
 #     - RCL: for OPC Foundation members in good-standing
@@ -53,9 +53,6 @@ endif()
         core/opcua_timer.c
         core/opcua_trace.c
         core/opcua_utilities.c
-        proxystub/clientproxy/opcua_asynccallstate.c
-        proxystub/clientproxy/opcua_channel.c
-        proxystub/clientproxy/opcua_clientapi.c
         proxystub/serverstub/opcua_endpoint.c
         proxystub/serverstub/opcua_serverapi.c
         proxystub/serverstub/opcua_servicetable.c
@@ -92,9 +89,6 @@ endif()
         transport/tcp/opcua_tcplistener.c
         transport/tcp/opcua_tcplistener_connectionmanager.c
         transport/tcp/opcua_tcpstream.c
-        pubsub/opcua_pubsub_connection.c
-        pubsub/opcua_uadp_binarydecoder.c
-        pubsub/opcua_uadp_binaryencoder.c
     )
 
 if(WIN32)
@@ -175,13 +169,11 @@ endif()
     add_library(uastack STATIC ${_uastack_src})
     target_include_directories(uastack
         PUBLIC core
-        PUBLIC proxystub/clientproxy
         PUBLIC proxystub/serverstub
         PUBLIC securechannel
         PUBLIC stackcore
         PUBLIC transport/https
         PUBLIC transport/tcp
-        PUBLIC pubsub
         PUBLIC ${OPENSSL_INCLUDE_DIR}
     )
     option(trace_enable "set to OFF to disable stack tracing." ON)
