@@ -24,8 +24,8 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
  * CMake version 3.6.2 or later from https://cmake.org/install/.
  * Perl
  * Windows:
-    - OpenSSL 1.1.1r was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
-	- **OpenSSL 1.1.1r was withdrawn by the OpenSSL Project Team. The LDS was rebuilt with OpenSSL 1.1.1q.**
+    - OpenSSL 1.1.1q was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
+	- **OpenSSL 1.1.1q was withdrawn by the OpenSSL Project Team. The LDS was rebuilt with OpenSSL 1.1.1q.**
     - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
  * Linux:
     - OpenSSL 1.0.2l and 1.1.1n was used in development and testing : (```sudo apt-get install libssl-dev```) (```sudo yum install openssl-devel```)  
