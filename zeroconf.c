@@ -347,6 +347,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
             uStatus = OpcUa_Good;
             bOwnRegistration = OpcUa_False;
             pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
+            TXTRecordDeallocate(&txtRecord);
             continue;
         }
 
@@ -372,6 +373,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
                 {
                     ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_registerInternal: Convert IP4 to hostname failed for '%s'",
                         szHostName);
+                    TXTRecordDeallocate(&txtRecord);
                     return uStatus;
                 }
             }
