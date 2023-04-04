@@ -51,6 +51,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 /* local includes */
 #include "config.h"
 /* local platform includes */
+#include <opcua_p_crypto.h>
 #include <log.h>
 
 enum _EntryType
@@ -737,10 +738,13 @@ int checkConfigConsistency()
             return -1;
         }
 
-        // check if it is one of the accepted options: None, Basic128Rsa15, Basic256
-        if (strcmp(tmpUrl, "http://opcfoundation.org/UA/SecurityPolicy#None") != 0 &&
-            strcmp(tmpUrl, "http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15") != 0 &&
-            strcmp(tmpUrl, "http://opcfoundation.org/UA/SecurityPolicy#Basic256") != 0
+        // check if it is one of the accepted options: None, Basic128Rsa15, Basic256, Aes128Sha256RsaOaep, Basic256Sha256, Aes256Sha256RsaPss
+        if (strcmp(tmpUrl, OpcUa_SecurityPolicy_None) != 0 &&
+            strcmp(tmpUrl, OpcUa_SecurityPolicy_Basic128Rsa15) != 0 &&
+            strcmp(tmpUrl, OpcUa_SecurityPolicy_Basic256) != 0 &&
+			strcmp(tmpUrl, OpcUa_SecurityPolicy_Aes128Sha256RsaOaep) != 0 &&
+			strcmp(tmpUrl, OpcUa_SecurityPolicy_Basic256Sha256) != 0 &&
+			strcmp(tmpUrl, OpcUa_SecurityPolicy_Aes256Sha256RsaPss) != 0
             )
         {
             return -1;
@@ -1583,7 +1587,8 @@ void loadDefaultSettings()
     retCode = ualds_settings_writestring("Url", "opc.tcp://[gethostname]:4840");
 
     // General/SecurityPolicies
-    retCode = ualds_settings_writestring("SecurityPolicies", "SecurityPolicy_None, SecurityPolicy_Basic128Rsa15, SecurityPolicy_Basic256");
+    retCode = ualds_settings_writestring("SecurityPolicies", "SecurityPolicy_None, SecurityPolicy_Basic128Rsa15, "
+		"SecurityPolicy_Basic256, SecurityPolicy_Basic256Sha256, SecurityPolicy_Aes256Sha256RsaPss, SecurityPolicy_Aes128Sha256RsaOaep");
     retCode = ualds_settings_endarray();
 
     retCode = ualds_settings_addemptyline();
@@ -1605,7 +1610,7 @@ void loadDefaultSettings()
     retCode = ualds_settings_begingroup("SecurityPolicy_None");
 
     // SecurityPolicy_None/Url
-    retCode = ualds_settings_writestring("Url", "http://opcfoundation.org/UA/SecurityPolicy#None");
+    retCode = ualds_settings_writestring("Url", OpcUa_SecurityPolicy_None);
     // SecurityPolicy_None/MessageSecurity
     retCode = ualds_settings_writestring("MessageSecurity", "None");
 
@@ -1620,7 +1625,7 @@ void loadDefaultSettings()
     retCode = ualds_settings_begingroup("SecurityPolicy_Basic128Rsa15");
 
     // SecurityPolicy_Basic128Rsa15/Url
-    retCode = ualds_settings_writestring("Url", "http://opcfoundation.org/UA/SecurityPolicy#Basic128Rsa15");
+    retCode = ualds_settings_writestring("Url", OpcUa_SecurityPolicy_Basic128Rsa15);
     // SecurityPolicy_Basic128Rsa15/MessageSecurity
     retCode = ualds_settings_writestring("MessageSecurity", "Sign, SignAndEncrypt");
 
@@ -1635,7 +1640,7 @@ void loadDefaultSettings()
     retCode = ualds_settings_begingroup("SecurityPolicy_Basic256");
 
     // SecurityPolicy_Basic256/Url
-    retCode = ualds_settings_writestring("Url", "http://opcfoundation.org/UA/SecurityPolicy#Basic256");
+    retCode = ualds_settings_writestring("Url", OpcUa_SecurityPolicy_Basic256);
     // SecurityPolicy_Basic256/MessageSecurity
     retCode = ualds_settings_writestring("MessageSecurity", "Sign, SignAndEncrypt");
 
@@ -1645,6 +1650,51 @@ void loadDefaultSettings()
     retCode = ualds_settings_endgroup();
 
     // ----------------------------------------------------------------
+
+	// SecurityPolicy_Aes128Sha256RsaOaep
+	retCode = ualds_settings_begingroup("SecurityPolicy_Aes128Sha256RsaOaep");
+
+	// SecurityPolicy_Aes128Sha256RsaOaep/Url
+	retCode = ualds_settings_writestring("Url", OpcUa_SecurityPolicy_Aes128Sha256RsaOaep);
+	// SecurityPolicy_Aes128Sha256RsaOaep/MessageSecurity
+	retCode = ualds_settings_writestring("MessageSecurity", "Sign, SignAndEncrypt");
+
+	retCode = ualds_settings_addemptyline();
+
+	// SecurityPolicy_Aes128Sha256RsaOaep
+	retCode = ualds_settings_endgroup();
+
+	// ----------------------------------------------------------------
+
+	// SecurityPolicy_Basic256Sha256
+	retCode = ualds_settings_begingroup("SecurityPolicy_Basic256Sha256");
+
+	// SecurityPolicy_Basic256Sha256/Url
+	retCode = ualds_settings_writestring("Url", OpcUa_SecurityPolicy_Basic256Sha256);
+	// SecurityPolicy_Basic256Sha256/MessageSecurity
+	retCode = ualds_settings_writestring("MessageSecurity", "Sign, SignAndEncrypt");
+
+	retCode = ualds_settings_addemptyline();
+
+	// SecurityPolicy_Basic256Sha256
+	retCode = ualds_settings_endgroup();
+
+	// ----------------------------------------------------------------
+
+	// SecurityPolicy_Aes256Sha256RsaPss
+	retCode = ualds_settings_begingroup("SecurityPolicy_Aes256Sha256RsaPss");
+
+	// SecurityPolicy_Aes256Sha256RsaPss/Url
+	retCode = ualds_settings_writestring("Url", OpcUa_SecurityPolicy_Aes256Sha256RsaPss);
+	// SecurityPolicy_Aes256Sha256RsaPss/MessageSecurity
+	retCode = ualds_settings_writestring("MessageSecurity", "Sign, SignAndEncrypt");
+
+	retCode = ualds_settings_addemptyline();
+
+	// SecurityPolicy_Aes256Sha256RsaPss
+	retCode = ualds_settings_endgroup();
+
+	// ----------------------------------------------------------------
 
     // CertificateInfo
     retCode = ualds_settings_begingroup("CertificateInfo");

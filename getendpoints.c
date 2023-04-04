@@ -175,7 +175,19 @@ OpcUa_StatusCode ualds_getendpoints(
                             memcpy(pResponse->Endpoints[index].ServerCertificate.Data, g_server_certificate.Data, g_server_certificate.Length);
                         }
                         /* set security level */
-                        if (strcmp(OpcUa_String_GetRawString(&pEP[i].pSecurityPolicies[j].sSecurityPolicy), OpcUa_SecurityPolicy_Basic256) == 0)
+						if (strcmp(OpcUa_String_GetRawString(&pEP[i].pSecurityPolicies[j].sSecurityPolicy), OpcUa_SecurityPolicy_Aes256Sha256RsaPss) == 0)
+						{
+							pResponse->Endpoints[index].SecurityLevel = 6;
+						}
+						else if (strcmp(OpcUa_String_GetRawString(&pEP[i].pSecurityPolicies[j].sSecurityPolicy), OpcUa_SecurityPolicy_Basic256Sha256) == 0)
+						{
+							pResponse->Endpoints[index].SecurityLevel = 5;
+						}
+						else if (strcmp(OpcUa_String_GetRawString(&pEP[i].pSecurityPolicies[j].sSecurityPolicy), OpcUa_SecurityPolicy_Aes128Sha256RsaOaep) == 0)
+						{
+							pResponse->Endpoints[index].SecurityLevel = 4;
+						}
+                        else if (strcmp(OpcUa_String_GetRawString(&pEP[i].pSecurityPolicies[j].sSecurityPolicy), OpcUa_SecurityPolicy_Basic256) == 0)
                         {
                             pResponse->Endpoints[index].SecurityLevel = 3;
                         }
