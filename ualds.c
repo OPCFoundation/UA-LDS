@@ -54,6 +54,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 static int g_shutdown = 0;
 static OpcUa_P_OpenSSL_CertificateStore_Config g_PKIConfig;
 static OpcUa_PKIProvider                       g_PkiProvider;
+static OpcUa_P_OpenSSL_CertificateStore_Config g_LinuxConfig;
+static OpcUa_PKIProvider g_LinuxOverride;
 static OpcUa_P_OpenSSL_CertificateStore_Config g_Win32Config;
 static OpcUa_PKIProvider                       g_Win32Override;
 static char g_szCertificateFile[PATH_MAX];
@@ -709,6 +711,28 @@ static OpcUa_StatusCode ualds_override_validate_certificate(
 
   return uStatus;
 }
+#else
+static OpcUa_StatusCode ualds_override_validate_certificate(
+    struct _OpcUa_PKIProvider *pPKI,
+    OpcUa_ByteString *pCertificate,
+    OpcUa_Void *pCertificateStore,
+    OpcUa_Int *pValidationCode)
+{
+    OpcUa_StatusCode uStatus = g_PkiProvider.ValidateCertificate(pPKI, pCertificate, pCertificateStore, pValidationCode);
+
+    if (uStatus == OpcUa_BadCertificateUntrusted && g_bAllowLocalRegistration)
+    {
+        ualds_log(UALDS_LOG_DEBUG, "ualds_override_validate_certificate: Ignoring BadCertificateUntrusted error, because AllowLocalRegistration is set to yes.");
+        uStatus = OpcUa_Good;
+    }
+
+    if (OpcUa_IsBad(uStatus))
+    {
+        print_failed_certificate_vaidation(uStatus, pCertificate);
+    }
+
+    return uStatus;
+}
 #endif /* _WIN32 */
 
 static OpcUa_StatusCode ualds_load_certificate(OpcUa_Handle hCertificateStore)
@@ -1032,6 +1056,12 @@ OpcUa_InitializeStatus(OpcUa_Module_Server, "ualds_security_initialize");
     g_Win32Config = g_PKIConfig;
     g_Win32Config.PkiType = OpcUa_Override;
     g_Win32Config.Override = &g_Win32Override;
+#else
+    memset(&g_LinuxOverride, 0, sizeof(g_LinuxOverride));
+    g_LinuxOverride.ValidateCertificate = ualds_override_validate_certificate;
+    g_LinuxConfig = g_PKIConfig;
+    g_LinuxConfig.PkiType = OpcUa_Override;
+    g_LinuxConfig.Override = &g_LinuxOverride;
 #endif /* _WIN32 */
 
     ualds_create_security_policies();
@@ -1308,7 +1338,7 @@ static OpcUa_StatusCode ualds_create_endpoints()
 #ifdef _WIN32
             &g_Win32Config,
 #else
-            &g_PKIConfig,
+            &g_LinuxConfig,
 #endif /* _WIN32 */
             pEP->nNoOfSecurityPolicies,
             pEP->pSecurityPolicies);
