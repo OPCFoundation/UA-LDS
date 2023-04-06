@@ -362,20 +362,37 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         }
         else
         {
-            /* If IP4 => convert it to hostname */
-            int isIP4 = is_Host_IP4Address(szHostName);
-            if (isIP4 == 0)
+            enum ip_format format = ualds_platform_get_ip_format(szHostName);
+            if (format != ip_format_host)
             {
-                ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_registerInternal: Found IP4: '%s'. Converting it to hostname.",
-                    szHostName);
-                int convertSuccess = ualds_platform_convertIP4ToHostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
-                if (convertSuccess != 0)
-                {
-                    ualds_log(UALDS_LOG_ERR, "ualds_zeroconf_registerInternal: Convert IP4 to hostname failed for '%s'",
-                        szHostName);
-                    TXTRecordDeallocate(&txtRecord);
-                    return uStatus;
-                }
+            	// convert IP to hostname */
+            	int convertSuccess = 0; //success
+            	if (format == ip_format_v4)
+            	{
+                    ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_register: Found IP4: '%s'. Converting it to hostname.",
+                    		szHostName);
+                    convertSuccess = ualds_platform_convert_ipv4_to_hostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
+            	}
+            	else if (format == ip_format_v6)
+            	{
+                    ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_register: Found IP6: '%s'. Converting it to hostname.",
+                    		szHostName);
+                    convertSuccess = ualds_platform_convert_ipv6_to_hostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
+            	}
+            	else
+				{
+            		convertSuccess = -1;
+				}
+
+				if (convertSuccess != 0) {
+					ualds_log(UALDS_LOG_ERR,
+							"ualds_zeroconf_registerInternal: Convert IP to hostname failed for '%s'",
+							szHostName);
+					TXTRecordDeallocate(&txtRecord);
+					pRegisterContext = (ualds_registerContext*)OpcUa_List_GetNextElement(&g_lstServers);
+					uStatus = OpcUa_Bad;
+					continue;
+				}
             }
         }
 

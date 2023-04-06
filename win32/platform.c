@@ -125,8 +125,46 @@ void getDefaultLogFilePath(char *szFilePath, size_t len)
     }
 }
 
-/** Windows specific function for onvert IP4 to hostname .*/
-int ualds_platform_convertIP4ToHostname(char* host, int len)
+/** Windows specific function for determining the IP format .*/
+enum ip_format ualds_platform_get_ip_format(const char* host)
+{
+	enum ip_format retCode = ip_format_unknown;
+
+	struct addrinfo* result;
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+
+	/* resolve the domain name into a list of addresses */
+	int ret_error = getaddrinfo(host, NULL, &hints, &result);
+	if (ret_error != 0) {
+		retCode = ip_format_unknown;
+	}
+	else
+	{
+		if (result->ai_family == AF_INET)
+		{
+			retCode = ip_format_v4;
+		}
+		else if (result->ai_family == AF_INET6)
+		{
+			retCode = ip_format_v6;
+		}
+		else
+		{
+			retCode = ip_format_host;
+		}
+
+		freeaddrinfo(result);
+	}
+
+	return retCode;
+}
+
+/** Windows specific function for onvert IPv4 to hostname .*/
+int ualds_platform_convert_ipv4_to_hostname(char* host, int len)
 {
     struct hostent *hp;
     struct in_addr addr = { 0 };
@@ -146,7 +184,35 @@ int ualds_platform_convertIP4ToHostname(char* host, int len)
     return 0;
 }
 
-int ualds_platform_convertHostnameToIP4(const char* host, char* ip)
+/** Windows specific function for onvert IPv6 to hostname .*/
+int ualds_platform_convert_ipv6_to_hostname(char* host, int len)
+{
+	int success = -1;
+
+	struct sockaddr_in6 sa;
+	sa.sin6_family = AF_INET6;
+	int retCode = inet_pton(AF_INET6, host, &sa.sin6_addr);
+	if (retCode > 0)
+	{
+		//char hostname[len];
+		char* hostname = malloc(sizeof(char) * len);
+		memset(hostname, 0, len);
+		retCode = getnameinfo((struct sockaddr*)&sa, sizeof(sa), hostname, sizeof(hostname), NULL, 0, 0);
+		if (retCode == 0)
+		{
+			strncpy(host, hostname, len);
+			host[len - 1] = 0;
+
+			success = 0;
+		}
+		free(hostname);
+	}
+
+	return success;
+}
+
+/** Windows specific function for onvert hostname to IPv4.*/
+int ualds_platform_convert_hostname_to_ipv4(const char* host, char* ip)
 {
     struct addrinfo* result;
     struct addrinfo* res;

@@ -83,8 +83,45 @@ int ualds_platform_gethostbyname(const char* host, char* szHostname, int len)
     return 0;
 }
 
+enum ip_format ualds_platform_get_ip_format(const char* host)
+{
+	enum ip_format retCode = ip_format_unknown;
+
+    struct addrinfo* result;
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+
+    /* resolve the domain name into a list of addresses */
+    int ret_error = getaddrinfo(host, NULL, &hints, &result);
+    if (ret_error != 0) {
+    	retCode = ip_format_unknown;
+    }
+    else
+    {
+        if (result->ai_family == AF_INET)
+        {
+        	retCode = ip_format_v4;
+        }
+        else if (result->ai_family == AF_INET6)
+        {
+        	retCode = ip_format_v6;
+        }
+        else
+        {
+        	retCode = ip_format_host;
+        }
+
+        freeaddrinfo(result);
+    }
+
+	return retCode;
+}
+
 /** Linux specific function for onvert IP4 to hostname .*/
-int ualds_platform_convertIP4ToHostname(char* host, int len)
+int ualds_platform_convert_ipv4_to_hostname(char* host, int len)
 {
     struct hostent *hp;
     struct in_addr addr = { 0 };
@@ -95,7 +132,10 @@ int ualds_platform_convertIP4ToHostname(char* host, int len)
     else
     {
         hp = gethostbyaddr((char *)&addr, 4, AF_INET);
-        if (hp == 0) return -1;
+        if (hp == 0)
+        {
+        	return -1;
+        }
 
         strncpy(host, hp->h_name, len);
         host[len - 1] = 0;
@@ -104,7 +144,32 @@ int ualds_platform_convertIP4ToHostname(char* host, int len)
     return 0;
 }
 
-int ualds_platform_convertHostnameToIP4(const char* host, char* ip)
+/** Linux specific function for onvert IP6 to hostname .*/
+int ualds_platform_convert_ipv6_to_hostname(char* host, int len)
+{
+	int success = -1;
+
+    struct sockaddr_in6 sa;
+    sa.sin6_family = AF_INET6;
+    int retCode = inet_pton(AF_INET6, host, &sa.sin6_addr);
+    if (retCode > 0)
+    {
+    	char hostname[len];
+    	memset(hostname, 0, len);
+    	retCode = getnameinfo((struct sockaddr*)&sa, sizeof(sa), hostname, sizeof(hostname), NULL, 0, 0);
+    	if (retCode == 0)
+    	{
+			strncpy(host, hostname, len);
+			host[len - 1] = 0;
+
+			success = 0;
+    	}
+    }
+
+    return success;
+}
+
+int ualds_platform_convert_hostname_to_ipv4(const char* host, char* ip)
 {
     struct addrinfo* result;
     struct addrinfo* res;

@@ -82,6 +82,14 @@ OpcUa_StatusCode ualds_parse_url(char *szUrl, char **szScheme, char **szHostname
         *szPath = szTmp;
     }
 
+    // if szHostname is between square brackets, remove them (it is used for IPv6).
+    int szHostnameLen = strlen(*szHostname);
+    if (szHostnameLen >= 2 && (*szHostname)[0] == '[' && (*szHostname)[szHostnameLen-1] == ']')
+    {
+    	(*szHostname)[szHostnameLen-1] = 0;
+    	(*szHostname) += 1;
+    }
+
     return OpcUa_Good;
 }
 
