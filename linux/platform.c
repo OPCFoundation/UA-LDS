@@ -154,9 +154,9 @@ int ualds_platform_convert_ipv6_to_hostname(char* host, int len)
     int retCode = inet_pton(AF_INET6, host, &sa.sin6_addr);
     if (retCode > 0)
     {
-    	char hostname[len];
+    	char* hostname = malloc(sizeof(char) * len);
     	memset(hostname, 0, len);
-    	retCode = getnameinfo((struct sockaddr*)&sa, sizeof(sa), hostname, sizeof(hostname), NULL, 0, 0);
+    	retCode = getnameinfo((struct sockaddr*)&sa, sizeof(sa), hostname, sizeof(char) * len, NULL, 0, 0);
     	if (retCode == 0)
     	{
 			strncpy(host, hostname, len);
@@ -164,6 +164,7 @@ int ualds_platform_convert_ipv6_to_hostname(char* host, int len)
 
 			success = 0;
     	}
+		free(hostname);
     }
 
     return success;
@@ -184,9 +185,8 @@ int ualds_platform_convert_hostname_to_ipv4(const char* host, char* ip)
     /* loop over all returned results and do inverse lookup */
     for (res = result; res != NULL; res = res->ai_next) {
         char hostname[1024];
-        int error = getnameinfo(res->ai_addr, res->ai_addrlen, hostname, 1024, NULL, 0, 0);
+        int error = getnameinfo(res->ai_addr, res->ai_addrlen, hostname, sizeof(char)*1024, NULL, 0, 0);
         if (error != 0) {
-            //fprintf(stderr, "error in getnameinfo: %s\n", gai_strerror(error));
             ret_error = error;
             continue;
         }
