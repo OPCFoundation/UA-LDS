@@ -125,10 +125,10 @@ void getDefaultLogFilePath(char *szFilePath, size_t len)
     }
 }
 
-/** Windows specific function for determining the IP format .*/
-enum ip_format ualds_platform_get_ip_format(const char* host)
+/** Windows specific function for determining if it is IP format .*/
+int ualds_platform_is_ip_format(const char* host)
 {
-	enum ip_format retCode = ip_format_unknown;
+	int retCode = 1;
 
 	struct addrinfo* result;
 	struct addrinfo hints;
@@ -140,21 +140,17 @@ enum ip_format ualds_platform_get_ip_format(const char* host)
 	/* resolve the domain name into a list of addresses */
 	int ret_error = getaddrinfo(host, NULL, &hints, &result);
 	if (ret_error != 0) {
-		retCode = ip_format_unknown;
+		retCode = 1;
 	}
 	else
 	{
-		if (result->ai_family == AF_INET)
+		if (result->ai_family == AF_INET || result->ai_family == AF_INET6)
 		{
-			retCode = ip_format_v4;
-		}
-		else if (result->ai_family == AF_INET6)
-		{
-			retCode = ip_format_v6;
+			retCode = 0;
 		}
 		else
 		{
-			retCode = ip_format_host;
+			retCode = 1;
 		}
 
 		freeaddrinfo(result);
@@ -164,51 +160,49 @@ enum ip_format ualds_platform_get_ip_format(const char* host)
 }
 
 /** Windows specific function for onvert IPv4 to hostname .*/
-int ualds_platform_convert_ipv4_to_hostname(char* host, int len)
+int ualds_platform_convert_ip_to_hostname(char *host, int len)
 {
-    struct hostent *hp;
-    struct in_addr addr = { 0 };
-    addr.s_addr = inet_addr(host);
-    if (addr.s_addr == INADDR_NONE) {
-        return -1;
-    }
-    else
-    {
-        hp = gethostbyaddr((char *)&addr, 4, AF_INET);
-        if (hp == 0) return -1;
+	struct addrinfo *result;
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
 
-        strncpy(host, hp->h_name, len);
-        host[len - 1] = 0;
-    }
-    
-    return 0;
-}
+	/* resolve the domain name into a list of addresses */
+	int ret_error = getaddrinfo(host, NULL, &hints, &result);
+	if (ret_error == 0) {
+		if (result->ai_family == AF_INET) {
+			struct sockaddr_in *addrIn4 = (struct sockaddr_in*) result->ai_addr;
 
-/** Windows specific function for onvert IPv6 to hostname .*/
-int ualds_platform_convert_ipv6_to_hostname(char* host, int len)
-{
-	int success = -1;
-
-	struct sockaddr_in6 sa;
-	sa.sin6_family = AF_INET6;
-	int retCode = inet_pton(AF_INET6, host, &sa.sin6_addr);
-	if (retCode > 0)
-	{
-		char* hostname = malloc(sizeof(char) * len);
-		memset(hostname, 0, len);
-		retCode = getnameinfo((struct sockaddr*)&sa, sizeof(sa), hostname, sizeof(char) * len, NULL, 0, 0);
-		if (retCode == 0)
-		{
-			strncpy(host, hostname, len);
-			host[len - 1] = 0;
-
-			success = 0;
+			char* hostname = malloc(sizeof(char)*len);
+			memset(hostname, 0, sizeof(char)*len);
+			ret_error = getnameinfo((struct sockaddr*) addrIn4,
+				sizeof(*addrIn4), hostname, sizeof(char)*len, NULL, 0, 0);
+			if (ret_error == 0) {
+				strncpy(host, hostname, sizeof(char)*len);
+				host[len - 1] = 0;
+			}
+			free(hostname);
 		}
+		else if (result->ai_family == AF_INET6) {
+			struct sockaddr_in6 *addrIn6 =
+				(struct sockaddr_in6*) result->ai_addr;
 
-		free(hostname);
+			char* hostname = malloc(sizeof(char)*len);
+			memset(hostname, 0, sizeof(char)*len);
+			ret_error = getnameinfo((struct sockaddr*) addrIn6,
+				sizeof(*addrIn6), hostname, sizeof(char)*len, NULL, 0, 0);
+			if (ret_error == 0) {
+				strncpy(host, hostname, sizeof(char)*len);
+				host[len - 1] = 0;
+			}
+			free(hostname);
+		}
+		freeaddrinfo(result);
 	}
 
-	return success;
+	return ret_error;
 }
 
 /** Windows specific function for onvert hostname to IPv4.*/

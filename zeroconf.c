@@ -362,28 +362,14 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
         }
         else
         {
-            enum ip_format format = ualds_platform_get_ip_format(szHostName);
-            if (format != ip_format_host)
+            int is_ip_format = ualds_platform_is_ip_format(szHostName);
+            if (is_ip_format == 0) // yes
             {
             	// convert IP to hostname */
-            	int convertSuccess = 0; //success
-            	if (format == ip_format_v4)
-            	{
-                    ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_register: Found IP4: '%s'. Converting it to hostname.",
-                    		szHostName);
-                    convertSuccess = ualds_platform_convert_ipv4_to_hostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
-            	}
-            	else if (format == ip_format_v6)
-            	{
-                    ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_register: Found IP6: '%s'. Converting it to hostname.",
-                    		szHostName);
-                    convertSuccess = ualds_platform_convert_ipv6_to_hostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
-            	}
-            	else
-				{
-            		convertSuccess = -1;
-				}
+                ualds_log(UALDS_LOG_DEBUG, "ualds_zeroconf_register: Found IP: '%s'. Converting it to hostname.",
+                		szHostName);
 
+            	int convertSuccess = ualds_platform_convert_ip_to_hostname(szHostName, UALDS_CONF_MAX_URI_LENGTH);
 				if (convertSuccess != 0) {
 					ualds_log(UALDS_LOG_ERR,
 							"ualds_zeroconf_registerInternal: Convert IP to hostname failed for '%s'",

@@ -65,17 +65,8 @@ void ualds_platform_getconfigfile_path(char *szFilePath, size_t len);
 void getDefaultCertificateFolder(char *szFolderPath, size_t len);
 void getDefaultLogFilePath(char *szFilePath, size_t len);
 
-enum ip_format
-{
-	ip_format_unknown 	= -1,
-	ip_format_host 		= 0,
-	ip_format_v4		= 1,
-	ip_format_v6		= 2
-};
-
-enum ip_format ualds_platform_get_ip_format(const char* host);
-int ualds_platform_convert_ipv4_to_hostname(char* host, int len);
-int ualds_platform_convert_ipv6_to_hostname(char* host, int len);
+int ualds_platform_is_ip_format(const char* host);
+int ualds_platform_convert_ip_to_hostname(char *host, int len);
 int ualds_platform_convert_hostname_to_ipv4(const char* host, char* ip);
 
 #define UALDS_FILE FILE
