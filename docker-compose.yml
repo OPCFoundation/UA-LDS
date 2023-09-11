@@ -2,13 +2,18 @@ version: "3.4"
 
 services:
   lds:
-    container_name: lds
     image: lds:latest
     build:
-      context: UA-LDS
       dockerfile: Dockerfile
-    hostname: lds
-    expose:
-      - "5353"
-      - "4840"
-	tty: true
+    #hostname: lds
+    #ports:
+    #  - 5353:5353/udp
+    #  - 4840:4840
+    tty: true
+    volumes:
+      - ./UALDS-data/config:/lds/etc
+      - ./UALDS-data/pki:/opt/opcfoundation/ualds/pki
+      - ./UALDS-data/logs:/var/log/
+    # using network_mode: host to ensure working mDNS Broadcast/Receive
+    # alternatively you can uncomment the port config - make sure to properly set the hostname, so the mDNS Broadcast points to your actual host
+    network_mode: host
