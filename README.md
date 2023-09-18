@@ -78,12 +78,12 @@ docker build -t lds .
 
 Running in host mode (shared network interface with host):
 ```
-docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ --network host --name lds lds:latest 
+docker run -d -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ --network host --restart always --name lds lds:latest
 ```
 
 Running in a separate docker network (Replace <hostname> with your actual hostname):
 ```
-docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ -h <hostname> -p 5353:5353/udp -p 4840:4840 --name lds lds:latest 
+docker run -d -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ -h <hostname> -p 5353:5353/udp -p 4840:4840 --restart always --name lds lds:latest
 ```
 
 ## Package file structure description
