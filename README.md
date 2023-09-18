@@ -59,6 +59,10 @@ sudo systemctl disable avahi-daemon
 ```
 Finally verify no other service is using the mDNS Port ```5353/udp``` or LDS Port ```4840/tcp``` by running ```sudo netstat -tulnp```.
 To run the LDS clone the repository and follow the steps described either in [Docker](#docker) or in [Docker Compose](#docker-compose).
+Regardless of whether Docker or Docker Compose is chosen the LDS will be using three directory mounts to make its data accessible:
+ - ```./UALDS-data/config```: contains the servers config file ```ualds.conf```
+ - ```./UALDS/pki```: contains the LDS's public key infrastructure
+ - ```./UALDS/logs```: contains all the containers logs files
 
 ## Docker
 First build the image using the provided Dockerfile.
@@ -68,17 +72,13 @@ docker build -t lds .
 
 Running in host mode (shared network interface with host):
 ```
-docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ -network host lds:latest 
+docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ --network host --name lds lds:latest 
 ```
 
 Running in a separate docker network:
 ```
-docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ -h <hostname> -p 5353:5353/udp -p 4840:4840 lds:latest 
+docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ -h <hostname> -p 5353:5353/udp -p 4840:4840 --name lds lds:latest 
 ```
-The ```docker run``` commands define three directory mounts:
- - ```./UALDS-data/config```: contains the servers config file ```ualds.conf```
- - ```./UALDS/pki```: contains the LDS's public key infrastructure
- - ```./UALDS/logs```: contains all the containers logs files
 
 ## Docker Compose
 
