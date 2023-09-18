@@ -64,7 +64,7 @@ Regardless of whether Docker or Docker Compose is chosen the LDS will be using t
  - ```./UALDS/pki```: contains the LDS's public key infrastructure
  - ```./UALDS/logs```: contains all the containers logs files
 
-## Docker Compose
+## Docker Compose (Recommended)
 
 After completing the prerequisites build and execute the image by running ```docker compose up -d```.
 By default the ```docker-compose.yml``` defines the ```network_mode=host``` to ensure your LDS broadcasts the proper hostname via mDNS in your network.
@@ -81,7 +81,7 @@ Running in host mode (shared network interface with host):
 docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ --network host --name lds lds:latest 
 ```
 
-Running in a separate docker network:
+Running in a separate docker network (Replace <hostname> with your actual hostname):
 ```
 docker run -t -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ -h <hostname> -p 5353:5353/udp -p 4840:4840 --name lds lds:latest 
 ```
