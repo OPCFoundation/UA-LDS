@@ -45,6 +45,25 @@ Predefined scripts are available based on CMake.
 
 After a successful build, binary files will be in <build-folder>\bin\[config] and should work as is.
 
+## Running on Linux using Docker
+
+Make sure the avahi-daemon on your host system is either disabled or not installed at all. 
+To remove the avahi-daemon from your host run
+```
+sudo apt purge avahi-daemon
+```
+To only stop and disable the avahi-daemon on your host run
+```
+sudo systemctl stop avahi-daemon
+sudo systemctl disable avahi-daemon
+```
+Finally verify no other service is using the mDNS Port ```5353/udp``` or LDS Port ```4840/tcp``` by running ```sudo netstat -tulnp```.
+To start the LDS you just have to clone the repository and build/execute the image by running ```docker compose up -d```.
+The ```docker-compose.yml``` file defined three dictionary mounts:
+ - ```./UALDS-data/config```: contains the servers config file ```ualds.conf```
+ - ```./UALDS/pki```: contains the LDS's public key infrastructure
+ - ```./UALDS/logs```: contains all the containers logs files 
+
 ## Package file structure description
 
 The following tree shows the directory layout of this repo:
