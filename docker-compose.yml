@@ -10,7 +10,6 @@ services:
     #  - 5353:5353/udp
     #  - 4840:4840
     restart: always
-    tty: true
     volumes:
       - ./UALDS-data/config:/lds/etc
       - ./UALDS-data/pki:/opt/opcfoundation/ualds/pki
