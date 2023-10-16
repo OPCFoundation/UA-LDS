@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:latest
+FROM debian:bookworm-slim
 
 ADD / /lds
 
@@ -24,5 +24,5 @@ RUN \
         
 EXPOSE 5353
 
-ENTRYPOINT service lds start && bash
+ENTRYPOINT service lds start && tail -f /var/log/opcualds.log
 

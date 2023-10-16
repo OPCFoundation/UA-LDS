@@ -45,6 +45,47 @@ Predefined scripts are available based on CMake.
 
 After a successful build, binary files will be in <build-folder>\bin\[config] and should work as is.
 
+## Running on Linux using Docker
+
+Make sure the avahi-daemon on your host system is either disabled or not installed at all. 
+To remove the avahi-daemon from your host run
+```
+sudo apt purge avahi-daemon
+```
+To only stop and disable the avahi-daemon on your host run
+```
+sudo systemctl stop avahi-daemon
+sudo systemctl disable avahi-daemon
+```
+Finally verify no other service is using the mDNS Port ```5353/udp``` or LDS Port ```4840/tcp``` by running ```sudo netstat -tulnp```.
+To run the LDS clone the repository and follow the steps described either in [Docker](#docker) or in [Docker Compose](#docker-compose).
+Regardless of whether Docker or Docker Compose is chosen the LDS will be using three directory mounts to make its data accessible:
+ - ```./UALDS-data/config```: contains the servers config file ```ualds.conf```
+ - ```./UALDS/pki```: contains the LDS's public key infrastructure
+ - ```./UALDS/logs```: contains all the containers logs files
+
+## Docker Compose (Recommended)
+
+After completing the prerequisites build and execute the image by running ```docker compose up -d```.
+By default the ```docker-compose.yml``` defines the ```network_mode=host``` to ensure your LDS broadcasts the proper hostname via mDNS in your network.
+If you can not use ```network_mode=host``` you can comment it out and uncomment the ports and hostname lines within the ```docker-compose.yml``` file and enter the correct hostname there.
+
+## Docker
+First build the image using the provided Dockerfile.
+```
+docker build -t lds .
+```
+
+Running in host mode (shared network interface with host):
+```
+docker run -d -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ --network host --restart always --name lds lds:latest
+```
+
+Running in a separate docker network (Replace <hostname> with your actual hostname):
+```
+docker run -d -v ./UALDS-data/config:/lds/etc -v ./UALDS-data/pki:/opt/opcfoundation/ualds/pki -v ./UALDS-data/logs:/var/log/ -h <hostname> -p 5353:5353/udp -p 4840:4840 --restart always --name lds lds:latest
+```
+
 ## Package file structure description
 
 The following tree shows the directory layout of this repo:
