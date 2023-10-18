@@ -22,7 +22,7 @@ TARGET = $(TARGET_DIR)\uastack.lib
 
 OPENSSLINC = $(OPENSSLDIR)\include
 
-CFLAGS = /MT /Ox /W3 /Gs0 /GF /Gy /nologo /Zl /Zi /Fd$(TARGET).pdb \
+CFLAGS = /MT /Ox /W3 /WX- /Gs0 /GF /Gy /nologo /Zl /Zi /Fd$(TARGET).pdb \
          /Icore /Istackcore /Isecurechannel /Itransport\tcp /Itransport\https \
          /Iproxystub\serverstub /Iplatforms\win32 /I$(OPENSSLINC)
 

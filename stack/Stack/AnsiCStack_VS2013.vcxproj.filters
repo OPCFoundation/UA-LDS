@@ -28,14 +28,8 @@
     <Filter Include="proxystub\serverstub">
       <UniqueIdentifier>{1c6adb01-746c-4b70-96a9-fde611ebcc7f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="proxystub\clientproxy">
-      <UniqueIdentifier>{2d1bdde0-8d4c-4a52-9f4b-d278d432c903}</UniqueIdentifier>
-    </Filter>
     <Filter Include="transport\https">
       <UniqueIdentifier>{cbba7259-5d01-4bdf-804e-927370e6f92d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pubsub">
-      <UniqueIdentifier>{9fd50fa8-d081-401c-9cf6-d6b749b31d10}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -300,21 +294,6 @@
     <ClInclude Include="proxystub\serverstub\opcua_servicetable.h">
       <Filter>proxystub\serverstub</Filter>
     </ClInclude>
-    <ClInclude Include="proxystub\clientproxy\opcua_asynccallstate.h">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClInclude>
-    <ClInclude Include="proxystub\clientproxy\opcua_channel.h">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClInclude>
-    <ClInclude Include="proxystub\clientproxy\opcua_channel_internal.h">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClInclude>
-    <ClInclude Include="proxystub\clientproxy\opcua_clientapi.h">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClInclude>
-    <ClInclude Include="proxystub\clientproxy\opcua_clientproxy.h">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClInclude>
     <ClInclude Include="transport\https\opcua_httpsstream.h">
       <Filter>transport\https</Filter>
     </ClInclude>
@@ -335,12 +314,6 @@
     </ClInclude>
     <ClInclude Include="platforms\win32\opcua_p_socket_udp.h">
       <Filter>platforms\win32</Filter>
-    </ClInclude>
-    <ClInclude Include="pubsub\opcua_pubsub_connection.h">
-      <Filter>pubsub</Filter>
-    </ClInclude>
-    <ClInclude Include="pubsub\opcua_uadp_networkmessage.h">
-      <Filter>pubsub</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -563,15 +536,6 @@
     <ClCompile Include="proxystub\serverstub\opcua_servicetable.c">
       <Filter>proxystub\serverstub</Filter>
     </ClCompile>
-    <ClCompile Include="proxystub\clientproxy\opcua_asynccallstate.c">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClCompile>
-    <ClCompile Include="proxystub\clientproxy\opcua_channel.c">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClCompile>
-    <ClCompile Include="proxystub\clientproxy\opcua_clientapi.c">
-      <Filter>proxystub\clientproxy</Filter>
-    </ClCompile>
     <ClCompile Include="transport\https\opcua_https_internal.c">
       <Filter>transport\https</Filter>
     </ClCompile>
@@ -592,15 +556,6 @@
     </ClCompile>
     <ClCompile Include="platforms\win32\opcua_p_socket_udp.c">
       <Filter>platforms\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="pubsub\opcua_pubsub_connection.c">
-      <Filter>pubsub</Filter>
-    </ClCompile>
-    <ClCompile Include="pubsub\opcua_uadp_binarydecoder.c">
-      <Filter>pubsub</Filter>
-    </ClCompile>
-    <ClCompile Include="pubsub\opcua_uadp_binaryencoder.c">
-      <Filter>pubsub</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
