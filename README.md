@@ -20,15 +20,15 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 
 ## Build Dependencies
 
- * OPC UA Ansi C Stack 1.04.342. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC-Legacy.
- * CMake version 3.6.2 or later from https://cmake.org/install/.
- * Perl
+ * OPC UA Ansi C Stack v1.04.342. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC-Legacy.
+ * CMake version v3.6.2 (or later) from https://cmake.org/install/.
+ * Perl 
  * Windows:
-    - OpenSSL 1.1.1v was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
+    - OpenSSL v3.1.3 was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
     - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
  * Linux:
-    - OpenSSL 1.0.2l and 1.1.1v was used in development and testing : (```sudo apt-get install libssl-dev```) (```sudo yum install openssl-devel```)  
-    - Avahi 0.61 (or later) libdnssd compatibility layer: (```sudo apt-get install libavahi-compat-libdnssd-dev```) (```sudo yum install avahi-compat-libdns_sd-devel```)  
+    - OpenSSL v3.x.x, v1.1.1 and v1.0.2 was used in development and testing : (```sudo apt-get install libssl-dev```) (```sudo yum install openssl-devel```)  
+    - Avahi v0.61 (or later) libdnssd compatibility layer: (```sudo apt-get install libavahi-compat-libdnssd-dev```) (```sudo yum install avahi-compat-libdns_sd-devel```)  
  
 ## Building the LDS
 
@@ -120,5 +120,5 @@ Required notices for open source software products or components distributed wit
 | Provider | Component | Licensing Information |
 | -------- | --------- | --------------------- |
 | Apple Computer, Inc. | Bonjour Mdns/dnssd (Multicast Domain Name System) client library | Apache License v2 http://www.apache.org/licenses/LICENSE-2.0.html |
-| Open SSL Project | OpenSSL 1.1.1v | The OpenSSL toolkit stays under a double license, i.e. both the conditions of the OpenSSL License and the original SSLeay license apply to the toolkit. See https://www.openssl.org/source/license.html |
+| Open SSL Project | OpenSSL 3.1.3 | Apache License v2 https://www.openssl.org/source/license.html |
 | github.com/lathiat/avahi| Avahi 0.61 | GNU Lesser General Public License v2.1 Avahi was developed by Lennart Poettering and Trent Lloyd. It is the result of a merger of Poettering's original mDNS/DNS-SD implementation called "FlexMDNS", and Lloyd's original code called "Avahi" https://github.com/lathiat/avahi/blob/master/LICENSE |
