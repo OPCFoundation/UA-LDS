@@ -64,9 +64,6 @@ OBJECTS = \
 	$(ODIR)\opcua_securestream.obj \
 	$(ODIR)\opcua_soapsecurechannel.obj \
 	$(ODIR)\opcua_tcpsecurechannel.obj \
-	$(ODIR)\opcua_asynccallstate.obj \
-	$(ODIR)\opcua_channel.obj \
-	$(ODIR)\opcua_clientapi.obj \
 	$(ODIR)\opcua_endpoint.obj \
 	$(ODIR)\opcua_serverapi.obj \
 	$(ODIR)\opcua_servicetable.obj \
@@ -79,8 +76,6 @@ OBJECTS = \
 	$(ODIR)\opcua_httpslistener.obj \
 	$(ODIR)\opcua_httpslistener_connectionmanager.obj \
 	$(ODIR)\opcua_httpsstream.obj \
-	$(ODIR)\opcua_uadp_binarydecoder.obj \
-	$(ODIR)\opcua_uadp_binaryencoder.obj \
 	$(ODIR)\opcua_p_binary.obj \
 	$(ODIR)\opcua_p_cryptofactory.obj \
 	$(ODIR)\opcua_p_datetime.obj \
