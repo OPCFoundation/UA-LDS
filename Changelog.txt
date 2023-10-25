@@ -2,7 +2,7 @@ OPC Foundation OPC UA Local Discovery Server
 ============================================
 Version 1.04.411
 	Highlights:
-		- Updated OpenSSL to version 3.1.3
+		- Updated OpenSSL to version 3.1.4
 		- Fixed memory leak. PullRequest #78
 		- Enable local registration for linux platform. PullRequest #79
 		- Updated default security policy list: added Basic256Sha256, Aes256Sha256RsaPss, Aes128Sha256RsaOaep. Reported in Issue #72.

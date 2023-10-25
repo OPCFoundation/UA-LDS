@@ -24,7 +24,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
  * CMake version v3.6.2 (or later) from https://cmake.org/install/.
  * Perl 
  * Windows:
-    - OpenSSL v3.1.3 was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
+    - OpenSSL v3.1.4 was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
     - Bonjour Mdns/dnssd (Multicast Domain Name System) client library (included)
  * Linux:
     - OpenSSL v3.x.x, v1.1.1 and v1.0.2 was used in development and testing : (```sudo apt-get install libssl-dev```) (```sudo yum install openssl-devel```)  
@@ -120,5 +120,5 @@ Required notices for open source software products or components distributed wit
 | Provider | Component | Licensing Information |
 | -------- | --------- | --------------------- |
 | Apple Computer, Inc. | Bonjour Mdns/dnssd (Multicast Domain Name System) client library | Apache License v2 http://www.apache.org/licenses/LICENSE-2.0.html |
-| Open SSL Project | OpenSSL 3.1.3 | Apache License v2 https://www.openssl.org/source/license.html |
+| Open SSL Project | OpenSSL 3.1.4 | Apache License v2 https://www.openssl.org/source/license.html |
 | github.com/lathiat/avahi| Avahi 0.61 | GNU Lesser General Public License v2.1 Avahi was developed by Lennart Poettering and Trent Lloyd. It is the result of a merger of Poettering's original mDNS/DNS-SD implementation called "FlexMDNS", and Lloyd's original code called "Avahi" https://github.com/lathiat/avahi/blob/master/LICENSE |
