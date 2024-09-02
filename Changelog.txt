@@ -1,5 +1,12 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
+
+Version 1.04.413
+	Highlights:
+		- Updated OpenSSL to version 3.1.6
+		- Updated Visual Studio to 2015 [update 3]
+		- Fix for x64 build scripts
+
 Version 1.04.411
 	Highlights:
 		- Updated OpenSSL to version 3.1.4

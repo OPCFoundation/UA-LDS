@@ -21,11 +21,11 @@ REM IF EXIST %INSTALLDIR%\bin rmdir /s /q %INSTALLDIR%\bin
 IF "%1"=="no-stack" GOTO noStack
 ECHO STEP 2) Fetch OpenSSL
 REM IF EXIST %INSTALLDIR%\stack\openssl rmdir /s /q %INSTALLDIR%\stack\openssl
-CALL fetch_openssl.bat
+CALL fetch_openssl_win64.bat
 
 ECHO STEP 3) Building Stack
 cd %SRCDIR%\stack
-CALL build_win32.bat
+CALL build_win64.bat
 :noStack
 
 ECHO STEP 4) Update Build Number
@@ -41,7 +41,7 @@ del /Q *.bak
 
 ECHO STEP 5) Building LDS
 cd %SRCDIR%
-CALL build_win32.bat
+CALL build_win64.bat
 
 ECHO STEP 6) Sign the Binaries
 IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\build\bin\%VS_CONFIG%\*.dll /dual

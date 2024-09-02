@@ -88,6 +88,11 @@ echo perl has to be in the path
 goto done
 
 :error3
+cd /D %ROOT%openssl-3.?.? >NUL 2>&1
+if not errorlevel 1 goto ossl_build
+goto error4
+
+:error4
 cd /D %ROOT%openssl-1.1.?? >NUL 2>&1
 if not errorlevel 1 goto ossl_build
 echo fatal error: cannot continue.

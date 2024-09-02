@@ -18,4 +18,4 @@ cd %SRCDIR%
 "%GIT%" checkout tags/%GITTAG%
 
 cd %ROOT%\stack
-perl -pi.back -e "s/openssl-3.\?.\?/%SRCDIR%/" build_win32.bat
+perl -pi.back -e "s/openssl-3.\?.\?/%SRCDIR%/" build_win64.bat
