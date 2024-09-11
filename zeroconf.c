@@ -242,8 +242,7 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
             return OpcUa_BadInternalError;
         }
 
-        /* create TXT record */
-        TXTRecordCreate(txtRecord, 0, OpcUa_Null);
+        /* set TXT record */
         if (szPath != OpcUa_Null)
         {
             TXTRecordSetValue(txtRecord, "path", (uint8_t)strlen(szPath), szPath);
@@ -322,6 +321,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
 
         uint16_t port = 0;
         TXTRecordRef txtRecord;
+		TXTRecordCreate(&txtRecord, 0, OpcUa_Null);
 
         if (pRegisterContext->registrationStatus != RegistrationStatus_Unregistered)
         {
