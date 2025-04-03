@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -16,7 +17,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 #include <sys/types.h>
 #include <string.h>
+#include "config.h"
+#include <platform.h>
 
+#ifndef HAVE_STRLCPY
 /** Size limited copy string function.
  * This function guaranties that \c dst will be zero terminated,
  * as long as \c dst is at least one byte long.
@@ -41,5 +45,4 @@ size_t strlcpy(char *dst, const char *src, size_t len)
     dst[pos] = 0;
     return pos;
 }
-
-
+#endif
