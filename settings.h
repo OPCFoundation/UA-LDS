@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -26,11 +27,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <platform.h>
 
 int ualds_settings_open(const char *szFilename);
-int ualds_settings_flush();
-void ualds_settings_update_config_file();
+int ualds_settings_flush(void);
+void ualds_settings_update_config_file(void);
 int ualds_settings_close(int flush);
 int ualds_settings_begingroup(const char *szGroup);
-int ualds_settings_endgroup();
+int ualds_settings_endgroup(void);
 int ualds_settings_readstring(const char *szKey, char *szValue, int len);
 int ualds_settings_setReadOnly(int readOnly);
 #ifdef HAVE_OPCUA_STACK
@@ -44,9 +45,9 @@ int ualds_settings_writetime_t(const char *szKey, time_t time);
 int ualds_settings_beginreadarray(const char *szArrayKey, int *pNumElements);
 int ualds_settings_beginwritearray(const char *szArrayKey, int numElements);
 int ualds_settings_setarrayindex(int index);
-int ualds_settings_endarray();
+int ualds_settings_endarray(void);
 int ualds_settings_addcomment(const char* szComment);
-int ualds_settings_addemptyline();
+int ualds_settings_addemptyline(void);
 int ualds_settings_removekey(const char *szKey);
 int ualds_settings_removearray(const char *szKey);
 int ualds_settings_removegroup(const char *szGroup);

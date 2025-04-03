@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual - license scenario :
 - RCL: for OPC Foundation members in good - standing
@@ -61,7 +62,7 @@ static OpcUa_Timer          g_hRegistrationTimer = OpcUa_Null;
 /* list of ualds_registerContext representing servers announced via zeroconf */
 static OpcUa_List           g_lstServers;
 
-void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
+static void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
                                              DNSServiceFlags flags,
                                              DNSServiceErrorType errorCode,
                                              const char *name,
@@ -154,7 +155,7 @@ void ualds_zeroconf_socketEventCallback(int* shutdown)
     OpcUa_List_Leave(&g_lstServers);
 }
 
-OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
+static OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
                                               int discoveryUrlIndex,
                                               char *szMDNSServerName,
                                               unsigned int uMDNSServerNameLength,
@@ -214,10 +215,6 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
         ualds_settings_readstring("Url", szURL, UALDS_CONF_MAX_URI_LENGTH);
     }
     ualds_settings_endarray();
-    if (szURL == OpcUa_Null)
-    {
-        return OpcUa_BadInternalError;
-    }
 
     if (OpcUa_IsGood(ualds_parse_url(szURL, &szScheme, &tmpHostname, port, &szPath)))
     {
@@ -292,7 +289,7 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
     return OpcUa_Good;
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCallbackData,
                                                                OpcUa_Timer  hTimer,
                                                                OpcUa_UInt32 msecElapsed)
 {
@@ -466,7 +463,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
     return uStatus;
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pvCallbackData,
                                                                  OpcUa_Timer  hTimer,
                                                                  OpcUa_UInt32 msecElapsed)
 {
@@ -524,7 +521,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
     return OpcUa_Good;
 }
 
-void ualds_zeroconf_init_servers()
+static void ualds_zeroconf_init_servers(void)
 {
     int i;
     int     numServers = 0;
@@ -579,7 +576,7 @@ void ualds_zeroconf_init_servers()
     OpcUa_List_Initialize(&g_registerServersSocketList);
 }
 
-OpcUa_StatusCode ualds_zeroconf_start_registration()
+OpcUa_StatusCode ualds_zeroconf_start_registration(void)
 {
     OpcUa_StatusCode ret = OpcUa_BadNothingToDo;
 
@@ -622,7 +619,7 @@ OpcUa_StatusCode ualds_zeroconf_start_registration()
     return ret;
 }
 
-void ualds_zeroconf_stop_registration()
+void ualds_zeroconf_stop_registration(void)
 {
     if (g_hRegistrationTimer != OpcUa_Null)
     {

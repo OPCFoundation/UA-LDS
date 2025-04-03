@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -56,8 +57,10 @@ static OpcUa_P_OpenSSL_CertificateStore_Config g_PKIConfig;
 static OpcUa_PKIProvider                       g_PkiProvider;
 static OpcUa_P_OpenSSL_CertificateStore_Config g_LinuxConfig;
 static OpcUa_PKIProvider g_LinuxOverride;
+#ifdef _WIN32
 static OpcUa_P_OpenSSL_CertificateStore_Config g_Win32Config;
 static OpcUa_PKIProvider                       g_Win32Override;
+#endif
 static char g_szCertificateFile[PATH_MAX];
 static char g_szCertificateKeyFile[PATH_MAX];
 static char g_szCRLPath[PATH_MAX];
@@ -147,7 +150,7 @@ static Status_Code_String status_code_to_string[Status_Code_String_Count] =
 
 void print_failed_certificate_vaidation(OpcUa_StatusCode uaStatusCode, OpcUa_ByteString* pCertificate);
 
-char* get_statuscode_pretty_print(OpcUa_StatusCode status_code)
+static char* get_statuscode_pretty_print(OpcUa_StatusCode status_code)
 {
     int i = 0;
     for (i = 0; i < Status_Code_String_Count; i++)
@@ -173,13 +176,13 @@ const ualds_endpoint* ualds_endpoints(OpcUa_UInt32 *pNumEndpoints)
 }
 
 /** Returns the lds server uri. */
-const char* ualds_serveruri()
+const char* ualds_serveruri(void)
 {
     return g_szServerUri;
 }
 
 /** Returns the lds product uri. */
-const char* ualds_producturi()
+const char* ualds_producturi(void)
 {
     return g_szProductUri;
 }
@@ -208,7 +211,7 @@ OpcUa_StatusCode ualds_registerserver(
     OpcUa_Handle          hContext,
     OpcUa_Void          **ppRequest,
     OpcUa_EncodeableType *pRequestType);
-static OpcUa_StatusCode ualds_delete_security_policies();
+static OpcUa_StatusCode ualds_delete_security_policies(void);
 #ifdef HAVE_HDS
 OpcUa_StatusCode ualds_registerserver2(OpcUa_Endpoint        hEndpoint,
                                        OpcUa_Handle          hContext,
@@ -313,7 +316,7 @@ void ualds_endpoint_clear(ualds_endpoint *pEndpoint)
     }
 }
 
-static OpcUa_StatusCode ualds_create_security_policies()
+static OpcUa_StatusCode ualds_create_security_policies(void)
 {
     OpcUa_UInt32 i, n;
     int j;
@@ -497,7 +500,7 @@ static OpcUa_StatusCode ualds_create_security_policies()
     return ret;
 }
 
-static OpcUa_StatusCode ualds_delete_security_policies()
+static OpcUa_StatusCode ualds_delete_security_policies(void)
 {
     OpcUa_UInt32 i;
 
@@ -513,17 +516,6 @@ static OpcUa_StatusCode ualds_delete_security_policies()
     }
 
     return OpcUa_Good;
-}
-
-static void ualds_datetime_from_time_t(time_t t, OpcUa_DateTime *pDate)
-{
-    OpcUa_UInt64 tmp = t;
-
-    tmp += UINT64_C(11644473600);
-    tmp *= 10000000;
-
-    pDate->dwHighDateTime = tmp >> 32;
-    pDate->dwLowDateTime = (OpcUa_UInt32)tmp;
 }
 
 #if HAVE_OPENSSL
@@ -787,7 +779,7 @@ static OpcUa_StatusCode ualds_load_certificate(OpcUa_Handle hCertificateStore)
     OpcUa_FinishErrorHandling;
 }
 
-static OpcUa_StatusCode ualds_security_initialize()
+static OpcUa_StatusCode ualds_security_initialize(void)
 {
     OpcUa_Handle hCertificateStore = OpcUa_Null;
     char         szValue[10];
@@ -1079,7 +1071,7 @@ OpcUa_BeginErrorHandling;
 OpcUa_FinishErrorHandling;
 }
 
-static OpcUa_StatusCode ualds_security_uninitialize()
+static OpcUa_StatusCode ualds_security_uninitialize(void)
 {
     OpcUa_ByteString_Clear(&g_server_certificate);
     OpcUa_Key_Clear(&g_server_key);
@@ -1127,7 +1119,7 @@ static int ualds_certificate_filesort(const struct ualds_dirent **a, const struc
     return 0;
 }
 
-static OpcUa_Void ualds_cleanup_rejected()
+static OpcUa_Void ualds_cleanup_rejected(void)
 {
     int ret;
     struct ualds_dirent **namelist;
@@ -1246,6 +1238,7 @@ static OpcUa_StatusCode ualds_endpoint_callback(
     OpcUa_UInt16            uSecurityMode)
 {
     int index = eEvent;
+    UALDS_UNUSED(hEndpoint);
     UALDS_UNUSED(pvCallbackData);
 
     if (index < 0 || index > 5) index = 0;
@@ -1299,7 +1292,7 @@ static OpcUa_StatusCode ualds_endpoint_callback(
     return uStatus;
 }
 
-static OpcUa_StatusCode ualds_create_endpoints()
+static OpcUa_StatusCode ualds_create_endpoints(void)
 {
     OpcUa_StatusCode ret = OpcUa_Good;
     ualds_endpoint *pEP = g_pEndpoints;
@@ -1356,7 +1349,7 @@ static OpcUa_StatusCode ualds_create_endpoints()
     return ret;
 }
 
-static OpcUa_StatusCode ualds_delete_endpoints()
+static OpcUa_StatusCode ualds_delete_endpoints(void)
 {
     OpcUa_StatusCode ret = OpcUa_Good;
     OpcUa_UInt32 i;
@@ -1405,7 +1398,7 @@ static OpcUa_Void OPCUA_DLLCALL ualds_stack_trace_hook(OpcUa_CharA* szMessage)
     ualds_log(UALDS_LOG_DEBUG, "[uastack] %.*s", strlen(szMessage)-1, szMessage);
 }
 
-int ualds_server_startup()
+static int ualds_server_startup(void)
 {
     int ret = EXIT_SUCCESS;
     OpcUa_ProxyStubConfiguration stackconfig;
@@ -1643,7 +1636,7 @@ int ualds_server_startup()
  * This function does not return until shutdown.
  * @see ualds_shutdown
  */
-int ualds_server()
+int ualds_server(void)
 {
     int ret = EXIT_SUCCESS;
 
@@ -1678,7 +1671,7 @@ int ualds_server()
 /** This functions sets the shutdown flag which forces the ualds_serve function to stop
  * the server, clean up all OPC UA resources and return.
  */
-void ualds_shutdown()
+void ualds_shutdown(void)
 {
     g_shutdown = 1;
 }
@@ -1686,12 +1679,12 @@ void ualds_shutdown()
 /** Reloads the configuration.
  * Note that not all parameters take effect without restarting.
  */
-void ualds_reload()
+void ualds_reload(void)
 {
 }
 
 /** Iterates over all registered servers and removes all expired entries. */
-void ualds_expirationcheck()
+void ualds_expirationcheck(void)
 {
     int numServers = 0;
     int numRemoved = 0;

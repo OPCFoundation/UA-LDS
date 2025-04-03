@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -51,7 +52,7 @@ BOOL CtrlHandler(DWORD dwCtrlType)
     }
 }
 
-static void install_signal_handlers()
+static void install_signal_handlers(void)
 {
     if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE))
     {
@@ -64,7 +65,7 @@ static void install_signal_handlers()
 }
 
 /** Starts the windows service and returns. */
-int daemonize()
+int daemonize(void)
 {
     BOOL bRet;
     SERVICE_TABLE_ENTRY dispatchTable[] =
@@ -90,7 +91,7 @@ int daemonize()
 }
 
 /** just runs the application without daemonizing. */
-int run()
+int run(void)
 {
     install_signal_handlers();
     return ualds_server();

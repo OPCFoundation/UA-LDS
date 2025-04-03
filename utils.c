@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -14,6 +15,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
+#include <stdlib.h>
 #include "utils.h"
 //#include <opcua_statuscodes.h>
 //#include <opcua_errorhandling.h>
@@ -124,7 +126,7 @@ int is_Host_IP4Address(const char* host)
     return 0;
 }
 
-int isTLD(char* domain)
+int isTLD(const char* domain)
 {
     int i = 0;
     for (i = 0; i < tld_struct.nrTlds; ++i)
@@ -137,7 +139,7 @@ int isTLD(char* domain)
     return 1;
 }
 
-void loadKnownTLD()
+void loadKnownTLD(void)
 {
     // load known Top Level Domains (TLD) 
     tld_struct.nrTlds = 0;

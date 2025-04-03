@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -36,7 +37,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 
 extern void ualds_settings_dump(char* pText);
-extern void ualds_settings_clear();
+extern void ualds_settings_clear(void);
 
 
 static void createDefaultSettings_General()

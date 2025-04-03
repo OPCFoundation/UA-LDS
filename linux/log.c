@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -180,7 +181,7 @@ void ualds_log(LogLevel level, const char *format, ...)
     va_end(ap);
 }
 
-void ualds_closelog()
+void ualds_closelog(void)
 {
     if (g_logger_state == 0) return;
 

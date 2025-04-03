@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2018, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
    The source code in this file is covered under a dual-license scenario:
      - RCL: for OPC Foundation members in good-standing
@@ -59,19 +60,6 @@ static OpcUa_StatusCode OpcUa_Endpoint_BeginProcessRequest(
     OpcUa_Endpoint              hEndpoint,
     OpcUa_Handle                pConnection,
     OpcUa_InputStream**         ppIstrm);
-
-/**
- * @brief Returns a pointer to the function that implements the service.
- *
- * @param hEndpoint [in]  The endpoint which received the request.
- * @param hContext  [in]  The context to for a request.
- * @param ppInvoke  [out] A pointer to the service function.
- */
-OpcUa_StatusCode OpcUa_Endpoint_GetServiceFunction(
-    OpcUa_Endpoint           hEndpoint,
-    OpcUa_Handle             hContext,
-    OpcUa_PfnInvokeService** ppInvoke);
-
 
 /*============================================================================
  * OpcUa_EndpointContext
@@ -1076,6 +1064,14 @@ OpcUa_FinishErrorHandling;
 /*============================================================================
  * OpcUa_Endpoint_GetServiceFunction
  *===========================================================================*/
+
+/**
+ * @brief Returns a pointer to the function that implements the service.
+ *
+ * @param hEndpoint [in]  The endpoint which received the request.
+ * @param hContext  [in]  The context to for a request.
+ * @param ppInvoke  [out] A pointer to the service function.
+ */
 OpcUa_StatusCode OpcUa_Endpoint_GetServiceFunction( OpcUa_Endpoint           a_hEndpoint,
                                                     OpcUa_Handle             a_hContext,
                                                     OpcUa_PfnInvokeService** a_ppInvoke)

@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -19,7 +20,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 #include "service.h"
 
-int daemonize();
-int run();
+int daemonize(void);
+int run(void);
 
 #endif /* __DAEMON_H__ */
