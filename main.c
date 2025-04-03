@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -51,9 +52,9 @@ void usage(const char *szAppName)
     fprintf(stderr, "[-u] ");
 #endif
 #if defined(HAVE_SERVICE_START) || defined(HAVE_SERVICE_STOP) || defined(HAVE_SERVICE_STATUS)
-    fprintf(stderr,"<command>\n");
+    fprintf(stderr,"<command>");
 #endif
-    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "\nOptions:\n");
     fprintf(stderr, "  -d: Debug mode. The server sends verbose output to standard error, "
             "and does not go into background.\n");
     fprintf(stderr, "  -D: No detach. When this options is specified, ualds will not detach "
