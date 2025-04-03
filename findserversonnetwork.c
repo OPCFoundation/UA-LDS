@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual - license scenario :
 - RCL: for OPC Foundation members in good - standing
@@ -244,9 +245,13 @@ void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
 
     /* fill results */
 
+    size_t hosttargetlen = strlen(hosttarget);
+    if (hosttargetlen >= 1 && hosttarget[hosttargetlen - 1] == '.') {
+	hosttargetlen -= 1;
+    }
     OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
         OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
-        strlen(hosttarget));
+        hosttargetlen);
 
     char szPort[40] = { 0 };
 #if OPCUA_USE_SAFE_FUNCTIONS
