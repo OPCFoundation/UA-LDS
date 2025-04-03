@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -40,6 +41,6 @@ typedef enum _LogLevel LogLevel;
 
 int ualds_openlog(LogTarget target, LogLevel level);
 void ualds_log(LogLevel level, const char *format, ...);
-void ualds_closelog();
+void ualds_closelog(void);
 
 #endif /* __LOG_H__ */

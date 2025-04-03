@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual-license scenario:
 - RCL: for OPC Foundation members in good-standing
@@ -47,14 +48,14 @@ extern int g_bEnableZeroconf;
 void ualds_endpoint_initialize(ualds_endpoint *pEndpoint);
 void ualds_endpoint_clear(ualds_endpoint *pEndpoint);
 
-int ualds_server();
-void ualds_shutdown();
-void ualds_reload();
-void ualds_expirationcheck();
+int ualds_server(void);
+void ualds_shutdown(void);
+void ualds_reload(void);
+void ualds_expirationcheck(void);
 
 const ualds_endpoint* ualds_endpoints(OpcUa_UInt32 *pNumEndpoints);
-const char* ualds_serveruri();
-const char* ualds_producturi();
+const char* ualds_serveruri(void);
+const char* ualds_producturi(void);
 const char* ualds_applicationname(const char *szLocale);
 
 // param flush 

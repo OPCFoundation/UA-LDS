@@ -1,4 +1,5 @@
 /* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
+   Copyright (c) 2025 Pilz GmbH & Co. KG
 
 The source code in this file is covered under a dual - license scenario :
 -RCL : for OPC Foundation members in good - standing
@@ -302,7 +303,7 @@ static void UaServer_FSBE_RemoveEntry(FileSettings *pFS, int index)
     int i2;
     for (i2 = 0; i2 < pFS->numEntries; i2++)
     {
-        Entry *pEntry = &pFS->pEntries[i2];
+        pEntry = &pFS->pEntries[i2];
         if (pEntry->parent != -1)
         {
             if (pEntry->parent == index)
@@ -519,7 +520,7 @@ static int UaServer_FSBE_ParseConfigFile(char* path)
     return 0;
 }
 
-void UaServer_FSBE_WriteConfigFile_Descriptor(FileSettings *pFS, UALDS_FILE *f)
+static void UaServer_FSBE_WriteConfigFile_Descriptor(FileSettings *pFS, UALDS_FILE *f)
 {
     int i, j;
     if (f)
@@ -577,7 +578,7 @@ void UaServer_FSBE_WriteConfigFile_Descriptor(FileSettings *pFS, UALDS_FILE *f)
     }
 }
 
-static int UaServer_FSBE_WriteConfigFile()
+static int UaServer_FSBE_WriteConfigFile(void)
 {
     FileSettings *pFS = &g_settings;
     if (pFS->readOnly) {
@@ -604,7 +605,7 @@ static int UaServer_FSBE_WriteConfigFile()
 /* It will write to settings to the disk. 
    Usecase: when the config file was corrupt, it will update it with the correct values.
 */
-void ualds_settings_update_config_file()
+void ualds_settings_update_config_file(void)
 {
     FileSettings *pFS = &g_settings;
 
@@ -619,10 +620,8 @@ void ualds_settings_update_config_file()
 /* It will check if teh configuration is corrupt.
    Return: 0 if OK, -1 if error.
 */
-int checkConfigConsistency()
+static int checkConfigConsistency(void)
 {
-    FileSettings *pFS = &g_settings;
-
     char tmpString[4096];
     int tmpVal = 0;
     int i,j = 0;
@@ -1549,7 +1548,7 @@ int checkConfigConsistency()
     return 0;
 }
 
-void loadDefaultSettings()
+static void loadDefaultSettings(void)
 {
     // General
     int retCode = ualds_settings_begingroup("General");
@@ -2046,7 +2045,7 @@ int ualds_settings_open_from_default(const char *szFilename)
  * You can use this function to force changes to be written to the file
  * without closing it.
  */
-int ualds_settings_flush()
+int ualds_settings_flush(void)
 {
     UaServer_FSBE_WriteConfigFile();
     return 0;
@@ -2144,7 +2143,7 @@ int ualds_settings_begingroup(const char *szGroup)
 }
 
 /** Closes the group opened by ualds_settings_begingroup. */
-int ualds_settings_endgroup()
+int ualds_settings_endgroup(void)
 {
     FileSettings *pFS = &g_settings;
     pFS->CurrentGroup = -1;
@@ -2421,7 +2420,7 @@ int ualds_settings_setarrayindex(int index)
 }
 
 /** Closes an array opened with ualds_settings_beginreadarray or ualds_settings_beginwritearray. */
-int ualds_settings_endarray()
+int ualds_settings_endarray(void)
 {
     FileSettings *pFS = &g_settings;
     pFS->szArrayKey = 0;
@@ -2442,7 +2441,7 @@ int ualds_settings_addcomment(const char* szComment)
     return -1;
 }
 
-int ualds_settings_addemptyline()
+int ualds_settings_addemptyline(void)
 {
     FileSettings *pFS = &g_settings;
     Entry *pEntry = UaServer_FSBE_AddEmptyLine(pFS);
@@ -2586,7 +2585,7 @@ void ualds_settings_dump(char* pText)
     }
 }
 
-void ualds_settings_clear()
+void ualds_settings_clear(void)
 {
     int i;
     FileSettings *pFS = &g_settings;
