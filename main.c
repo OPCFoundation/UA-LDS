@@ -50,7 +50,7 @@
 void version()
 {
     fprintf(stdout, "OPC UA Local Discovery Server %s\n", UALDS_CONF_VERSION_STRING);
-    fprintf(stdout, "Copyright (c) 1996-2024, OPC Foundation. All rights reserved.n");
+    fprintf(stdout, "Copyright (c) 1996-2026, OPC Foundation. All rights reserved.n");
     fprintf(stdout, "Build date: %s\n", __DATE__);
 }
 
