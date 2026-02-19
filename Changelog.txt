@@ -1,5 +1,9 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
+
+Version 1.04.420
+	Highlights:
+		- Updated OpenSSL to version 3.5.5
  
 Version 1.04.413
 	Highlights:

@@ -30,7 +30,7 @@
 #
 # Hint at old root folder (see build_win32/build_win64.bat)
 #
-    set (OPENSSL_ROOT_DIR ${_PROJECT_ROOT}/openssl)
+set (OPENSSL_ROOT_DIR ${_PROJECT_ROOT}/openssl)
     
 if (WIN32)
     include(FindOpenSSL)

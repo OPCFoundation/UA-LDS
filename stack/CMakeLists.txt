@@ -27,7 +27,7 @@
 # http://opcfoundation.org/License/MIT/1.00/
 # ======================================================================*/
 #
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.20)
 
 project(UA-AnsiC)
 include(CMakeToolsHelpers OPTIONAL)
