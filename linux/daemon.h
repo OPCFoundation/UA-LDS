@@ -30,7 +30,7 @@
 #ifndef __DAEMON_H__
 #define __DAEMON_H__
 
-int daemonize();
-int run();
+int daemonize(void);
+int run(void);
 
 #endif /* __DAEMON_H__ */

@@ -53,6 +53,6 @@ typedef enum _LogLevel LogLevel;
 
 int ualds_openlog(LogTarget target, LogLevel level);
 void ualds_log(LogLevel level, const char *format, ...);
-void ualds_closelog();
+void ualds_closelog(void);
 
 #endif /* __LOG_H__ */

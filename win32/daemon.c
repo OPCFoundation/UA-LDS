@@ -64,7 +64,7 @@ BOOL CtrlHandler(DWORD dwCtrlType)
     }
 }
 
-static void install_signal_handlers()
+static void install_signal_handlers(void)
 {
     if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE))
     {
@@ -77,7 +77,7 @@ static void install_signal_handlers()
 }
 
 /** Starts the windows service and returns. */
-int daemonize()
+int daemonize(void)
 {
     BOOL bRet;
     SERVICE_TABLE_ENTRY dispatchTable[] =
@@ -103,7 +103,7 @@ int daemonize()
 }
 
 /** just runs the application without daemonizing. */
-int run()
+int run(void)
 {
     install_signal_handlers();
     return ualds_server();

@@ -47,14 +47,14 @@
 #include <crtdbg.h>
 #endif /* _WIN32 */
 
-void version()
+static void version(void)
 {
     fprintf(stdout, "OPC UA Local Discovery Server %s\n", UALDS_CONF_VERSION_STRING);
     fprintf(stdout, "Copyright (c) 1996-2026, OPC Foundation. All rights reserved.n");
     fprintf(stdout, "Build date: %s\n", __DATE__);
 }
 
-void usage(const char *szAppName)
+static void usage(const char *szAppName)
 {
     fprintf(stderr, "Usage: %s [-h] [-c configfile] [-d] [-v] ", szAppName);
 #ifdef HAVE_SERVICE_REGISTER

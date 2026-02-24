@@ -105,20 +105,10 @@ static OpcUa_List               g_lstServers;
 static OpcUa_DateTime           g_lastCounterResetTime = {0, 0};
 static OpcUa_UInt32             g_currentRecordId = 0;
 
-int string_ends_with(const char * str, const char * suffix)
-{
-    int str_len = strlen(str);
-    int suffix_len = strlen(suffix);
-
-    int ret = strcmp(str + (str_len - suffix_len), suffix);
-
-    return (str_len >= suffix_len) && (ret);
-}
-
 
 /* if pBrowseContext is one of the global browse contexts, the according browse call has been canceled.
    in this case, all according entries in g_lstServers have to be removed. */
-void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrowseContext)
+static void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrowseContext)
 {
     OpcUa_UInt32 i;
     for (i = 0; i < g_noOfServiceTypes; i++)
@@ -224,7 +214,7 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
 }
 
 /* async DNSService callback for browse result resolving */
-void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
+static void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
                                             DNSServiceFlags         flags,
                                             uint32_t                interfaceIndex,
                                             DNSServiceErrorType     errorCode,
@@ -331,7 +321,7 @@ Error:
 }
 
 /* async DNSService callback for browse results */
-void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
+static void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                                            DNSServiceFlags      flags,
                                            uint32_t             interfaceIndex,
                                            DNSServiceErrorType  errorCode,
@@ -581,7 +571,7 @@ Error:
     }
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_Void*  pvCallbackData,
                                                                          OpcUa_Timer  hTimer,
                                                                          OpcUa_UInt32 msecElapsed)
 {
@@ -636,7 +626,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_V
     return uStatus;
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_stop_internal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_stop_internal(OpcUa_Void*  pvCallbackData,
                                                                         OpcUa_Timer  hTimer,
                                                                         OpcUa_UInt32 msecElapsed)
 {
@@ -663,7 +653,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_stop_internal(OpcUa_Vo
     return OpcUa_Good;
 }
 
-OpcUa_StatusCode ualds_findserversonnetwork_start_listening()
+OpcUa_StatusCode ualds_findserversonnetwork_start_listening(void)
 {
     OpcUa_StatusCode ret = OpcUa_BadNothingToDo;
 
@@ -708,7 +698,7 @@ OpcUa_StatusCode ualds_findserversonnetwork_start_listening()
     return ret;
 }
 
-void ualds_findserversonnetwork_stop_listening()
+void ualds_findserversonnetwork_stop_listening(void)
 {
     if (g_hBrowseTimer != OpcUa_Null)
     {
@@ -1010,7 +1000,6 @@ void ualds_zeroconf_register_offline(const char *szServerUri)
             ualds_resolveContext* pResolveContext = (ualds_resolveContext*)OpcUa_Alloc(sizeof(ualds_resolveContext));
             if (pResolveContext)
             {
-                OpcUa_StatusCode uStatus = OpcUa_Good;
                 uint16_t port = 0;
 
                 pResolveContext->contextType = ContextType_Resolve;
@@ -1306,7 +1295,7 @@ void ualds_zeroconf_unregister_offline(const char *szServerUri)
     OpcUa_List_Leave(&g_lstServers);
 }
 
-void ualds_zeroconf_load_offline()
+void ualds_zeroconf_load_offline(void)
 {
     char** szUriArray = 0;
     int numServers = 0;
@@ -1359,7 +1348,7 @@ void ualds_zeroconf_load_offline()
     }
 }
 
-void ualds_zeroconf_cleanup_offline()
+void ualds_zeroconf_cleanup_offline(void)
 {
     OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_ResetCurrent(&g_lstServers);

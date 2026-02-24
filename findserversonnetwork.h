@@ -32,14 +32,14 @@
 
 #include <opcua_proxystub.h>
 
-OpcUa_StatusCode ualds_findserversonnetwork_start_listening();
-void ualds_findserversonnetwork_stop_listening();
+OpcUa_StatusCode ualds_findserversonnetwork_start_listening(void);
+void ualds_findserversonnetwork_stop_listening(void);
 
 void ualds_findserversonnetwork_socketEventCallback(int *shutdown);
 
 void ualds_zeroconf_register_offline(const char *szServerUri);
 void ualds_zeroconf_unregister_offline(const char *szServerUri);
-void ualds_zeroconf_load_offline();
-void ualds_zeroconf_cleanup_offline();
+void ualds_zeroconf_load_offline(void);
+void ualds_zeroconf_cleanup_offline(void);
 
 #endif /* __FINDSERVERSONNETWORK_H__ */

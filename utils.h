@@ -36,7 +36,7 @@
 
 OpcUa_StatusCode ualds_parse_url(char *szUrl, char **szScheme, char **szHostname, uint16_t *port, char **szPath);
 int is_Host_IP4Address(const char* host);
-int isTLD(char* domain);
-void loadKnownTLD();
+int isTLD(const char* domain);
+void loadKnownTLD(void);
 
 #endif /* UTILS */

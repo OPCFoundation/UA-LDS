@@ -49,7 +49,7 @@
 
 
 extern void ualds_settings_dump(char* pText);
-extern void ualds_settings_clear();
+extern void ualds_settings_clear(void);
 
 
 static void createDefaultSettings_General()

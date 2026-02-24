@@ -193,7 +193,7 @@ void ualds_log(LogLevel level, const char *format, ...)
     va_end(ap);
 }
 
-void ualds_closelog()
+void ualds_closelog(void)
 {
     if (g_logger_state == 0) return;
 

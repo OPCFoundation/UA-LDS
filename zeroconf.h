@@ -32,8 +32,8 @@
 
 #include <opcua_proxystub.h>
 
-OpcUa_StatusCode ualds_zeroconf_start_registration();
-void ualds_zeroconf_stop_registration();
+OpcUa_StatusCode ualds_zeroconf_start_registration(void);
+void ualds_zeroconf_stop_registration(void);
 
 void ualds_zeroconf_addRegistration(const char *szServerUri);
 void ualds_zeroconf_removeRegistration(const char *szServerUri);

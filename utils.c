@@ -27,6 +27,7 @@
 * http://opcfoundation.org/License/MIT/1.00/
 * ======================================================================*/
 
+#include <stdlib.h>
 #include "utils.h"
 //#include <opcua_statuscodes.h>
 //#include <opcua_errorhandling.h>
@@ -137,7 +138,7 @@ int is_Host_IP4Address(const char* host)
     return 0;
 }
 
-int isTLD(char* domain)
+int isTLD(const char* domain)
 {
     int i = 0;
     for (i = 0; i < tld_struct.nrTlds; ++i)
@@ -150,7 +151,7 @@ int isTLD(char* domain)
     return 1;
 }
 
-void loadKnownTLD()
+void loadKnownTLD(void)
 {
     // load known Top Level Domains (TLD) 
     tld_struct.nrTlds = 0;

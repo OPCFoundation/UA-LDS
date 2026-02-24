@@ -72,7 +72,7 @@
 int ualds_platform_gethostbyname(const char* host, char* fqdn, int len);
 int ualds_platform_getfqhostname(char *szHostname, int len);
 int ualds_platform_fileexists(const char *szFile);
-int ualds_platform_drop_privileges();
+int ualds_platform_drop_privileges(void);
 void ualds_platform_getconfigfile_path(char *szFilePath, size_t len);
 
 void getDefaultCertificateFolder(char *szFolderPath, size_t len);

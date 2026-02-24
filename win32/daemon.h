@@ -32,7 +32,7 @@
 
 #include "service.h"
 
-int daemonize();
-int run();
+int daemonize(void);
+int run(void);
 
 #endif /* __DAEMON_H__ */

@@ -38,7 +38,7 @@
 #include "log.h"
 
 
-int ualds_platform_drop_privileges()
+int ualds_platform_drop_privileges(void)
 {
     if (getuid() == 0)
     {
@@ -75,7 +75,6 @@ void getDefaultLogFilePath(char *szFilePath, size_t len)
 
 int ualds_platform_getfqhostname(char *szHostname, int len)
 {
-    struct hostent *pEnt = 0;
     int ret = gethostname(szHostname, len);
 
     if (ret != 0) return ret;
@@ -87,6 +86,7 @@ int ualds_platform_gethostbyname(const char* host, char* szHostname, int len)
 {
     struct hostent *pEnt = 0;
 
+    UALDS_UNUSED(host);
     pEnt = gethostbyname(szHostname);
     if (pEnt == 0) return -1;
 
@@ -280,6 +280,8 @@ void ualds_getOldLogFilename(const char *szLogFileName, char *szOldFileName, siz
     struct tm * timeinfo;
     char time_str[80];
 
+    UALDS_UNUSED(bufSize);
+    UALDS_UNUSED(maxRotateCount);
     // TODO: 'maxRotateCount' is currently not supported; so always use the date/time filename
     // get current time in string format
     time(&rawtime);

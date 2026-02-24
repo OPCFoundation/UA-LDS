@@ -35,22 +35,23 @@
 #include "../config.h"
 #include "../ualds.h"
 #include "log.h"
+#include "daemon.h"
 
-void signal_handler(int sig)
+static void signal_handler(int sig)
 {
     ualds_log(UALDS_LOG_NOTICE, "Received signal %d. Terminating now.", sig);
     ualds_shutdown();
 }
 
 /** Starts the windows service and returns. */
-int daemonize()
+int daemonize(void)
 {
     daemon(0, 0);
     return ualds_server();
 }
 
 /** just runs the application without daemonizing. */
-int run()
+int run(void)
 {
     signal(SIGINT, signal_handler);
     return ualds_server();
