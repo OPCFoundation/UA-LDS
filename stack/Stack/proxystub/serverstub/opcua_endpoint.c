@@ -1,18 +1,31 @@
-/* Copyright (c) 1996-2018, OPC Foundation. All rights reserved.
-
-   The source code in this file is covered under a dual-license scenario:
-     - RCL: for OPC Foundation members in good-standing
-     - GPL V2: everybody else
-
-   RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
-
-   GNU General Public License as published by the Free Software Foundation;
-   version 2 of the License are accompanied with this source code. See http://opcfoundation.org/License/GPLv2
-
-   This source code is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*/
+/* ========================================================================
+* Copyright (c) 2005-2026 The OPC Foundation, Inc. All rights reserved.
+*
+* OPC Foundation MIT License 1.00
+*
+* Permission is hereby granted, free of charge, to any person
+* obtaining a copy of this software and associated documentation
+* files (the "Software"), to deal in the Software without
+* restriction, including without limitation the rights to use,
+* copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the
+* Software is furnished to do so, subject to the following
+* conditions:
+*
+* The above copyright notice and this permission notice shall be
+* included in all copies or substantial portions of the Software.
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+* OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+* WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+* OTHER DEALINGS IN THE SOFTWARE.
+*
+* The complete license agreement can be found here:
+* http://opcfoundation.org/License/MIT/1.00/
+* ======================================================================*/
 
 /* platform */
 #include <opcua.h>
@@ -59,19 +72,6 @@ static OpcUa_StatusCode OpcUa_Endpoint_BeginProcessRequest(
     OpcUa_Endpoint              hEndpoint,
     OpcUa_Handle                pConnection,
     OpcUa_InputStream**         ppIstrm);
-
-/**
- * @brief Returns a pointer to the function that implements the service.
- *
- * @param hEndpoint [in]  The endpoint which received the request.
- * @param hContext  [in]  The context to for a request.
- * @param ppInvoke  [out] A pointer to the service function.
- */
-OpcUa_StatusCode OpcUa_Endpoint_GetServiceFunction(
-    OpcUa_Endpoint           hEndpoint,
-    OpcUa_Handle             hContext,
-    OpcUa_PfnInvokeService** ppInvoke);
-
 
 /*============================================================================
  * OpcUa_EndpointContext
@@ -1076,6 +1076,14 @@ OpcUa_FinishErrorHandling;
 /*============================================================================
  * OpcUa_Endpoint_GetServiceFunction
  *===========================================================================*/
+
+/**
+ * @brief Returns a pointer to the function that implements the service.
+ *
+ * @param hEndpoint [in]  The endpoint which received the request.
+ * @param hContext  [in]  The context to for a request.
+ * @param ppInvoke  [out] A pointer to the service function.
+ */
 OpcUa_StatusCode OpcUa_Endpoint_GetServiceFunction( OpcUa_Endpoint           a_hEndpoint,
                                                     OpcUa_Handle             a_hContext,
                                                     OpcUa_PfnInvokeService** a_ppInvoke)

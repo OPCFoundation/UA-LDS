@@ -1,18 +1,31 @@
-/* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
-
-The source code in this file is covered under a dual-license scenario:
-- RCL: for OPC Foundation members in good-standing
-- GPL V2: everybody else
-
-RCL license terms accompanied with this source code. See http://opcfoundation.org/License/RCL/1.00/
-
-GNU General Public License as published by the Free Software Foundation;
-version 2 of the License are accompanied with this source code. See http://opcfoundation.org/License/GPLv2
-
-This source code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*/
+/* ========================================================================
+* Copyright (c) 2005-2026 The OPC Foundation, Inc. All rights reserved.
+*
+* OPC Foundation MIT License 1.00
+*
+* Permission is hereby granted, free of charge, to any person
+* obtaining a copy of this software and associated documentation
+* files (the "Software"), to deal in the Software without
+* restriction, including without limitation the rights to use,
+* copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the
+* Software is furnished to do so, subject to the following
+* conditions:
+*
+* The above copyright notice and this permission notice shall be
+* included in all copies or substantial portions of the Software.
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+* OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+* WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+* OTHER DEALINGS IN THE SOFTWARE.
+*
+* The complete license agreement can be found here:
+* http://opcfoundation.org/License/MIT/1.00/
+* ======================================================================*/
 
 #ifndef __SETTINGS_H__
 #define __SETTINGS_H__
@@ -26,11 +39,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <platform.h>
 
 int ualds_settings_open(const char *szFilename);
-int ualds_settings_flush();
-void ualds_settings_update_config_file();
+int ualds_settings_flush(void);
+void ualds_settings_update_config_file(void);
 int ualds_settings_close(int flush);
 int ualds_settings_begingroup(const char *szGroup);
-int ualds_settings_endgroup();
+int ualds_settings_endgroup(void);
 int ualds_settings_readstring(const char *szKey, char *szValue, int len);
 int ualds_settings_setReadOnly(int readOnly);
 #ifdef HAVE_OPCUA_STACK
@@ -44,9 +57,9 @@ int ualds_settings_writetime_t(const char *szKey, time_t time);
 int ualds_settings_beginreadarray(const char *szArrayKey, int *pNumElements);
 int ualds_settings_beginwritearray(const char *szArrayKey, int numElements);
 int ualds_settings_setarrayindex(int index);
-int ualds_settings_endarray();
+int ualds_settings_endarray(void);
 int ualds_settings_addcomment(const char* szComment);
-int ualds_settings_addemptyline();
+int ualds_settings_addemptyline(void);
 int ualds_settings_removekey(const char *szKey);
 int ualds_settings_removearray(const char *szKey);
 int ualds_settings_removegroup(const char *szGroup);

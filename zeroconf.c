@@ -1,18 +1,31 @@
-/* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
-
-The source code in this file is covered under a dual - license scenario :
-- RCL: for OPC Foundation members in good - standing
-- GPL V2: everybody else
-
-RCL license terms accompanied with this source code.See http ://opcfoundation.org/License/RCL/1.00/
-
-GNU General Public License as published by the Free Software Foundation;
-version 2 of the License are accompanied with this source code.See http ://opcfoundation.org/License/GPLv2
-
-This source code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*/
+/* ========================================================================
+* Copyright (c) 2005-2026 The OPC Foundation, Inc. All rights reserved.
+*
+* OPC Foundation MIT License 1.00
+*
+* Permission is hereby granted, free of charge, to any person
+* obtaining a copy of this software and associated documentation
+* files (the "Software"), to deal in the Software without
+* restriction, including without limitation the rights to use,
+* copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the
+* Software is furnished to do so, subject to the following
+* conditions:
+*
+* The above copyright notice and this permission notice shall be
+* included in all copies or substantial portions of the Software.
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+* OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+* WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+* OTHER DEALINGS IN THE SOFTWARE.
+*
+* The complete license agreement can be found here:
+* http://opcfoundation.org/License/MIT/1.00/
+* ======================================================================*/
 
 #include <stdlib.h>
 #include "zeroconf.h"
@@ -61,7 +74,7 @@ static OpcUa_Timer          g_hRegistrationTimer = OpcUa_Null;
 /* list of ualds_registerContext representing servers announced via zeroconf */
 static OpcUa_List           g_lstServers;
 
-void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
+static void DNSSD_API ualds_DNSServiceRegisterReply(DNSServiceRef sdRef,
                                              DNSServiceFlags flags,
                                              DNSServiceErrorType errorCode,
                                              const char *name,
@@ -154,7 +167,7 @@ void ualds_zeroconf_socketEventCallback(int* shutdown)
     OpcUa_List_Leave(&g_lstServers);
 }
 
-OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
+static OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
                                               int discoveryUrlIndex,
                                               char *szMDNSServerName,
                                               unsigned int uMDNSServerNameLength,
@@ -214,10 +227,6 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
         ualds_settings_readstring("Url", szURL, UALDS_CONF_MAX_URI_LENGTH);
     }
     ualds_settings_endarray();
-    if (szURL == OpcUa_Null)
-    {
-        return OpcUa_BadInternalError;
-    }
 
     if (OpcUa_IsGood(ualds_parse_url(szURL, &szScheme, &tmpHostname, port, &szPath)))
     {
@@ -292,7 +301,7 @@ OpcUa_StatusCode ualds_zeroconf_getServerInfo(const char *szServerUri,
     return OpcUa_Good;
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCallbackData,
                                                                OpcUa_Timer  hTimer,
                                                                OpcUa_UInt32 msecElapsed)
 {
@@ -466,7 +475,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_registerInternal(OpcUa_Void*  pvCa
     return uStatus;
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pvCallbackData,
                                                                  OpcUa_Timer  hTimer,
                                                                  OpcUa_UInt32 msecElapsed)
 {
@@ -524,7 +533,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_zeroconf_unregisterInternal(OpcUa_Void*  pv
     return OpcUa_Good;
 }
 
-void ualds_zeroconf_init_servers()
+static void ualds_zeroconf_init_servers(void)
 {
     int i;
     int     numServers = 0;
@@ -579,7 +588,7 @@ void ualds_zeroconf_init_servers()
     OpcUa_List_Initialize(&g_registerServersSocketList);
 }
 
-OpcUa_StatusCode ualds_zeroconf_start_registration()
+OpcUa_StatusCode ualds_zeroconf_start_registration(void)
 {
     OpcUa_StatusCode ret = OpcUa_BadNothingToDo;
 
@@ -622,7 +631,7 @@ OpcUa_StatusCode ualds_zeroconf_start_registration()
     return ret;
 }
 
-void ualds_zeroconf_stop_registration()
+void ualds_zeroconf_stop_registration(void)
 {
     if (g_hRegistrationTimer != OpcUa_Null)
     {

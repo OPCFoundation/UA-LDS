@@ -1,19 +1,31 @@
-/* Copyright (c) 1996-2024, OPC Foundation. All rights reserved.
-   Copyright (c) 2025 Pilz GmbH & Co. KG
-
-The source code in this file is covered under a dual - license scenario :
-- RCL: for OPC Foundation members in good - standing
-- GPL V2: everybody else
-
-RCL license terms accompanied with this source code.See http ://opcfoundation.org/License/RCL/1.00/
-
-GNU General Public License as published by the Free Software Foundation;
-version 2 of the License are accompanied with this source code.See http ://opcfoundation.org/License/GPLv2
-
-This source code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-*/
+/* ========================================================================
+* Copyright (c) 2005-2026 The OPC Foundation, Inc. All rights reserved.
+*
+* OPC Foundation MIT License 1.00
+*
+* Permission is hereby granted, free of charge, to any person
+* obtaining a copy of this software and associated documentation
+* files (the "Software"), to deal in the Software without
+* restriction, including without limitation the rights to use,
+* copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the
+* Software is furnished to do so, subject to the following
+* conditions:
+*
+* The above copyright notice and this permission notice shall be
+* included in all copies or substantial portions of the Software.
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+* OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+* WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+* OTHER DEALINGS IN THE SOFTWARE.
+*
+* The complete license agreement can be found here:
+* http://opcfoundation.org/License/MIT/1.00/
+* ======================================================================*/
 
 #include "findserversonnetwork.h"
 
@@ -93,20 +105,10 @@ static OpcUa_List               g_lstServers;
 static OpcUa_DateTime           g_lastCounterResetTime = {0, 0};
 static OpcUa_UInt32             g_currentRecordId = 0;
 
-int string_ends_with(const char * str, const char * suffix)
-{
-    int str_len = strlen(str);
-    int suffix_len = strlen(suffix);
-
-    int ret = strcmp(str + (str_len - suffix_len), suffix);
-
-    return (str_len >= suffix_len) && (ret);
-}
-
 
 /* if pBrowseContext is one of the global browse contexts, the according browse call has been canceled.
    in this case, all according entries in g_lstServers have to be removed. */
-void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrowseContext)
+static void ualds_findserversonnetwork_removeServiceEntries(ualds_browseContext *pBrowseContext)
 {
     OpcUa_UInt32 i;
     for (i = 0; i < g_noOfServiceTypes; i++)
@@ -212,7 +214,7 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
 }
 
 /* async DNSService callback for browse result resolving */
-void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
+static void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
                                             DNSServiceFlags         flags,
                                             uint32_t                interfaceIndex,
                                             DNSServiceErrorType     errorCode,
@@ -323,7 +325,7 @@ Error:
 }
 
 /* async DNSService callback for browse results */
-void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
+static void DNSSD_API ualds_DNSServiceBrowseReply(DNSServiceRef        sdRef,
                                            DNSServiceFlags      flags,
                                            uint32_t             interfaceIndex,
                                            DNSServiceErrorType  errorCode,
@@ -573,7 +575,7 @@ Error:
     }
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_Void*  pvCallbackData,
                                                                          OpcUa_Timer  hTimer,
                                                                          OpcUa_UInt32 msecElapsed)
 {
@@ -628,7 +630,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_start_internal(OpcUa_V
     return uStatus;
 }
 
-OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_stop_internal(OpcUa_Void*  pvCallbackData,
+static OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_stop_internal(OpcUa_Void*  pvCallbackData,
                                                                         OpcUa_Timer  hTimer,
                                                                         OpcUa_UInt32 msecElapsed)
 {
@@ -655,7 +657,7 @@ OpcUa_StatusCode OPCUA_DLLCALL ualds_findserversonnetwork_stop_internal(OpcUa_Vo
     return OpcUa_Good;
 }
 
-OpcUa_StatusCode ualds_findserversonnetwork_start_listening()
+OpcUa_StatusCode ualds_findserversonnetwork_start_listening(void)
 {
     OpcUa_StatusCode ret = OpcUa_BadNothingToDo;
 
@@ -700,7 +702,7 @@ OpcUa_StatusCode ualds_findserversonnetwork_start_listening()
     return ret;
 }
 
-void ualds_findserversonnetwork_stop_listening()
+void ualds_findserversonnetwork_stop_listening(void)
 {
     if (g_hBrowseTimer != OpcUa_Null)
     {
@@ -1002,7 +1004,6 @@ void ualds_zeroconf_register_offline(const char *szServerUri)
             ualds_resolveContext* pResolveContext = (ualds_resolveContext*)OpcUa_Alloc(sizeof(ualds_resolveContext));
             if (pResolveContext)
             {
-                OpcUa_StatusCode uStatus = OpcUa_Good;
                 uint16_t port = 0;
 
                 pResolveContext->contextType = ContextType_Resolve;
@@ -1298,7 +1299,7 @@ void ualds_zeroconf_unregister_offline(const char *szServerUri)
     OpcUa_List_Leave(&g_lstServers);
 }
 
-void ualds_zeroconf_load_offline()
+void ualds_zeroconf_load_offline(void)
 {
     char** szUriArray = 0;
     int numServers = 0;
@@ -1351,7 +1352,7 @@ void ualds_zeroconf_load_offline()
     }
 }
 
-void ualds_zeroconf_cleanup_offline()
+void ualds_zeroconf_cleanup_offline(void)
 {
     OpcUa_List_Enter(&g_lstServers);
     OpcUa_List_ResetCurrent(&g_lstServers);
