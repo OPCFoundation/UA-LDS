@@ -29,7 +29,10 @@
 
 #include <sys/types.h>
 #include <string.h>
+#include "config.h"
+#include <platform.h>
 
+#ifndef HAVE_STRLCAT
 /** Size limited concatenate string function.
  * This function guaranties that \c dst will be zero terminated,
  * as long as \c dst is at least one byte long.
@@ -56,6 +59,4 @@ size_t strlcat(char *dst, const char *src, size_t len)
     dst[pos] = 0;
     return pos;
 }
-
-
-
+#endif
