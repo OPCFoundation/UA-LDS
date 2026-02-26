@@ -172,7 +172,7 @@ int ualds_platform_is_ip_format(const char* host)
 	return retCode;
 }
 
-/** Windows specific function for onvert IPv4 to hostname .*/
+/** Windows specific function for onvert IP to hostname .*/
 int ualds_platform_convert_ip_to_hostname(char *host, int len)
 {
 	struct addrinfo *result;
@@ -191,7 +191,7 @@ int ualds_platform_convert_ip_to_hostname(char *host, int len)
 			char* hostname = malloc(sizeof(char)*len);
 			memset(hostname, 0, sizeof(char)*len);
 			ret_error = getnameinfo((struct sockaddr*) addrIn4,
-				sizeof(*addrIn4), hostname, sizeof(char)*len, NULL, 0, 0);
+				sizeof(*addrIn4), hostname, sizeof(char)*len, NULL, 0, NI_NAMEREQD);
 			if (ret_error == 0) {
 				strncpy(host, hostname, sizeof(char)*len);
 				host[len - 1] = 0;
@@ -205,7 +205,7 @@ int ualds_platform_convert_ip_to_hostname(char *host, int len)
 			char* hostname = malloc(sizeof(char)*len);
 			memset(hostname, 0, sizeof(char)*len);
 			ret_error = getnameinfo((struct sockaddr*) addrIn6,
-				sizeof(*addrIn6), hostname, sizeof(char)*len, NULL, 0, 0);
+				sizeof(*addrIn6), hostname, sizeof(char)*len, NULL, 0, NI_NAMEREQD);
 			if (ret_error == 0) {
 				strncpy(host, hostname, sizeof(char)*len);
 				host[len - 1] = 0;
