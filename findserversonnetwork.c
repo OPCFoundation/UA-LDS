@@ -247,9 +247,25 @@ static void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef
 
     /* fill results */
 
+    size_t hosttargetlen = strlen(hosttarget);
+    if (hosttargetlen >= 1 && hosttarget[hosttargetlen - 1] == '.') 
+	{
+		// check if IP address
+		char szHostName[UALDS_CONF_MAX_URI_LENGTH];
+		memset(szHostName, 0, UALDS_CONF_MAX_URI_LENGTH);
+
+		strncpy(szHostName, hosttarget, hosttargetlen - 1);
+		int is_ip_format = ualds_platform_is_ip_format(szHostName);
+		if (is_ip_format == 0) // yes
+		{
+			// strip the dot character from the end of the IP address
+			hosttargetlen -= 1;
+		}
+    }
+
     OpcUa_String_StrnCat(&pRecord->DiscoveryUrl,
         OpcUa_String_FromCString((OpcUa_StringA)hosttarget),
-        strlen(hosttarget));
+        hosttargetlen);
 
     char szPort[40] = { 0 };
 #if OPCUA_USE_SAFE_FUNCTIONS
