@@ -45,7 +45,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-    add_subdirectory(stack)
+add_subdirectory(stack)
 set_target_properties(uastack PROPERTIES FOLDER "stack")
 if(WIN32)
 if(NOT no_lds_me)
@@ -54,7 +54,8 @@ set_target_properties(dnssd PROPERTIES FOLDER "mdns")
 set_target_properties(dnssd-static PROPERTIES FOLDER "mdns")
 endif()
 endif()
-    set(_ualds_src
+
+set(_ualds_src
         findservers.c
         getendpoints.c
         main.c
@@ -92,16 +93,18 @@ else()
         linux/platform.c
     )
 endif()
-    if(NOT no_lds_me)
+
+if(NOT no_lds_me)
         set(_ualds_src ${_ualds_src}
             findserversonnetwork.c
             zeroconf.c
         )
-    endif()
-    add_executable(ualds ${_ualds_src})
-	set_target_properties(ualds PROPERTIES OUTPUT_NAME  "opcualds")
-    target_link_libraries(ualds PUBLIC uastack)
-    target_compile_definitions(ualds
+endif()
+
+add_executable(ualds ${_ualds_src})
+set_target_properties(ualds PROPERTIES OUTPUT_NAME  "opcualds")
+target_link_libraries(ualds PUBLIC uastack)
+target_compile_definitions(ualds
         PUBLIC HAVE_OPCUA_STACK
         PUBLIC HAVE_OPENSSL
     )
@@ -116,6 +119,10 @@ if(WIN32)
         PUBLIC HAVE_SERVICE_STOP
         PUBLIC HAVE_SERVICE_STATUS
     )
+	# enable ControlFlowGuard 
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /guard:cf")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /guard:cf /DYNAMICBASE")
+	
     if(NOT no_lds_me)
         target_compile_definitions(ualds PUBLIC HAVE_HDS)
         target_link_libraries(ualds PUBLIC dnssd)
