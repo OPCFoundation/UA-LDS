@@ -3,33 +3,45 @@ OPC Foundation OPC UA Local Discovery Server
 
 Version 1.04.420
 	Highlights:
-		- Updated OpenSSL to version 3.5.5
+		- Updated OpenSSL to version 3.5.5 (LTS)
+		- Updated Copyright to MIT License
+	Fixed issues:
+		- Enable Control Flow Guard for Windows: Issue #91
+		- Santize IP address to exclude trailing ".": PullRequest #86
+		- Fix usage output: PullRequest #88
+		- Fix -ReadOnlyCfgs -> -ReadOnlyCfg typo in ualds.ini: PullRequest #87
+		- Add conditional compiles for strlcat() and strlcpy(): PullRequest #89
+		- Code cleanups: PullRequest #90
  
 Version 1.04.413
 	Highlights:
 		- Updated OpenSSL to version 3.1.7
 		- Updated Visual Studio to 2015 [update 3]
+	Fixed issues:
 		- Fix for x64 build scripts
 
 Version 1.04.411
 	Highlights:
 		- Updated OpenSSL to version 3.1.4
+		- Reduced AnsiCStack code to a minimal: removed unused features.
+	Fixed issues:
 		- Fixed memory leak. PullRequest #78
 		- Enable local registration for linux platform. PullRequest #79
 		- Updated default security policy list: added Basic256Sha256, Aes256Sha256RsaPss, Aes128Sha256RsaOaep. Reported in Issue #72.
 		- Fixed IPv6 problem for FindServersOnNetwork. Issue #74.
-		- Reduced AnsiCStack code to a minimal: removed unused features.
-
+		
 Version 1.04.405
 	Highlights:
-		- Fixed security issue: Privilege Escalation Vulnerability
 		- Updated OpenSSL to version 1.1.1q
+	Fixed issues:
+		- Fixed security issue: Privilege Escalation Vulnerability
 		
 Version 1.04.403
 	Highlights:
-		- Added option to recreate certificate if it is invalid: #68
 		- Updated OpenSSL to version 1.1.1n
+	Fixed issues:
 		- Fixed memory leak & crash in AnsiCStack
+		- Added option to recreate certificate if it is invalid: PullRequest #68
 
 Version 1.04.402
 	Highlights:

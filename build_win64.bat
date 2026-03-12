@@ -4,6 +4,5 @@ mkdir build
 pushd build
 cmake -T "v140_xp" -G "Visual Studio 14 2015 Win64" ..
 cmake --build . --config Release
-cmake --build . --config RelWithDebInfo
 cmake --build . --config Debug
 popd

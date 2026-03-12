@@ -12,10 +12,6 @@ cmake --build . --config Release
 set code=%errorlevel%
 if not %code%==0 goto :error
 
-cmake --build . --config RelWithDebInfo
-set code=%errorlevel%
-if not %code%==0 goto :error
-
 cmake --build . --config Debug
 set code=%errorlevel%
 if not %code%==0 goto :error
