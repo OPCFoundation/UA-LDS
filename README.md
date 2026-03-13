@@ -21,7 +21,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 ## Build Dependencies
 
  * OPC UA Ansi C Stack v1.04.342. (included) Please review official site page http://opcfoundation.github.io/UA-AnsiC-Legacy.
- * CMake version v3.6.2 (or later) from https://cmake.org/install/.
+ * CMake version v3.20 (or later) from https://cmake.org/install/.
  * Perl 
  * Windows:
     - OpenSSL v3.5.5 was used in development and testing: either built from source (https://www.openssl.org/source/) or as pre-built package, for example from https://slproweb.com/products/Win32OpenSSL.html.
@@ -35,7 +35,7 @@ OPC UA, empowering the Industrial Internet of Things (IIOT) and Industrie 4.0.
 Make sure that openssl is installed or build. See [UA-AnsiC](https://github.com/OPCFoundation/UA-AnsiC-Legacy) build instructions.
 <br/>
 Predefined scripts are available based on CMake. 
- * Windows: build\_ualds.bat (Visual Studio 2015 command line)
+ * Windows: build\_ualds.bat (using Visual Studio 2022 Developer Command Prompt)
  * Linux: build\_linux.sh
 
 ## Runtime Dependencies

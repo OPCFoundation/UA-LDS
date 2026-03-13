@@ -9,7 +9,7 @@ set SRCDIR=%~dp0
 set INSTALLDIR=%~dp0
 set SIGNTOOL=C:\Build\sign_output.bat
 set ZIP="C:\Program Files\7-zip\7z.exe"
-set VS_CONFIG=RelWithDebInfo
+set VS_CONFIG=Release
 set LDSFN=OPC UA Local Discovery Server
 
 set GIT=C:\Program Files\Git\bin\git.exe
@@ -26,6 +26,8 @@ CALL fetch_openssl_win64.bat
 ECHO STEP 3) Building Stack
 cd %SRCDIR%\stack
 CALL build_win64.bat
+set code=%errorlevel%
+if not %code%==0 goto :error
 :noStack
 
 ECHO STEP 4) Update Build Number
@@ -42,6 +44,8 @@ del /Q *.bak
 ECHO STEP 5) Building LDS
 cd %SRCDIR%
 CALL build_win64.bat
+set code=%errorlevel%
+if not %code%==0 goto :error
 
 ECHO STEP 6) Sign the Binaries
 IF EXIST "%SIGNTOOL%" CALL "%SIGNTOOL%" %INSTALLDIR%\build\bin\%VS_CONFIG%\*.dll /dual
@@ -51,8 +55,14 @@ ECHO STEP 7) ZIP the Binaries
 %ZIP% a "%LDSFN%.zip" "%INSTALLDIR%\build\bin\%VS_CONFIG%\*.exe"
 %ZIP% a "%LDSFN%.zip" "%INSTALLDIR%\build\bin\%VS_CONFIG%\*.dll"
 
-ECHO *** ALL DONE ***
-GOTO theEnd
+goto :end
 
-:theEnd
+:error
+echo build failed with exit code %code%
+popd
+exit /b %code%
+
+:end
+ECHO *** ALL DONE ***
+
 ENDLOCAL
