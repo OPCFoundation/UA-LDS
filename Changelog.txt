@@ -3,7 +3,7 @@ OPC Foundation OPC UA Local Discovery Server
 
 Version 1.04.420
 	Highlights:
-		- Updated OpenSSL to version 3.5.5 (LTS)
+		- Updated OpenSSL to version 3.5.6 (LTS)
 		- Updated Visual Studio to v2022
 		- Updated Copyright to MIT License
 	Fixed issues:
