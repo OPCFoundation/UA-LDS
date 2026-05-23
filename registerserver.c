@@ -78,7 +78,7 @@ OpcUa_StatusCode ualds_registerserver(
     int numServers = 0;
     int bExists = 0;
     char szServerUri[UALDS_CONF_MAX_URI_LENGTH];
-    char *pszServerUri;
+    char *pszServerUri = NULL;
 
     UALDS_UNUSED(pRequestType);
 
