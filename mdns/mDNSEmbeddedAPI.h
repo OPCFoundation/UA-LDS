@@ -1,55 +1,31 @@
-/* -*- Mode: C; tab-width: 4 -*-
+/* ========================================================================
+ * Copyright (c) 2005-2026, OPC Federation AISBL, All rights reserved.
  *
- * Copyright (c) 2002-2012 Apple Computer, Inc. All rights reserved.
+ * OPC Foundation MIT License 1.00
+ * 
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ * 
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-
-   NOTE:
-   If you're building an application that uses DNS Service Discovery
-   this is probably NOT the header file you're looking for.
-   In most cases you will want to use /usr/include/dns_sd.h instead.
-
-   This header file defines the lowest level raw interface to mDNSCore,
-   which is appropriate *only* on tiny embedded systems where everything
-   runs in a single address space and memory is extremely constrained.
-   All the APIs here are malloc-free, which means that the caller is
-   responsible for passing in a pointer to the relevant storage that
-   will be used in the execution of that call, and (when called with
-   correct parameters) all the calls are guaranteed to succeed. There
-   is never a case where a call can suffer intermittent failures because
-   the implementation calls malloc() and sometimes malloc() returns NULL
-   because memory is so limited that no more is available.
-   This is primarily for devices that need to have precisely known fixed
-   memory requirements, with absolutely no uncertainty or run-time variation,
-   but that certainty comes at a cost of more difficult programming.
-
-   For applications running on general-purpose desktop operating systems
-   (Mac OS, Linux, Solaris, Windows, etc.) the API you should use is
-   /usr/include/dns_sd.h, which defines the API by which multiple
-   independent client processes communicate their DNS Service Discovery
-   requests to a single "mdnsd" daemon running in the background.
-
-   Even on platforms that don't run multiple independent processes in
-   multiple independent address spaces, you can still use the preferred
-   dns_sd.h APIs by linking in "dnssd_clientshim.c", which implements
-   the standard "dns_sd.h" API calls, allocates any required storage
-   using malloc(), and then calls through to the low-level malloc-free
-   mDNSCore routines defined here. This has the benefit that even though
-   you're running on a small embedded system with a single address space,
-   you can still use the exact same client C code as you'd use on a
-   general-purpose desktop system.
-
- */
+ * The complete license agreement can be found here:
+ * http://opcfoundation.org/License/MIT/1.00/
+ * ======================================================================*/
 
 #ifndef __mDNSClientAPI_h
 #define __mDNSClientAPI_h
