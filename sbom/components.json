@@ -1,19 +1,10 @@
 {
   "_comment": [
-    "Component inventory for the OPC UA Local Discovery Server service.",
+    "Component inventory for the OPC UA Local Discovery Server (LDS) service.",
     "",
-    "This manifest belongs to THIS repository (OPCFoundation/UA-LDS) and",
-    "describes only what this repository produces and links. It is self-",
-    "contained: every path below is relative to this project root, and the",
-    "manifest renders to a standalone CycloneDX 1.6 SBOM that can be published",
-    "with this project's releases.",
+    "UA-LDS-Installers project consumes this file to compose the SBOM for the components it includes.",
     "",
-    "UA-LDS-Installers consumes this file to compose the SBOM for the installer",
-    "it ships. Do not add installer-owned components here - the installer",
-    "declares its own (ldsca.dll, the certificate generator, the MSI).",
-    "",
-    "RULE: adding or bumping any shipped component requires updating this file",
-    "in the same pull request.",
+    "RULE: adding or bumping any shipped component requires updating this file in the same pull request.",
     "",
     "Schema is documented in UA-LDS-Installers/sbom/README.md."
   ],

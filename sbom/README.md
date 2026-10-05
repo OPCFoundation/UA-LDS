@@ -29,25 +29,3 @@ Useful extras:
 | `components.json` | The component inventory.|
 | `New-Sbom.ps1` | Renderer |
 
-**`New-Sbom.ps1` is a copy** of the one in
-[OPCFoundation/UA-LDS-Installers](https://github.com/OPCFoundation/UA-LDS-Installers)
-under `sbom/`. That repository is upstream for this script; the copies are kept
-byte-identical so behaviour cannot diverge between the SBOM this project
-publishes and the one composed for the installer. Its build warns when they
-drift. Fix the script upstream and re-copy — do not edit it here.
-
-`components.json`, by contrast, belongs to this repository and is maintained here.
-
-## The rule
-
-**Adding or bumping anything this project ships or links requires updating
-`components.json` in the same pull request.**
-
-The inventory is manually maintained because the automated tools do not work.
-
-## Downstream
-
-The installer repository composes this SBOM into the one it ships for the
-installed product, deduplicating components that several projects declare (such
-as OpenSSL) and linking back to this document by SHA-256. Keeping this manifest
-accurate is therefore what keeps the product SBOM accurate.
