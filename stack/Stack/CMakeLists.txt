@@ -28,9 +28,22 @@
 # ======================================================================*/
 
 #
-# Hint at old root folder (see build_win32/build_win64.bat)
+# Locate OpenSSL.
 #
-set (OPENSSL_ROOT_DIR ${_PROJECT_ROOT}/openssl)
+# A caller may supply OPENSSL_ROOT_DIR (e.g. -DOPENSSL_ROOT_DIR=<path>) to point
+# at an install outside this tree; that takes precedence.  Otherwise fall back
+# to the in-tree location the standalone batch builds populate - see
+# fetch_openssl.bat and build_win32/build_win64.bat.
+#
+# This used to be an unconditional set(), which silently overrode anything the
+# caller passed on the command line, so an out-of-tree OpenSSL could only be
+# used by copying it to ${_PROJECT_ROOT}/openssl first.
+#
+if (NOT OPENSSL_ROOT_DIR)
+    set (OPENSSL_ROOT_DIR ${_PROJECT_ROOT}/openssl)
+endif()
+
+message (STATUS "UA stack: OPENSSL_ROOT_DIR = ${OPENSSL_ROOT_DIR}")
     
 if (WIN32)
     include(FindOpenSSL)
