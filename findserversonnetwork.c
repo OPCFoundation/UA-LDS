@@ -213,6 +213,22 @@ void ualds_findserversonnetwork_socketEventCallback(int* shutdown)
     OpcUa_Mutex_Unlock(g_mutex);
 }
 
+/* Narrows the caps token szCaps[iStart, iEnd) to exclude leading and trailing spaces and tabs.
+   The trimmed token is szCaps[*piTokStart, *piTokEnd); it is empty if *piTokEnd == *piTokStart. */
+static void ualds_trimCapsToken(const char *szCaps, int iStart, int iEnd, int *piTokStart, int *piTokEnd)
+{
+    while (iStart < iEnd && (szCaps[iStart] == ' ' || szCaps[iStart] == '\t'))
+    {
+        iStart++;
+    }
+    while (iEnd > iStart && (szCaps[iEnd - 1] == ' ' || szCaps[iEnd - 1] == '\t'))
+    {
+        iEnd--;
+    }
+    *piTokStart = iStart;
+    *piTokEnd = iEnd;
+}
+
 /* async DNSService callback for browse result resolving */
 static void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef,
                                             DNSServiceFlags         flags,
@@ -298,39 +314,57 @@ static void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef
     {
         uint8_t lenCaps = 0;
         const char *szCaps = TXTRecordGetValuePtr(txtLen, txtRecord, "caps", &lenCaps);
-        if (lenCaps > 0 && szCaps != OpcUa_Null && szCaps[0] != '\0')
+        if (lenCaps > 0 && szCaps != OpcUa_Null)
         {
-            const char *szLastPos = szCaps;
-            int i = 0, iCap = 0;
-            pRecord->NoOfServerCapabilities = 1;
+            /* the value is a comma separated list and not NUL terminated; spaces and tabs
+               around each token are trimmed, and tokens that are empty after trimming
+               (leading, trailing or repeated commas) are skipped. A NUL byte cannot be part
+               of a capability, so it separates tokens like a comma. */
+            int i = 0, iStart = 0, iTokStart = 0, iTokEnd = 0, iCap = 0, numCaps = 0;
+            OpcUa_String *pCaps = OpcUa_Null;
 
-            for (i = 0; i < lenCaps; i++)
+            for (i = 0; i <= lenCaps; i++)
             {
-                if (szCaps[i] == ',' && i+1 != lenCaps && szCaps[i+1] != ',') {pRecord->NoOfServerCapabilities++;}
-            }
-            pRecord->ServerCapabilities = (OpcUa_String*)OpcUa_Alloc(pRecord->NoOfServerCapabilities * sizeof(OpcUa_String));
-            for (i = 0; i < lenCaps; i++)
-            {
-                if (szCaps[i] == ',' && i+1 != lenCaps && szCaps[i+1] != ',')
+                if (i == lenCaps || szCaps[i] == ',' || szCaps[i] == '\0')
                 {
-                    OpcUa_String_Initialize(&pRecord->ServerCapabilities[iCap]);
-                    OpcUa_String_AttachToString((OpcUa_StringA)szLastPos,
-                                                &szCaps[i] - szLastPos,
-                                                &szCaps[i] - szLastPos,
-                                                OpcUa_True,
-                                                OpcUa_True,
-                                                &pRecord->ServerCapabilities[iCap]);
-                    iCap++;
-                    szLastPos = &szCaps[i+1];
+                    ualds_trimCapsToken(szCaps, iStart, i, &iTokStart, &iTokEnd);
+                    if (iTokEnd > iTokStart)
+                    {
+                        numCaps++;
+                    }
+                    iStart = i + 1;
                 }
             }
-            OpcUa_String_Initialize(&pRecord->ServerCapabilities[iCap]);
-            OpcUa_String_AttachToString((OpcUa_StringA)szLastPos,
-                                        &szCaps[i] - szLastPos,
-                                        &szCaps[i] - szLastPos,
-                                        OpcUa_True,
-                                        OpcUa_True,
-                                        &pRecord->ServerCapabilities[iCap]);
+
+            if (numCaps > 0)
+            {
+                pCaps = (OpcUa_String*)OpcUa_Alloc(numCaps * sizeof(OpcUa_String));
+            }
+            if (pCaps != OpcUa_Null)
+            {
+                iStart = 0;
+                for (i = 0; i <= lenCaps; i++)
+                {
+                    if (i == lenCaps || szCaps[i] == ',' || szCaps[i] == '\0')
+                    {
+                        ualds_trimCapsToken(szCaps, iStart, i, &iTokStart, &iTokEnd);
+                        if (iTokEnd > iTokStart)
+                        {
+                            OpcUa_String_Initialize(&pCaps[iCap]);
+                            OpcUa_String_AttachToString((OpcUa_StringA)&szCaps[iTokStart],
+                                                        iTokEnd - iTokStart,
+                                                        iTokEnd - iTokStart,
+                                                        OpcUa_True,
+                                                        OpcUa_True,
+                                                        &pCaps[iCap]);
+                            iCap++;
+                        }
+                        iStart = i + 1;
+                    }
+                }
+                pRecord->ServerCapabilities = pCaps;
+                pRecord->NoOfServerCapabilities = iCap;
+            }
         }
     }
 
