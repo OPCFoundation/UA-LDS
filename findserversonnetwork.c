@@ -306,12 +306,12 @@ static void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef
 
             for (i = 0; i < lenCaps; i++)
             {
-                if (szCaps[i] == ',' && szCaps[i+1] != ',' && i+1 != lenCaps) {pRecord->NoOfServerCapabilities++;}
+                if (szCaps[i] == ',' && i+1 != lenCaps && szCaps[i+1] != ',') {pRecord->NoOfServerCapabilities++;}
             }
             pRecord->ServerCapabilities = (OpcUa_String*)OpcUa_Alloc(pRecord->NoOfServerCapabilities * sizeof(OpcUa_String));
             for (i = 0; i < lenCaps; i++)
             {
-                if (szCaps[i] == ',' && szCaps[i+1] != ',' && i+1 != lenCaps)
+                if (szCaps[i] == ',' && i+1 != lenCaps && szCaps[i+1] != ',')
                 {
                     OpcUa_String_Initialize(&pRecord->ServerCapabilities[iCap]);
                     OpcUa_String_AttachToString((OpcUa_StringA)szLastPos,
