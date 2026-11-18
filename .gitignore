@@ -50,3 +50,7 @@ pki/**
 *.ilk
 *.iobj
 *.ipdb
+
+*/openssl/
+*/openssl-x64/
+*/openssl-x86/

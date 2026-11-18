@@ -1,0 +1,118 @@
+{
+  "_comment": [
+    "Component inventory for the OPC UA Local Discovery Server (LDS) service.",
+    "",
+    "UA-LDS-Installers project consumes this file to compose the SBOM for the components it includes.",
+    "",
+    "RULE: adding or bumping any shipped component requires updating this file in the same pull request.",
+    "",
+    "Schema is documented in UA-LDS-Installers/sbom/README.md."
+  ],
+
+  "schemaVersion": 2,
+
+  "project": {
+    "id": "ua-lds",
+    "name": "OPC UA Local Discovery Server",
+    "group": "org.opcfoundation",
+    "description": "OPC UA Local Discovery Server service - endpoint registration and discovery.",
+    "license": "MIT",
+    "repository": "https://github.com/OPCFoundation/UA-LDS",
+    "supplier": { "name": "OPC Federation AISBL", "url": "https://opcfoundation.org" },
+    "craRole": "open-source-steward",
+    "primaryComponent": "opcualds",
+    "versionFrom": {
+      "kind": "header",
+      "path": "config.h",
+      "macros": [
+        "UALDS_CONF_VERSION_MAJOR",
+        "UALDS_CONF_VERSION_MINOR",
+        "UALDS_CONF_VERSION_PATCH",
+        "UALDS_CONF_VERSION_BUILD"
+      ]
+    },
+    "version": "1.4.420.0"
+  },
+
+  "buildTools": [
+    { "name": "CMake", "version": "3.20+", "supplier": "Kitware" },
+    { "name": "MSVC", "version": "v143", "supplier": "Microsoft" }
+  ],
+
+  "components": [
+    {
+      "key": "opcualds",
+      "name": "opcualds.exe",
+      "type": "application",
+      "artifactFile": "opcualds.exe",
+      "versionFrom": { "kind": "project" },
+      "licenses": ["MIT"],
+      "supplier": "OPC Federation AISBL",
+      "purl": "pkg:github/OPCFoundation/UA-LDS@{sha}#opcualds.exe",
+      "shaFrom": ".",
+      "cveMonitoring": "manual",
+      "exposure": "network-facing",
+      "notes": "The discovery service, running as a Windows service and listening for OPC UA requests. The primary attack surface of any product that ships it."
+    },
+    {
+      "key": "dnssd",
+      "name": "dnssd.dll",
+      "type": "library",
+      "artifactFile": "dnssd.dll",
+      "versionFrom": { "kind": "project" },
+      "licenses": ["MIT", "Apache-2.0"],
+      "supplier": "OPC Federation AISBL",
+      "purl": "pkg:github/OPCFoundation/UA-LDS@{sha}#dnssd.dll",
+      "shaFrom": ".",
+      "cveMonitoring": "manual",
+      "exposure": "network-reachable",
+      "notes": "DNS-SD client shim. Incorporates the dns_sd API surface derived from Apple mDNSResponder, hence the dual license record."
+    },
+    {
+      "key": "ua-ansi-c-stack",
+      "name": "OPC UA ANSI C Stack",
+      "type": "library",
+      "version": "1.04.342",
+      "versionFrom": { "kind": "literal" },
+      "licenses": ["MIT"],
+      "supplier": "OPC Federation AISBL",
+      "purl": "pkg:generic/opcfoundation/ua-ansi-c-stack@1.04.342",
+      "cveMonitoring": "manual",
+      "exposure": "network-reachable",
+      "notes": "Parses OPC UA messages arriving from the network, in-process inside opcualds.exe. VENDORED SOURCE under stack/ - not a pinned external dependency, so no dependency scanner will detect it. Reduced-functionality stack, LDS use only. No CPE exists for this component. Predates the OPC UA ECC SecurityPolicies, so this service cannot negotiate them."
+    },
+    {
+      "key": "openssl-3",
+      "name": "OpenSSL",
+      "type": "library",
+      "version": "3.5.7",
+      "versionFrom": { "kind": "literal" },
+      "licenses": ["Apache-2.0"],
+      "supplier": "OpenSSL Project",
+      "purl": "pkg:github/openssl/openssl@openssl-3.5.7",
+      "cpe": "cpe:2.3:a:openssl:openssl:3.5.7:*:*:*:*:*:*:*",
+      "cveMonitoring": "cpe",
+      "exposure": "network-reachable",
+      "notes": "Crypto and PKI for the network-facing service, so advisories here are the ones most likely to be severe. Statically linked (built 'no-shared'), so a fix requires rebuilding and re-releasing rather than patching a shared library. The version and configuration are decided by whoever builds this project; the figure above is what UA-LDS-Installers currently supplies ('no-shared no-asm no-autoload-config', with EC enabled for the OPC UA ECC policies)."
+    },
+    {
+      "key": "msvc-crt",
+      "name": "Microsoft Visual C++ Runtime Library",
+      "type": "library",
+      "versionFrom": { "kind": "parameter", "parameter": "CrtVersion" },
+      "licenses": [{ "name": "Microsoft Visual C++ Runtime Library - proprietary, redistributable" }],
+      "supplier": "Microsoft Corporation",
+      "cveMonitoring": "manual",
+      "exposure": "network-reachable",
+      "notes": "STATICALLY LINKED via /MT. A CRT vulnerability is therefore NOT remediated by Windows Update on the operator's machine - it requires a rebuild and re-release. Recorded as a shipped component rather than an environment assumption for that reason."
+    }
+  ],
+
+  "dependencies": {
+    "opcualds": ["ua-ansi-c-stack", "openssl-3", "msvc-crt", "dnssd"],
+    "dnssd": ["msvc-crt"],
+    "ua-ansi-c-stack": ["openssl-3"],
+    "openssl-3": [],
+    "msvc-crt": []
+  }
+}
