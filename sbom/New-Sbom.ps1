@@ -22,7 +22,7 @@
     Composition merges rather than merely links, because a market surveillance
     authority asking for "the SBOM" should get one self-contained document, and
     most tooling does not follow CycloneDX BOM-Links. The composed document
-    still records an externalReference of type "bom" (with a SHA-256) back to
+    still records an externalReference of type "bom" (with a SHA-512) back to
     each subproject's own SBOM, so the authoritative source stays traceable.
 
     Components appearing in more than one manifest - OpenSSL and the static
@@ -56,7 +56,7 @@
 
 .PARAMETER BinDir, ExtraBinDir
     Staged binary directories. Shipped artifacts found here are hashed and the
-    SHA-256 recorded against their component.
+    SHA-512 recorded against their component.
 
 .PARAMETER CrtVersion
     MSVC toolset/runtime version, for versionFrom kind "parameter".
@@ -150,9 +150,9 @@ function New-Property {
     return @{ name = $Name; value = "$Value" }
 }
 
-function Get-FileSha256 {
+function Get-FileSha512 {
     param([string]$Path)
-    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA512).Hash.ToLowerInvariant()
 }
 
 # ---------------------------------------------------------------------------
@@ -301,7 +301,7 @@ function New-ComponentSet {
         $notes = Get-Prop $comp 'notes'
         if ($notes) { $entry.description = "$notes" }
 
-        # SHA-256 of the artifact as actually staged for this architecture.
+        # SHA-512 of the artifact as actually staged for this architecture.
         $artifact = Get-Prop $comp 'artifactFile'
         if ($artifact) {
             $artifactPath = $null
@@ -312,7 +312,7 @@ function New-ComponentSet {
             }
 
             if ($artifactPath) {
-                $entry.hashes = @(@{ alg = 'SHA-256'; content = (Get-FileSha256 $artifactPath) })
+                $entry.hashes = @(@{ alg = 'SHA-512'; content = (Get-FileSha512 $artifactPath) })
             } elseif ($BinDir -or $ExtraBinDir) {
                 Write-Warning "SBOM: '$artifact' not found in the staged output - its digest will be omitted."
             }
@@ -507,7 +507,7 @@ foreach ($subRef in $subBomRefs) {
             $references += @{
                 type    = 'bom'
                 url     = $bomName
-                hashes  = @(@{ alg = 'SHA-256'; content = (Get-FileSha256 $bomPath) })
+                hashes  = @(@{ alg = 'SHA-512'; content = (Get-FileSha512 $bomPath) })
                 comment = "Authoritative SBOM published by $(Get-Prop $subRef.Info.Project 'repository' $subRef.Info.Id)"
             }
         } else {
