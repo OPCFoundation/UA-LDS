@@ -252,14 +252,19 @@ static void DNSSD_API ualds_DNSServiceResolveReply(DNSServiceRef           sdRef
 	{
 		// check if IP address
 		char szHostName[UALDS_CONF_MAX_URI_LENGTH];
-		memset(szHostName, 0, UALDS_CONF_MAX_URI_LENGTH);
 
-		strncpy(szHostName, hosttarget, hosttargetlen - 1);
-		int is_ip_format = ualds_platform_is_ip_format(szHostName);
-		if (is_ip_format == 0) // yes
+		// hosttarget comes from the network and may be longer than szHostName;
+		// a name that does not fit cannot be an IP address
+		if (hosttargetlen <= sizeof(szHostName))
 		{
-			// strip the dot character from the end of the IP address
-			hosttargetlen -= 1;
+			// copy without the trailing dot
+			strlcpy(szHostName, hosttarget, hosttargetlen);
+			int is_ip_format = ualds_platform_is_ip_format(szHostName);
+			if (is_ip_format == 0) // yes
+			{
+				// strip the dot character from the end of the IP address
+				hosttargetlen -= 1;
+			}
 		}
     }
 
