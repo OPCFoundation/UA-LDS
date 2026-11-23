@@ -1,6 +1,13 @@
 OPC Foundation OPC UA Local Discovery Server
 ============================================
-
+Version 1.04.422
+	Highlights:
+		- Updated OpenSSL to version 3.5.9 (LTS)
+		- Updated CertificateGenerator to use OpenSSL 3.5.*
+		- Add SBOM Samples + Security Policy for EU CRA.
+	Fixed issues:
+		- Fix stack buffer overflow on long host names: PullRequest #95
+		
 Version 1.04.420
 	Highlights:
 		- Updated OpenSSL to version 3.5.7 (LTS)
