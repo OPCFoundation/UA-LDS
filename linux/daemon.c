@@ -43,10 +43,13 @@ static void signal_handler(int sig)
     ualds_shutdown();
 }
 
-/** Starts the windows service and returns. */
+/** Starts the service and returns. */
 int daemonize(void)
 {
-    daemon(0, 0);
+    if (daemon(0, 0) < 0){
+        ualds_log(UALDS_LOG_ALERT, "Daemonize failed with error: %s", strerror(errno));
+        return -1;
+    }
     return ualds_server();
 }
 

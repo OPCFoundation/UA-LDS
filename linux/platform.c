@@ -59,7 +59,15 @@ int ualds_platform_drop_privileges(void)
 
 void ualds_platform_getconfigfile_path(char *szFilePath, size_t len)
 {
-    getcwd(szFilePath, len);
+    if(getcwd(szFilePath, len) == 0)
+    {
+        fprintf(stderr, "getcwd: Unable to get current working directory: %s\n", strerror(errno));
+        if (len > 0)
+        {
+            szFilePath[0] = '\0';
+        }
+        return;
+    }
     strlcat(szFilePath, "/ualds.conf", len);
 }
 
